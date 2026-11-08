@@ -1,5 +1,6 @@
 import { decodeSelectors, isRecord } from '../capture-contract';
-import { CodingDatabase, initialProjectId } from '../storage/database';
+import { CodingDatabase } from '../storage/database';
+import { IndexedProjects } from '../storage/indexed-projects';
 import { IndexedCodings } from '../storage/indexed-codings';
 import type {
   CodeAssignment,
@@ -8,6 +9,7 @@ import type {
 } from '../domain/codings';
 
 export const database = new CodingDatabase();
+export const projects = new IndexedProjects(database);
 const codings = new IndexedCodings(database);
 const operationIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -35,12 +37,16 @@ export async function handleCodingRequest(
   message: unknown,
 ): Promise<
   | { kind: 'codings'; codes: CodeAssignment[] }
-  | { kind: 'highlights'; entries: HighlightEntry[] }
+  | { kind: 'highlights'; entries: HighlightEntry[]; projectId: string | null }
   | { kind: 'note'; note: string | null }
   | { kind: 'error' }
 > {
   const error = { kind: 'error' } as const;
   if (!isRecord(message)) return error;
+  const activeId = await projects.activeId();
+  const projectId =
+    typeof message.projectId === 'string' ? message.projectId : activeId;
+  if (projectId !== activeId) return error;
   if (message.type === 'highlight.read') {
     const { url, filter } = message;
     if (
@@ -50,15 +56,19 @@ export async function handleCodingRequest(
       return error;
     return {
       kind: 'highlights',
-      entries: await codings.highlights(initialProjectId, url, filter),
+      projectId,
+      entries: projectId
+        ? await codings.highlights(projectId, url, filter)
+        : [],
     };
   }
+  if (!projectId) return error;
   const fragment = decodeFragment(message.fragment);
   if (!fragment) return error;
   if (message.type === 'note.read') {
     return {
       kind: 'note',
-      note: await codings.readNote(initialProjectId, fragment),
+      note: await codings.readNote(projectId, fragment),
     };
   }
   if (message.type === 'note.set') {
@@ -73,12 +83,7 @@ export async function handleCodingRequest(
     try {
       return {
         kind: 'note',
-        note: await codings.setNote(
-          initialProjectId,
-          fragment,
-          note,
-          operationId,
-        ),
+        note: await codings.setNote(projectId, fragment, note, operationId),
       };
     } catch {
       return error;
@@ -87,7 +92,7 @@ export async function handleCodingRequest(
   if (message.type === 'coding.read')
     return {
       kind: 'codings',
-      codes: await codings.read(initialProjectId, fragment),
+      codes: await codings.read(projectId, fragment),
     };
   if (
     message.type !== 'coding.set' ||
@@ -101,7 +106,7 @@ export async function handleCodingRequest(
     return {
       kind: 'codings',
       codes: await codings.set(
-        initialProjectId,
+        projectId,
         fragment,
         message.codeId,
         message.assigned,

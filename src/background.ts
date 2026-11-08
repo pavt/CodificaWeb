@@ -1,5 +1,6 @@
 import { isRecord } from './capture-contract';
 import { handleCodingRequest } from './background/coding-messages';
+import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
 void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
@@ -15,6 +16,8 @@ async function handle(
   if (sender.url === chrome.runtime.getURL('src/panel/index.html')) {
     if (message.type === 'site.enable')
       return { enabled: await enableSite(message.url) };
+    if (typeof message.type === 'string' && message.type.startsWith('project.'))
+      return handleProjectRequest(message);
     return handleCodingRequest(message);
   }
   if (

@@ -100,6 +100,9 @@ export function createCodingControls(
     try {
       const codes = await requestCodes({
         type: 'coding.set',
+        ...(current.target.projectId
+          ? { projectId: current.target.projectId }
+          : {}),
         fragment: latest,
         codeId,
         assigned,
@@ -126,6 +129,9 @@ export function createCodingControls(
     try {
       const codes = await requestCodes({
         type: 'coding.read',
+        ...(current.target.projectId
+          ? { projectId: current.target.projectId }
+          : {}),
         fragment: snapshot,
       });
       if (active === current) {

@@ -8,6 +8,19 @@
   <body>
     <main>
       <h1>CodificaWeb</h1>
+      <fieldset id="projects" disabled>
+        <legend>Proyectos</legend>
+        <label for="project-select">Proyecto activo</label>
+        <select id="project-select"></select>
+        <label for="project-name">Nombre del proyecto</label>
+        <input id="project-name" maxlength="256" />
+        <label for="project-description">Descripción del proyecto</label>
+        <textarea id="project-description" maxlength="16384"></textarea>
+        <button id="project-create" type="button">Crear proyecto</button>
+        <button id="project-save" type="button">Guardar proyecto</button>
+        <button id="project-remove" type="button">Borrar proyecto</button>
+        <p id="project-status" aria-live="polite"></p>
+      </fieldset>
       <p>
         Para comprobar el acceso, indica la URL de la página abierta en la
         pestaña activa.
@@ -30,7 +43,7 @@
         ></blockquote>
         <p id="selection-source"></p>
         <fieldset id="fragment-codes" disabled>
-          <legend>Códigos del proyecto inicial</legend>
+          <legend>Códigos del proyecto activo</legend>
           <div id="coding-options"></div>
         </fieldset>
         <p id="coding-status" aria-live="polite"></p>

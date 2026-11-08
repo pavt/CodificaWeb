@@ -30,6 +30,9 @@ if (!world.codificawebCaptureInstalled) {
       capture?.stop();
       capture = undefined;
     }
+    if (message.type === 'highlight.project' && !sender.tab) {
+      void restoration.restore(true);
+    }
     if (sender.url !== chrome.runtime.getURL('src/panel/index.html')) return;
     if (message.type === 'capture.prepare') {
       void restoration.restore().then(respond);
@@ -45,6 +48,9 @@ if (!world.codificawebCaptureInstalled) {
       const start = performance.now();
       const result =
         capture &&
+        restoration.matchesProject(
+          'projectId' in message ? message.projectId : undefined,
+        ) &&
         message.url === location.href &&
         Array.isArray(message.entries)
           ? restoration.paint(

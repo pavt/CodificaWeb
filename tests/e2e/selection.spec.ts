@@ -3,7 +3,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
+test('Q01, Q03–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -195,6 +195,41 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
         'innerHTML',
         original,
       );
+
+      const project = panel.getByLabel('Proyecto activo');
+      const projectName = panel.getByLabel('Nombre del proyecto');
+      await projectName.fill('Proyecto B');
+      await panel.getByRole('button', { name: 'Crear proyecto' }).click();
+      await project.selectOption({ label: 'Proyecto B' });
+      await expect(project).toBeEnabled();
+      await expect(project.locator('option:checked')).toHaveText('Proyecto B');
+      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await capture.click();
+      await expect(note).toBeEnabled();
+      await expect(tema).toHaveCount(0);
+      await note.fill('Nota del segundo proyecto');
+      await saveNote.click();
+      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
+      await projectName.fill('Proyecto B editado');
+      await panel.getByRole('button', { name: 'Guardar proyecto' }).click();
+      await expect(project.locator('option:checked')).toHaveText(
+        'Proyecto B editado',
+      );
+      panel.once('dialog', (dialog) => void dialog.dismiss());
+      await panel.getByRole('button', { name: 'Borrar proyecto' }).click();
+      await expect(project.locator('option')).toHaveCount(2);
+      panel.once('dialog', (dialog) => void dialog.accept());
+      await panel.getByRole('button', { name: 'Borrar proyecto' }).click();
+      await expect(project.locator('option')).toHaveCount(1);
+      await expect(project.locator('option:checked')).toHaveText(
+        'Proyecto inicial',
+      );
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await capture.click();
+      await expect(tema).toBeChecked();
+      await expect(note).toHaveValue('');
 
       await source.evaluate(() =>
         history.replaceState(null, '', '#otra-fuente'),
