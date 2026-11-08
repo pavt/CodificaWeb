@@ -56,3 +56,7 @@ Los issues registran alcance, criterios, dependencias, etiquetas, prioridad y mi
 **Evidencia de T020.** [PR #44](https://github.com/pavt/CodificaWeb/pull/44). La prueba de selección observó primero un fondo naranja sin decoración. Después comprobó el subrayado de 1 px, su color y el fondo transparente. Pasaron las 97 pruebas con cobertura, ambos E2E de Chromium y los recorridos en Chrome y Brave. R2 p95 local de 1,9 ms.
 
 **Ajuste visual de T020.** Tras la revisión de un titular de varias líneas, el trazo pasa de 1 a 3 px y se separa de la base de las letras. La prueba E2E comprueba el nuevo grosor.
+
+**Evidencia de T021.** [PR #45](https://github.com/pavt/CodificaWeb/pull/45). Red en `tests/integration/coding-storage.test.ts` al comprobar las categorías de una cita filtrada. Green con 100 pruebas, cobertura de ramas del 80,63 %, pruebas de margen y panel y E2E de Chromium a 900 y 320 px. Los recorridos de permisos pasaron en Chrome y Brave. Cuando dos grupos colisionan, el primero ocupa el margen y el panel conserva ambos grupos.
+
+**Regresión de selección durante T021.** En Chrome, una cita visible que atravesaba un nodo HTML oculto quedaba bloqueada. La prueba de permisos ahora comprueba la selección, la asignación de categoría y la pintura de ambos tramos visibles en Chrome y Brave. La prueba unitaria cubre un campo de búsqueda con foco y mantiene la exclusión de texto editable.

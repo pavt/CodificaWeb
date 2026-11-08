@@ -1,13 +1,20 @@
+import {
+  createMarginLabels,
+  isPageMutation,
+  readMarginCategories,
+} from './margin-labels';
 import { segmentHighlights } from '../domain/highlights';
 import { resolveAnchor } from './resolve-anchor';
 import { indexDocument } from './text-index';
 
 export function createPainter() {
+  const margin = createMarginLabels();
   const owned = new Map<string, Highlight>();
   let sheet: CSSStyleSheet | undefined;
   let observer: MutationObserver | undefined;
 
   function clear() {
+    margin.clear();
     for (const [name, highlight] of owned) {
       if (CSS.highlights.get(name) === highlight) CSS.highlights.delete(name);
     }
@@ -52,7 +59,16 @@ export function createPainter() {
       )
         return [];
       const resolved = resolveAnchor(text, exact, prefix, suffix);
-      return resolved ? [{ id, ...resolved, color }] : [];
+      return resolved
+        ? [
+            {
+              id,
+              ...resolved,
+              color,
+              categories: readMarginCategories(entry.categories),
+            },
+          ]
+        : [];
     });
 
     const colors = new Map<string, Range[]>();
@@ -94,7 +110,24 @@ export function createPainter() {
     }
     sheet.replaceSync(rules.join('\n'));
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-    observer = new MutationObserver(clear);
+    let anchorIndex = 0;
+    margin.show(
+      [...ranges]
+        .sort((a, b) => a.start - b.start)
+        .flatMap(({ start, end, categories }) => {
+          if (!categories.length) return [];
+          while ((nodes[anchorIndex]?.end ?? Infinity) <= start) anchorIndex++;
+          const span = nodes[anchorIndex];
+          if (!span) return [];
+          const anchor = document.createRange();
+          anchor.setStart(span.node, start - span.start);
+          anchor.setEnd(span.node, Math.min(span.end, end) - span.start);
+          return [{ anchor, categories }];
+        }),
+    );
+    observer = new MutationObserver((records) => {
+      if (records.some(isPageMutation)) clear();
+    });
     observer.observe(document, {
       subtree: true,
       childList: true,

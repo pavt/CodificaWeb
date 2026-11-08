@@ -213,6 +213,32 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           'rgb(253, 192, 134)',
           'rgba(0, 0, 0, 0)',
         ]);
+      const pageCitations = panel.locator('#page-citations');
+      await pageCitations.locator('summary').click();
+      await expect(pageCitations.locator('li')).toContainText('🙂 hola mundo');
+      await expect(pageCitations.locator('.citation-category')).toHaveText(
+        'Patrón rápido',
+      );
+      await source.locator('#text').evaluate((element) => {
+        element.style.maxWidth = '350px';
+      });
+      await source.setViewportSize({ width: 900, height: 600 });
+      const marginCdp = await context.newCDPSession(source);
+      const marginContent = async () => {
+        const { root } = await marginCdp.send('DOM.getDocument', {
+          depth: -1,
+          pierce: true,
+        });
+        return JSON.stringify(root);
+      };
+      await expect.poll(marginContent).toContain('Patrón rápido');
+      await source.setViewportSize({ width: 320, height: 600 });
+      await expect.poll(marginContent).not.toContain('Patrón rápido');
+      await expect(pageCitations.locator('.citation-category')).toHaveText(
+        'Patrón rápido',
+      );
+      await source.setViewportSize({ width: 900, height: 600 });
+      await marginCdp.detach();
       await panel.getByLabel('Buscar categorías').fill('patrón');
       await expect(panel.getByRole('checkbox', { name: 'Tema' })).toHaveCount(
         0,

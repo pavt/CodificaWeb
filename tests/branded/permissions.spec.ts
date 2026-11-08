@@ -66,7 +66,7 @@ for (const [name, executable] of browsers) {
       await context.route(url, (route) =>
         route.fulfill({
           contentType: 'text/html; charset=utf-8',
-          body: `<p>${citation}</p><aside style="user-select:none">Firma que no se selecciona</aside><p>Otra cita.</p>`,
+          body: `<p>${citation}</p><aside style="user-select:none">Firma que no se selecciona</aside><p>Otra <span hidden>Metadato oculto</span>cita.</p>`,
         }),
       );
       let releaseImage: (() => void) | undefined;
@@ -352,6 +352,9 @@ for (const [name, executable] of browsers) {
           .evaluate((paragraph) => {
             window.getSelection()?.selectAllChildren(paragraph);
           });
+        expect(
+          await page.evaluate(() => window.getSelection()?.toString()),
+        ).toBe('Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
         expect(
           await readPanel(
@@ -381,7 +384,7 @@ for (const [name, executable] of browsers) {
               ),
             ),
           )
-          .toEqual([citation, 'Otra cita.']);
+          .toEqual([citation, 'Otra ', 'cita.']);
         await readPanel(`(() => {
           document.querySelector('#project-name').value = 'Otro proyecto';
           document.querySelector('#project-create').click();
