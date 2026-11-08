@@ -69,6 +69,9 @@ test('Q16: excluye citas de la misma fuente, reutiliza un tipo simétrico y abre
   await vi.waitFor(() => expect(type.options).toHaveLength(3));
   type.value = 'type';
   type.dispatchEvent(new Event('change'));
+  find<HTMLButtonElement>('review-button').click();
+  expect(find('step').textContent).toBe('Paso 4 de 4');
+  expect(find('summary').textContent).toContain('Cita A ↔ Cita B');
   expect(find('reverse').hidden).toBe(true);
   find<HTMLFormElement>('save').requestSubmit();
   expect(send).toHaveBeenCalledWith({
@@ -155,8 +158,9 @@ test('Q16: conserva el borrador al fallar el guardado de un tipo nuevo dirigido'
   const name = find<HTMLInputElement>('type-name');
   name.value = 'Responde';
   find<HTMLTextAreaElement>('definition').value = 'Segunda fuente';
+  find<HTMLButtonElement>('review-button').click();
   find('reverse').click();
-  expect(find('review').textContent).toMatch(/DesdeDos.*Hacia<b>Uno/);
+  expect(find('review').textContent).toMatch(/Cita A.*Dos.*Cita B.*<b>Uno/);
   action(b).click();
   expect(find('origin').textContent).toContain(a.quote);
   find<HTMLFormElement>('save').requestSubmit();
@@ -222,4 +226,67 @@ test('Q16: un error al cargar citas o tipos se puede reintentar en el panel', as
   await vi.waitFor(() =>
     expect(find<HTMLSelectElement>('type').options).toHaveLength(3),
   );
+});
+
+test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserva el tipo al volver a editar', async () => {
+  const longUrl = 'https://example.test/informe?tracking=parametro-largo';
+  const page = Array.from({ length: 7 }, (_, index) => ({
+    ...results[1],
+    id: String(index),
+    url: longUrl,
+    quote: `Cita ${index}`,
+  }));
+  const send = vi.fn(async (message: { type: string }) => {
+    if (message.type === 'evidence.search')
+      return {
+        kind: 'evidence',
+        sources: [
+          { url: a.url, title: 'Entrevista' },
+          { url: longUrl, title: 'Informe municipal' },
+          null,
+        ],
+        results: page,
+      };
+    if (message.type === 'relationTypes.list')
+      return {
+        kind: 'relationTypes',
+        types: [{ ...types[0], description: 'Completa la evidencia' }],
+      };
+    return { kind: 'relations', links: [] };
+  });
+  const { root, find } = setup(send);
+  const resultList = find('results');
+  await vi.waitFor(() =>
+    expect(resultList.querySelectorAll('blockquote')).toHaveLength(5),
+  );
+  expect(find('origin').textContent).toContain('Entrevista');
+  expect(resultList.textContent).not.toContain('tracking=');
+  const more = [...resultList.querySelectorAll('button')].find(
+    (button) => button.textContent === 'Mostrar más citas',
+  );
+  more?.click();
+  expect(resultList.querySelectorAll('blockquote')).toHaveLength(7);
+  expect(document.activeElement?.closest('li')?.textContent).toContain(
+    'Cita 5',
+  );
+  const query = find<HTMLInputElement>('query');
+  query.value = 'Municipal';
+  query.dispatchEvent(new Event('input'));
+  await vi.waitFor(() =>
+    expect(resultList.querySelectorAll('blockquote')).toHaveLength(5),
+  );
+  resultList.querySelector('button')?.click();
+  expect(find('search').hidden).toBe(true);
+  const type = find<HTMLSelectElement>('type');
+  await vi.waitFor(() => expect(type.options).toHaveLength(3));
+  type.value = 'type';
+  type.dispatchEvent(new Event('change'));
+  find<HTMLButtonElement>('review-button').click();
+  expect(find('summary').textContent).toContain('Completa la evidencia');
+  find('edit').click();
+  expect(type.value).toBe('type');
+  expect(find('confirm').hidden).toBe(true);
+  find('change').click();
+  expect(find('step').textContent).toBe('Paso 2 de 4');
+  expect(root.hidden).toBe(false);
 });

@@ -779,12 +779,11 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(relate).toBeVisible();
       await relate.press('Enter');
       const relation = panel.getByRole('region', { name: 'Relacionar citas' });
-      await relation.getByLabel('Buscar por texto o URL').fill('informe');
+      await expect(relation.getByText('Paso 2 de 4')).toBeVisible();
+      await expect(panel.locator('#panel-evidence')).toBeHidden();
+      await relation.getByLabel('Buscar citas guardadas').fill('informe');
       await relation
-        .getByRole('button', { name: 'Buscar cita' })
-        .press('Enter');
-      await relation
-        .getByRole('button', { name: 'Elegir esta cita' })
+        .getByRole('button', { name: 'Elegir cita' })
         .press('Enter');
       await relation
         .getByLabel('Tipo de relación', { exact: true })
@@ -795,8 +794,14 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await relation
         .getByLabel('Definición')
         .fill('Aporta información posterior');
+      await expect(relation.getByText('Paso 3 de 4')).toBeVisible();
       await relation
-        .getByRole('button', { name: 'Invertir dirección' })
+        .getByRole('button', { name: 'Revisar vínculo' })
+        .press('Enter');
+      await expect(relation.getByText('Paso 4 de 4')).toBeVisible();
+      await expect(relation.getByText('Cita A → Cita B')).toBeVisible();
+      await relation
+        .getByRole('button', { name: 'Invertir citas' })
         .press('Enter');
       await panel.evaluate(() => {
         const send = chrome.runtime.sendMessage.bind(chrome.runtime);
@@ -808,7 +813,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
           return send(message);
         }) as typeof chrome.runtime.sendMessage;
       });
-      const save = relation.getByRole('button', { name: 'Guardar vínculo' });
+      const save = relation.getByRole('button', { name: 'Guardar relación' });
       await save.press('Enter');
       await expect(relation.getByRole('status').first()).toHaveText(
         /No se pudo guardar/,
@@ -823,6 +828,9 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(
         relation.getByText('Actualiza el diagnóstico · Hacia esta cita'),
       ).toBeVisible();
+      await relation
+        .getByRole('button', { name: 'Cerrar', exact: true })
+        .press('Enter');
       const other = panel
         .locator('#evidence-results li')
         .filter({ hasText: secondQuote });

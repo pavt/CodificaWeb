@@ -31,38 +31,73 @@
         aria-labelledby="relation-heading"
         hidden
       >
-        <h2 id="relation-heading" tabindex="-1">Relacionar citas</h2>
+        <header class="relation-actions">
+          <h2 id="relation-heading" tabindex="-1">Relacionar citas</h2>
+          <small id="relation-step"></small>
+        </header>
         <div id="relation-origin"></div>
         <p id="relation-status" role="status"></p>
         <form id="relation-search">
-          <label for="relation-query">Buscar por texto o URL</label>
-          <input id="relation-query" type="search" />
-          <button type="submit">Buscar cita</button>
+          <p>Elige una cita de otra fuente.</p>
+          <label for="relation-query">Buscar citas guardadas</label>
+          <input
+            id="relation-query"
+            type="search"
+            placeholder="Texto o fuente"
+          />
           <p id="relation-search-status" role="status"></p>
           <ul id="relation-results"></ul>
         </form>
         <form id="relation-save" hidden>
           <fieldset id="relation-fields">
             <div id="relation-review"></div>
-            <label for="relation-type">Tipo de relación</label>
-            <select id="relation-type" required></select>
-            <div id="relation-new-type" hidden>
-              <label for="relation-type-name">Nombre del tipo</label>
-              <input id="relation-type-name" maxlength="256" />
-              <label for="relation-definition">Definición (opcional)</label>
-              <textarea id="relation-definition" maxlength="16384"></textarea>
-              <label for="relation-direction">Dirección</label>
-              <select id="relation-direction">
-                <option value="directed">
-                  Dirigida: de una cita a la otra
-                </option>
-                <option value="symmetric">Simétrica: en ambos sentidos</option>
-              </select>
+            <div id="relation-editor">
+              <label for="relation-type">Tipo de relación</label>
+              <select id="relation-type" required></select>
+              <div id="relation-new-type" hidden>
+                <label for="relation-type-name">Nombre del tipo</label>
+                <input id="relation-type-name" maxlength="256" />
+                <label for="relation-definition">Definición (opcional)</label>
+                <textarea id="relation-definition" maxlength="16384"></textarea>
+                <label for="relation-direction">Dirección</label>
+                <select id="relation-direction">
+                  <option value="directed">
+                    Dirigida: de una cita a la otra
+                  </option>
+                  <option value="symmetric">
+                    Simétrica: en ambos sentidos
+                  </option>
+                </select>
+              </div>
+              <div class="relation-actions">
+                <button id="relation-change" type="button">
+                  Cambiar segunda cita
+                </button>
+                <button
+                  id="relation-review-button"
+                  class="relation-primary"
+                  type="submit"
+                >
+                  Revisar vínculo
+                </button>
+              </div>
             </div>
-            <button id="relation-reverse" type="button">
-              Invertir dirección
-            </button>
-            <button type="submit">Guardar vínculo</button>
+            <div id="relation-confirm" hidden>
+              <div id="relation-summary" class="relation-summary"></div>
+              <div id="relation-confirm-actions" class="relation-actions">
+                <button id="relation-edit" type="button">Editar tipo</button>
+                <button id="relation-reverse" type="button">
+                  Invertir citas
+                </button>
+                <button
+                  id="relation-submit"
+                  class="relation-primary"
+                  type="submit"
+                >
+                  Guardar relación
+                </button>
+              </div>
+            </div>
           </fieldset>
         </form>
         <div id="relation-links"></div>

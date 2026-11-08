@@ -5,6 +5,7 @@ interface Citation {
   id: string;
   quote: string;
   url: string;
+  title?: string;
 }
 
 const newType = '__new__';
@@ -17,18 +18,26 @@ function button(label: string, run: (button: HTMLButtonElement) => void) {
   return element;
 }
 
-function excerpt({ quote, url }: Citation, label?: string) {
+function sourceLabel(url: string) {
+  const address = new URL(url);
+  return address.hostname + (address.pathname === '/' ? '' : address.pathname);
+}
+
+function excerpt({ quote, url, title }: Citation, label?: string) {
   const element = document.createElement('div');
+  element.className = 'relation-quote';
   const text = document.createElement('blockquote');
-  const source = document.createElement('small');
-  text.textContent = quote;
-  source.textContent = url;
+  const source = document.createElement('strong');
+  const compact = sourceLabel(url);
+  text.textContent = `«${quote}»`;
+  source.textContent = title || compact;
+  source.title = compact;
   if (label) {
-    const heading = document.createElement('strong');
+    const heading = document.createElement('small');
     heading.textContent = label;
     element.append(heading);
   }
-  element.append(text, source);
+  element.append(source, text);
   return element;
 }
 
@@ -40,7 +49,14 @@ function readCitation(value: unknown): Citation | undefined {
     isRecord(value.source) &&
     typeof value.source.url === 'string'
   )
-    return { id: value.id, quote: value.quote, url: value.source.url };
+    return {
+      id: value.id,
+      quote: value.quote,
+      url: value.source.url,
+      ...(typeof value.source.title === 'string'
+        ? { title: value.source.title }
+        : {}),
+    };
 }
 
 export function mountRelations(root: HTMLElement) {
@@ -50,7 +66,13 @@ export function mountRelations(root: HTMLElement) {
     return element;
   }
   const heading = find('heading');
+  const step = find('step');
   const origin = find('origin');
+  const editor = find('editor');
+  const confirm = find('confirm');
+  const confirmActions = find('confirm-actions');
+  const summary = find('summary');
+  const submit = find('submit');
   const status = find('status');
   const search = find<HTMLFormElement>('search');
   const query = find<HTMLInputElement>('query');
@@ -76,6 +98,7 @@ export function mountRelations(root: HTMLElement) {
     reversed: boolean;
     searchVersion: number;
     loadingTypes?: boolean;
+    stage: 'search' | 'type' | 'review' | 'saved';
   }
   let draft: Draft | undefined;
 
@@ -98,15 +121,48 @@ export function mountRelations(root: HTMLElement) {
     if (!draft?.second) return;
     newFields.hidden = types.value !== newType;
     name.required = !newFields.hidden;
-    reverse.hidden = !directed();
+    const isDirected = directed();
+    reverse.hidden = !isDirected;
     const [from, to] =
-      directed() && draft.reversed
+      isDirected && draft.reversed
         ? [draft.second, draft.first]
         : [draft.first, draft.second];
     review.replaceChildren(
-      excerpt(from, directed() ? 'Desde' : 'Primera cita'),
-      excerpt(to, directed() ? 'Hacia' : 'Segunda cita'),
+      excerpt(from, 'Cita A · Origen'),
+      excerpt(to, 'Cita B · Destino'),
     );
+    const label = document.createElement('small');
+    label.textContent = 'Tipo de relación';
+    const typeName = document.createElement('strong');
+    typeName.textContent =
+      types.value === newType
+        ? name.value.trim()
+        : (types.selectedOptions[0]?.text ?? '');
+    const sentence = document.createElement('p');
+    sentence.textContent = isDirected ? 'Cita A → Cita B' : 'Cita A ↔ Cita B';
+    const description = document.createElement('small');
+    description.textContent =
+      types.value === newType
+        ? definition.value
+        : (types.selectedOptions[0]?.dataset.description ?? '');
+    summary.replaceChildren(label, typeName, sentence, description);
+  }
+
+  function showStage(current: Draft, stage: Draft['stage']) {
+    current.stage = stage;
+    step.textContent = {
+      search: 'Paso 2 de 4',
+      type: 'Paso 3 de 4',
+      review: 'Paso 4 de 4',
+      saved: 'Guardada',
+    }[stage];
+    origin.hidden = search.hidden = stage !== 'search';
+    save.hidden = stage === 'search';
+    editor.hidden = stage !== 'type';
+    confirm.hidden = stage === 'search' || stage === 'type';
+    confirmActions.hidden = stage === 'saved';
+    links.hidden = stage === 'type' || stage === 'review';
+    renderReview();
   }
 
   async function loadTypes(current: Draft) {
@@ -127,6 +183,8 @@ export function mountRelations(root: HTMLElement) {
           return [];
         const option = new Option(type.name, type.id);
         option.dataset.direction = type.direction;
+        if (typeof type.description === 'string')
+          option.dataset.description = type.description;
         return [option];
       });
       types.replaceChildren(
@@ -159,32 +217,69 @@ export function mountRelations(root: HTMLElement) {
       if (draft !== current || current.searchVersion !== version) return;
       if (result.kind !== 'evidence' || !Array.isArray(result.results))
         throw new Error();
-      for (const row of result.results.filter(isEvidence)) {
-        if (
-          row.id === current.first.id ||
-          row.url === current.first.url ||
-          ![row.quote, row.url].some((text) =>
-            text.toLowerCase().normalize('NFC').includes(needle),
+      const titles = new Map<string, string>();
+      if (Array.isArray(result.sources)) {
+        for (const source of result.sources as unknown[]) {
+          if (
+            isRecord(source) &&
+            typeof source.url === 'string' &&
+            typeof source.title === 'string'
           )
-        )
-          continue;
-        const item = document.createElement('li');
-        item.append(
-          excerpt(row),
-          button('Elegir esta cita', () => {
-            current.second = row;
-            current.reversed = false;
-            status.textContent = '';
-            save.hidden = false;
-            renderReview();
-            types.focus();
-            if (types.options.length === 1) void loadTypes(current);
-          }),
-        );
-        results.append(item);
+            titles.set(source.url, source.title);
+        }
       }
-      searchStatus.textContent = results.children.length
-        ? `${results.children.length} cita(s) de otras fuentes.`
+      const title = titles.get(current.first.url);
+      if (title) current.first = { ...current.first, title };
+      origin.replaceChildren(excerpt(current.first, 'Cita A · Origen'));
+      const matches = result.results
+        .filter(isEvidence)
+        .filter(
+          (row) =>
+            row.id !== current.first.id &&
+            row.url !== current.first.url &&
+            [row.quote, row.url, titles.get(row.url) ?? ''].some((text) =>
+              text.toLowerCase().normalize('NFC').includes(needle),
+            ),
+        );
+      let shown = 0;
+      const more = button('Mostrar más citas', () => appendPage());
+      function appendPage() {
+        const page = matches.slice(shown, shown + 5);
+        const wasPaging = shown > 0;
+        for (const row of page) {
+          const rowTitle = titles.get(row.url);
+          const citation = rowTitle ? { ...row, title: rowTitle } : row;
+          const item = document.createElement('li');
+          const card = excerpt(citation, 'Cita guardada');
+          card.append(
+            button('Elegir cita', () => {
+              current.second = citation;
+              current.reversed = false;
+              status.textContent = '';
+              showStage(current, 'type');
+              types.focus();
+              if (types.options.length === 1) void loadTypes(current);
+            }),
+          );
+          item.append(card);
+          results.insertBefore(
+            item,
+            moreRow.parentElement === results ? moreRow : null,
+          );
+        }
+        shown += page.length;
+        moreRow.hidden = shown >= matches.length;
+        if (wasPaging)
+          results.children[shown - page.length]
+            ?.querySelector('button')
+            ?.focus();
+      }
+      const moreRow = document.createElement('li');
+      moreRow.append(more);
+      if (matches.length > 5) results.append(moreRow);
+      appendPage();
+      searchStatus.textContent = matches.length
+        ? `${matches.length} ${matches.length === 1 ? 'cita disponible' : 'citas disponibles'}`
         : 'No hay citas de otras fuentes que coincidan.';
     } catch {
       if (draft === current && current.searchVersion === version)
@@ -275,7 +370,7 @@ export function mountRelations(root: HTMLElement) {
 
   function start(first: Citation, opener: HTMLButtonElement) {
     if (!projectId || fields.disabled) return;
-    if (draft && !search.hidden) {
+    if (draft && draft.stage !== 'saved') {
       heading.focus();
       return;
     }
@@ -285,15 +380,15 @@ export function mountRelations(root: HTMLElement) {
       opener,
       reversed: false,
       searchVersion: 0,
+      stage: 'search',
     };
     draft = current;
-    origin.replaceChildren(excerpt(first, 'Cita de partida'));
+    origin.replaceChildren(excerpt(first, 'Cita A · Origen'));
     status.textContent = '';
     search.reset();
     save.reset();
     types.replaceChildren(new Option('Cargando tipos…', ''));
-    save.hidden = true;
-    search.hidden = false;
+    showStage(current, 'search');
     close.textContent = 'Cancelar';
     root.hidden = false;
     heading.focus();
@@ -312,11 +407,44 @@ export function mountRelations(root: HTMLElement) {
     event.preventDefault();
     if (draft && !fields.disabled) void findCitations(draft);
   });
+  let searchTimer: ReturnType<typeof setTimeout>;
+  query.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const current = draft;
+    if (!current) return;
+    current.searchVersion++;
+    searchTimer = setTimeout(() => {
+      if (draft === current && current.stage === 'search')
+        void findCitations(current);
+    }, 180);
+  });
+  find('change').addEventListener('click', () => {
+    if (!draft) return;
+    showStage(draft, 'search');
+    query.focus();
+  });
+  find('edit').addEventListener('click', () => {
+    if (!draft) return;
+    status.textContent = '';
+    showStage(draft, 'type');
+    types.focus();
+  });
   close.addEventListener('click', () => clear(true));
   save.addEventListener('submit', async (event) => {
     event.preventDefault();
     const current = draft;
     if (!current?.second || !types.value || fields.disabled) return;
+    if (current.stage === 'type') {
+      if (types.value === newType && !name.value.trim()) {
+        name.value = '';
+        name.reportValidity();
+        return;
+      }
+      showStage(current, 'review');
+      submit.focus();
+      return;
+    }
+    if (current.stage !== 'review') return;
     const [from, to] =
       directed() && current.reversed
         ? [current.second, current.first]
@@ -328,7 +456,7 @@ export function mountRelations(root: HTMLElement) {
         ? {
             type: 'relations.createWithType',
             fields: {
-              name: name.value,
+              name: name.value.trim(),
               description: definition.value,
               direction: direction.value,
             },
@@ -341,7 +469,7 @@ export function mountRelations(root: HTMLElement) {
       const result = await send(current, message);
       if (draft !== current) return;
       if (result.kind !== 'relation') throw new Error();
-      save.hidden = search.hidden = true;
+      showStage(current, 'saved');
       close.textContent = 'Cerrar';
       status.textContent = 'Vínculo guardado.';
       heading.focus();

@@ -301,29 +301,95 @@ section:has(#category-assign[hidden]) .saved-next-step {
   overflow: auto;
 }
 
-#citation-relation :is(form, fieldset, #relation-new-type) {
+main:has(> #citation-relation:not([hidden]))
+  > :not(h1, #active-project-label, #citation-relation) {
+  display: none;
+}
+#citation-relation {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+#citation-relation
+  :is(
+    form,
+    fieldset,
+    #relation-editor,
+    #relation-new-type,
+    #relation-confirm,
+    #relation-review
+  ) {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 #relation-fields {
   border: 0;
   padding: 0;
 }
+#citation-relation .relation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 #citation-relation :is(input, select, textarea) {
   width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #ccdcd2;
+  border-radius: 7px;
 }
-#citation-relation :is(ul, ol) {
-  padding-inline-start: 20px;
+#relation-query {
+  background: white;
+}
+#citation-relation textarea {
+  resize: vertical;
+}
+#citation-relation ul {
+  list-style: none;
+  padding: 0;
   margin: 0;
+  display: grid;
+  gap: 8px;
 }
-#citation-relation li + li {
-  margin-top: 8px;
-}
-#citation-relation blockquote {
-  white-space: pre-wrap;
-}
-#citation-relation small {
-  display: block;
+#citation-relation .relation-quote {
+  display: grid;
+  gap: 5px;
+  background: white;
+  border: 1px solid #ccdcd2;
+  border-inline-start: 3px solid #265e46;
+  border-radius: 9px;
+  padding: 10px 12px;
   overflow-wrap: anywhere;
+}
+#relation-results blockquote {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+#relation-results button,
+#relation-close {
+  justify-self: start;
+}
+#citation-relation small,
+#relation-search-status {
+  color: #526760;
+  font-size: 12px;
+}
+#citation-relation .relation-summary {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: #e3f0e7;
+  overflow-wrap: anywhere;
+}
+#citation-relation .relation-primary {
+  background: #265e46;
+  color: white;
+  border-color: #265e46;
+  font-weight: 650;
 }

@@ -25,7 +25,7 @@ export class IndexedEvidence {
       async () => {
         const sources = (
           await db.sources.where('projectId').equals(projectId).sortBy('url')
-        ).map(({ id, url }) => ({ id, url }));
+        ).map(({ id, url, title }) => ({ id, url, title }));
         const codes = (
           await db.codes.where('projectId').equals(projectId).sortBy('nameKey')
         ).map(({ id, name }) => ({ id, name }));
