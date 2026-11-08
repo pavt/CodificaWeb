@@ -145,7 +145,15 @@ test('Q04–Q05: aísla fuentes y posiciones y aplica el filtro al catálogo per
   ).toMatchObject([{ color: '#7FC97F' }]);
   expect(
     await repository.highlights(initialProjectId, fragment.url, context),
-  ).toMatchObject([{ color: '#BEAED4' }]);
+  ).toMatchObject([
+    {
+      color: '#BEAED4',
+      categories: [
+        { id: theme, name: 'Tema', color: '#7FC97F' },
+        { id: context, name: 'Contexto', color: '#BEAED4' },
+      ],
+    },
+  ]);
   expect(
     await repository.highlights(initialProjectId, fragment.url, 'ajeno'),
   ).toEqual([]);

@@ -246,3 +246,31 @@ section:has(#category-assign[hidden]) .saved-next-step {
   border-radius: 4px;
   background-color: var(--category-color);
 }
+
+#page-citations {
+  overflow-wrap: anywhere;
+}
+
+#page-citation-list {
+  padding-inline-start: 1.5rem;
+}
+
+#page-citation-list p {
+  margin-block: 0.5rem 0.25rem;
+}
+
+.citation-category {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-inline-end: 0.5rem;
+}
+
+.citation-swatch {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  flex: none;
+}

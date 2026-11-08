@@ -212,7 +212,10 @@ async function attachActiveTab() {
     button.disabled = false;
     status.textContent = '';
     captureButton.disabled = projectId === null;
-    if (projectId !== null) void captureCurrent();
+    if (projectId !== null) {
+      highlights.track(target);
+      void captureCurrent();
+    }
   } catch {
     // Restricted pages and tabs without access leave the capture disabled.
   }
@@ -231,6 +234,7 @@ const setCatalogProject =
     highlights.clear();
     refreshEvidence?.(projectId ?? null);
     if (target && selected) void coding.show(target, selected);
+    else if (direct && target) highlights.track(target);
   });
 const transfer = document.getElementById('project-transfer');
 const setTransferProject = transfer && mountTransfer(transfer);
@@ -251,6 +255,7 @@ if (projects) {
       const { tabId, documentId, url } = target;
       target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
       captureButton.disabled = id === null;
+      if (direct && id) highlights.track(target);
       if (direct && id && loadingInitialProject) void captureCurrent();
     }
   });

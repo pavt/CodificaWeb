@@ -1,3 +1,7 @@
+import {
+  categoryLabel,
+  readHighlightCategories,
+} from '../highlight-categories';
 import { isRecord } from '../capture-contract';
 import type { CaptureTarget } from '../capture-contract';
 import type { CodeAssignment } from '../domain/codings';
@@ -6,6 +10,38 @@ export function createHighlightFilter(
   filter: HTMLSelectElement,
   status: HTMLElement,
 ) {
+  const citations = document.getElementById('page-citations');
+  const list = document.getElementById('page-citation-list');
+
+  function showCitations(entries: unknown[]) {
+    if (!citations || !list) return;
+    const rows = entries
+      .flatMap((entry) => {
+        if (!isRecord(entry) || !isRecord(entry.selectors)) return [];
+        const { quote, position } = entry.selectors;
+        if (
+          !isRecord(quote) ||
+          typeof quote.exact !== 'string' ||
+          !isRecord(position) ||
+          typeof position.start !== 'number'
+        )
+          return [];
+        const categories = readHighlightCategories(entry.categories);
+        if (!categories.length) return [];
+        const row = document.createElement('li');
+        const excerpt = document.createElement('p');
+        excerpt.textContent =
+          quote.exact.length > 180
+            ? quote.exact.slice(0, 180) + '…'
+            : quote.exact;
+        row.append(excerpt, ...categories.map(categoryLabel));
+        return [{ start: position.start, row }];
+      })
+      .sort((a, b) => a.start - b.start);
+    list.replaceChildren(...rows.map(({ row }) => row));
+    citations.hidden = !rows.length;
+  }
+
   let target: CaptureTarget | undefined;
   let request = 0;
 
@@ -48,6 +84,8 @@ export function createHighlightFilter(
         },
         { documentId: current.documentId },
       );
+      if (id === request && isRecord(painted) && painted.painted === true)
+        showCitations(result.entries);
       if (id === request && (!isRecord(painted) || painted.painted !== true))
         status.textContent = 'No se pudo aplicar el resaltado en esta página.';
       else if (
@@ -70,6 +108,12 @@ export function createHighlightFilter(
       request++;
       filter.disabled = true;
       status.textContent = '';
+      showCitations([]);
+    },
+    track(next: CaptureTarget) {
+      target = next;
+      filter.value = '';
+      void refresh();
     },
     update(next: CaptureTarget, codes: readonly CodeAssignment[]) {
       const selected = target === next ? filter.value : '';

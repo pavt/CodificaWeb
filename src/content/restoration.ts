@@ -1,3 +1,4 @@
+import { isPageMutation } from './margin-labels';
 import type { createPainter } from './paint';
 
 export function startRestoration(
@@ -10,7 +11,8 @@ export function startRestoration(
   let entries: unknown[] = [];
   let generation = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((records) => {
+    if (!records.some(isPageMutation)) return;
     clearTimeout(timer);
     if (entries.length)
       timer = setTimeout(() => {

@@ -3,6 +3,7 @@ import type {
   CodeAssignment,
   Fragment,
   HighlightEntry,
+  HighlightCategory,
 } from '../domain/codings';
 import type { CodingDatabase } from './database';
 import { IndexedCatalog, type CodeFields } from './indexed-catalog';
@@ -83,28 +84,30 @@ export class IndexedCodings {
           .where('annotationId')
           .anyOf(annotations.map((entry) => entry.id))
           .toArray();
-        const colors = new Map(
+        const catalog = new Map(
           (
             await this.db.codes.where('projectId').equals(projectId).toArray()
-          ).map((code) => [code.id, code.color]),
+          ).map(({ id, name, color }) => [id, { id, name, color }]),
         );
-        const chosen = new Map<string, string>();
-        for (const association of associations) {
-          const { annotationId, codeId } = association;
-          const previous = chosen.get(annotationId);
-          if (
-            association.projectId === projectId &&
-            colors.has(codeId) &&
-            (filter === null || filter === codeId) &&
-            (previous === undefined || codeId < previous)
-          ) {
-            chosen.set(annotationId, codeId);
-          }
+        const byAnnotation = new Map<string, HighlightCategory[]>();
+        for (const { projectId: owner, annotationId, codeId } of associations) {
+          const category = catalog.get(codeId);
+          if (owner !== projectId || !category) continue;
+          const categories = byAnnotation.get(annotationId) ?? [];
+          categories.push(category);
+          byAnnotation.set(annotationId, categories);
         }
         return annotations.flatMap(({ id, selectors }) => {
-          const codeId = chosen.get(id);
-          const color = codeId && colors.get(codeId);
-          return color ? [{ id, selectors, color }] : [];
+          const categories = byAnnotation.get(id);
+          if (!categories?.length) return [];
+          categories.sort((a, b) => (a.id < b.id ? -1 : Number(a.id !== b.id)));
+          const selected =
+            filter === null
+              ? categories[0]
+              : categories.find(({ id }) => id === filter);
+          return selected
+            ? [{ id, selectors, color: selected.color, categories }]
+            : [];
         });
       },
     );
