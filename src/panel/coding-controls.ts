@@ -59,11 +59,54 @@ export function createCodingControls(
   let available: readonly CodeAssignment[] = [];
   let draft: { key: string; operationId: string } | undefined;
 
+  const assign = fieldset.querySelector<HTMLElement>('#category-assign');
+  const open = fieldset.querySelector<HTMLButtonElement>('#category-open');
+  const cancel = fieldset.querySelector<HTMLButtonElement>('#category-cancel');
+  const color = form?.querySelector<HTMLInputElement>('#category-color');
+  const presets = form?.querySelectorAll<HTMLButtonElement>('[data-color]');
+
+  function syncColor() {
+    presets?.forEach((preset) =>
+      preset.setAttribute(
+        'aria-pressed',
+        String(preset.dataset.color === color?.value),
+      ),
+    );
+  }
+
+  function setEditing(editing: boolean) {
+    if (form) form.hidden = !editing;
+    if (assign) assign.hidden = editing;
+  }
+
+  open?.addEventListener('click', () => {
+    setEditing(true);
+    status.textContent = '';
+    form?.querySelector<HTMLInputElement>('#category-name')?.focus();
+  });
+  cancel?.addEventListener('click', () => {
+    form?.reset();
+    syncColor();
+    draft = undefined;
+    setEditing(false);
+    status.textContent = '';
+    open?.focus();
+  });
+  color?.addEventListener('input', syncColor);
+  presets?.forEach((preset) =>
+    preset.addEventListener('click', () => {
+      if (color && preset.dataset.color) color.value = preset.dataset.color;
+      syncColor();
+    }),
+  );
+
   function clear() {
     active = undefined;
     draft = undefined;
     available = [];
     form?.reset();
+    syncColor();
+    setEditing(false);
     if (search) search.value = '';
     fieldset.disabled = true;
     options.replaceChildren();
@@ -76,6 +119,7 @@ export function createCodingControls(
     for (const code of available) {
       if (!codeNameKey(code.name).includes(query)) continue;
       const label = document.createElement('label');
+      label.style.setProperty('--category-color', code.color);
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = code.assigned;
@@ -161,13 +205,18 @@ export function createCodingControls(
         if (creating) {
           draft = undefined;
           form?.reset();
+          syncColor();
+          setEditing(false);
           if (search) search.value = '';
         }
         available = codes;
         render();
         fieldset.disabled = false;
         onCodes?.(current.target, codes);
-        if (creating) onCreated?.(current.target);
+        if (creating) {
+          onCreated?.(current.target);
+          open?.focus();
+        }
         status.textContent = creating
           ? 'Categoría guardada y aplicada.'
           : 'Códigos guardados en este navegador.';

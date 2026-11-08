@@ -119,6 +119,11 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         '🙂 hola mundo',
       );
       await expect(panel.locator('#selection-source')).toHaveText(url);
+      await expect(panel.locator('#category-create')).toBeHidden();
+      await panel.getByRole('button', { name: 'Crear categoría' }).click();
+      await expect(panel.locator('#selection-quote')).toHaveText(
+        '🙂 hola mundo',
+      );
       await panel.getByLabel('Nombre de la categoría').fill('Patrón rápido');
       await panel
         .getByLabel('Definición de la categoría')
@@ -128,6 +133,10 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(panel.locator('#coding-status')).toHaveText(
         'Categoría guardada y aplicada.',
       );
+      await expect(panel.locator('#category-create')).toBeHidden();
+      await expect(
+        panel.getByText('Cita guardada', { exact: true }),
+      ).toBeVisible();
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(panel.getByText('Una definición sintética')).toBeVisible();

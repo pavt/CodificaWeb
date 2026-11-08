@@ -30,7 +30,17 @@ const coding = createCodingControls(
   document.getElementById('fragment-codes') as HTMLFieldSetElement,
   document.getElementById('coding-options') as HTMLElement,
   document.getElementById('coding-status') as HTMLElement,
-  highlights.update,
+  (target, codes) => {
+    highlights.update(target, codes);
+    const applied = codes.find(({ assigned }) => assigned);
+    const card = document.getElementById('quote-card');
+    const title = document.getElementById('selection-title');
+    if (card && title) {
+      card.toggleAttribute('data-saved', Boolean(applied));
+      if (applied) card.style.setProperty('--category-color', applied.color);
+      title.textContent = applied ? 'Cita guardada' : 'Texto seleccionado';
+    }
+  },
   ({ projectId }) => {
     if (!projectId) return;
     setCatalogProject?.(projectId);
@@ -65,6 +75,9 @@ function clearPreview() {
   captureRequest++;
   selected = undefined;
   quote.textContent = '';
+  document.getElementById('quote-card')?.removeAttribute('data-saved');
+  const title = document.getElementById('selection-title');
+  if (title) title.textContent = 'Texto seleccionado';
   source.textContent = '';
   captureStatus.textContent = '';
   coding.clear();
@@ -242,6 +255,7 @@ if (chrome.tabs?.onActivated) {
     .then((tab) => {
       if (tab) return;
       direct = true;
+      document.getElementById('panel-tools')?.removeAttribute('open');
       if (accessRequest === 0) void attachActiveTab();
     })
     .catch(() => undefined);
