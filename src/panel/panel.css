@@ -22,7 +22,8 @@ main {
 }
 section,
 #category-assign,
-#category-create {
+#category-create,
+#category-edit-definition {
   display: grid;
   gap: 9px;
 }
@@ -84,12 +85,14 @@ fieldset {
   clip-path: inset(50%);
 }
 #category-create label,
+#category-edit-definition label,
 #category-assign label {
   display: block;
   font-weight: 600;
   font-size: 12px;
 }
 #category-create :is(input:not([type='color']), textarea),
+#category-saved-definition,
 #category-search {
   width: 100%;
   margin-top: 3px;
@@ -184,4 +187,14 @@ button:disabled {
 }
 #panel-tools[open] > :not(summary) {
   margin-block-start: 8px;
+}
+
+.definition-edit {
+  display: block;
+  padding: 2px 0;
+  color: #215e49;
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  text-decoration: underline;
 }

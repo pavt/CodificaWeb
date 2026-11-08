@@ -94,6 +94,29 @@ export async function handleCodingRequest(
       kind: 'codings',
       codes: await codings.read(projectId, fragment),
     };
+  if (message.type === 'coding.updateDefinition') {
+    const { codeId, description } = message;
+    if (
+      typeof message.projectId !== 'string' ||
+      typeof codeId !== 'string' ||
+      typeof description !== 'string' ||
+      description.length > 16_384
+    )
+      return error;
+    return database.transaction('rw', database.tables, async () => {
+      if ((await projects.activeId()) !== projectId) return error;
+      if ((await database.codes.get(codeId))?.projectId !== projectId)
+        return error;
+      await database.codes.update(codeId, {
+        description,
+        updatedAt: new Date().toISOString(),
+      });
+      return {
+        kind: 'codings' as const,
+        codes: await codings.read(projectId, fragment),
+      };
+    });
+  }
   if (message.type === 'coding.createAndApply') {
     const { name, description, color, operationId } = message;
     if (

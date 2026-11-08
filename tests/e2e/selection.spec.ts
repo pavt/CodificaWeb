@@ -140,6 +140,24 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(panel.getByText('Una definición sintética')).toBeVisible();
+      await panel
+        .getByRole('button', { name: 'Editar definición de Patrón rápido' })
+        .click();
+      const definition = panel.getByLabel(
+        'Definición guardada de la categoría',
+      );
+      await expect(definition).toHaveValue('Una definición sintética');
+      await definition.fill('Definición revisada');
+      await panel.getByRole('button', { name: 'Guardar definición' }).click();
+      await expect(panel.locator('#coding-status')).toHaveText(
+        'Definición guardada.',
+      );
+      await capture.click();
+      await expect(
+        panel.getByText('Definición revisada', { exact: true }),
+      ).toBeVisible();
+      await expect(finding).toBeChecked();
+
       await expect
         .poll(() =>
           source.evaluate(() =>

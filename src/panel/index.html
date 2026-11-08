@@ -67,12 +67,25 @@
               >
               <textarea
                 id="category-definition"
+                placeholder="Escribe qué significa esta categoría"
                 name="description"
                 maxlength="16384"
               ></textarea>
             </div>
             <button class="primary" type="submit">Guardar y aplicar</button>
             <button id="category-cancel" type="button">Cancelar</button>
+          </form>
+          <form id="category-edit-definition" hidden>
+            <h3 id="definition-title">Editar definición</h3>
+            <label for="category-saved-definition"
+              >Definición guardada de la categoría</label
+            >
+            <textarea
+              id="category-saved-definition"
+              maxlength="16384"
+            ></textarea>
+            <button class="primary" type="submit">Guardar definición</button>
+            <button id="definition-cancel" type="button">Cancelar</button>
           </form>
           <p id="coding-status" aria-live="polite"></p>
         </fieldset>

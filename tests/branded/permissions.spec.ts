@@ -244,6 +244,17 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        await readPanel(`(() => {
+          document.querySelector('.definition-edit').click();
+          document.querySelector('#category-saved-definition').value = 'Definición revisada';
+          document.querySelector('#category-edit-definition').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Definición guardada.');
+
         await page
           .locator('p')
           .last()
@@ -258,7 +269,7 @@ for (const [name, executable] of browsers) {
           .poll(() =>
             readPanel("document.querySelector('#coding-options').textContent"),
           )
-          .toContain('Definición sintética');
+          .toContain('Definición revisada');
         await readPanel(`Array.from(document.querySelectorAll('#coding-options label'))
           .find(label => label.textContent === 'Categoría sintética').querySelector('input').click()`);
         await expect

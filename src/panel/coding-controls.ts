@@ -49,7 +49,7 @@ export function createCodingControls(
   options: HTMLElement,
   status: HTMLElement,
   onCodes?: (target: CaptureTarget, codes: readonly CodeAssignment[]) => void,
-  onCreated?: (target: CaptureTarget) => void,
+  onCatalogChanged?: (target: CaptureTarget) => void,
 ) {
   let active:
     { target: CaptureTarget; snapshot: SelectionSnapshot } | undefined;
@@ -64,6 +64,68 @@ export function createCodingControls(
   const cancel = fieldset.querySelector<HTMLButtonElement>('#category-cancel');
   const color = form?.querySelector<HTMLInputElement>('#category-color');
   const presets = form?.querySelectorAll<HTMLButtonElement>('[data-color]');
+
+  const definitionForm = fieldset.querySelector<HTMLFormElement>(
+    '#category-edit-definition',
+  );
+  const definitionInput =
+    definitionForm?.querySelector<HTMLTextAreaElement>('textarea');
+  const definitionTitle =
+    definitionForm?.querySelector<HTMLElement>('#definition-title');
+  let editingCode: CodeAssignment | undefined;
+
+  function closeDefinition() {
+    editingCode = undefined;
+    if (definitionForm) definitionForm.hidden = true;
+    if (assign) assign.hidden = false;
+  }
+
+  definitionForm
+    ?.querySelector('#definition-cancel')
+    ?.addEventListener('click', () => {
+      const id = editingCode?.id;
+      closeDefinition();
+      definitionButton(id)?.focus();
+    });
+
+  function definitionButton(id: string | undefined) {
+    return [
+      ...options.querySelectorAll<HTMLButtonElement>('.definition-edit'),
+    ].find((button) => button.dataset.codeId === id);
+  }
+
+  definitionForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const current = active;
+    const code = editingCode;
+    if (!current || !code || !definitionInput || fieldset.disabled) return;
+    fieldset.disabled = true;
+    status.textContent = '';
+    try {
+      const codes = await requestCodes({
+        type: 'coding.updateDefinition',
+        projectId: code.projectId,
+        codeId: code.id,
+        fragment: current.snapshot,
+        description: definitionInput.value,
+      });
+      if (active !== current) return;
+      available = codes;
+      closeDefinition();
+      render();
+      onCatalogChanged?.(current.target);
+      status.textContent = 'Definición guardada.';
+    } catch {
+      if (active === current)
+        status.textContent =
+          'No se pudo guardar la definición. Vuelve a intentarlo.';
+    } finally {
+      if (active === current) {
+        fieldset.disabled = false;
+        if (!editingCode) definitionButton(code.id)?.focus();
+      }
+    }
+  });
 
   function syncColor() {
     presets?.forEach((preset) =>
@@ -107,6 +169,7 @@ export function createCodingControls(
     form?.reset();
     syncColor();
     setEditing(false);
+    closeDefinition();
     if (search) search.value = '';
     fieldset.disabled = true;
     options.replaceChildren();
@@ -147,6 +210,31 @@ export function createCodingControls(
         definition.style.overflowWrap = 'anywhere';
         definition.textContent = code.description;
         row.append(definition);
+      }
+      if (
+        code.assigned &&
+        definitionForm &&
+        definitionInput &&
+        definitionTitle
+      ) {
+        const edit = document.createElement('button');
+        edit.className = 'definition-edit';
+        edit.type = 'button';
+        edit.dataset.codeId = code.id;
+        edit.textContent = code.description
+          ? 'Editar definición'
+          : 'Añadir definición';
+        edit.setAttribute('aria-label', `${edit.textContent} de ${code.name}`);
+        edit.addEventListener('click', () => {
+          editingCode = code;
+          definitionTitle.textContent = `Definición de ${code.name}`;
+          definitionInput.value = code.description ?? '';
+          definitionForm.hidden = false;
+          if (assign) assign.hidden = true;
+          status.textContent = '';
+          definitionInput.focus();
+        });
+        row.append(edit);
       }
       options.append(row);
     }
@@ -214,7 +302,7 @@ export function createCodingControls(
         fieldset.disabled = false;
         onCodes?.(current.target, codes);
         if (creating) {
-          onCreated?.(current.target);
+          onCatalogChanged?.(current.target);
           open?.focus();
         }
         status.textContent = creating
