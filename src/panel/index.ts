@@ -1,3 +1,4 @@
+import { isRecord } from '../capture-contract';
 import type { CaptureTarget, SelectionSnapshot } from '../capture-contract';
 import { mountCatalog } from './catalog-controls';
 import { createCodingControls } from './coding-controls';
@@ -13,6 +14,7 @@ const form = document.getElementById('site-access') as HTMLFormElement;
 const input = document.getElementById('site-url') as HTMLInputElement;
 const button = document.getElementById('verify-site') as HTMLButtonElement;
 const status = document.getElementById('site-status') as HTMLElement;
+const urlField = document.getElementById('site-url-field');
 
 const captureButton = document.getElementById(
   'capture-selection',
@@ -40,6 +42,11 @@ const notes = createNoteControls(
 let selected: SelectionSnapshot | undefined;
 let target: CaptureTarget | undefined;
 let projectId: string | null | undefined;
+let direct = false;
+let activeTabId: number | undefined;
+let requiresInvocation = false;
+let accessRequest = 0;
+let captureRequest = 0;
 
 const captureMessages = {
   empty: 'Selecciona texto en la página e inténtalo de nuevo.',
@@ -50,6 +57,7 @@ const captureMessages = {
 };
 
 function clearPreview() {
+  captureRequest++;
   selected = undefined;
   quote.textContent = '';
   source.textContent = '';
@@ -60,6 +68,7 @@ function clearPreview() {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  const request = ++accessRequest;
   button.disabled = true;
   status.textContent = '';
   target = undefined;
@@ -67,48 +76,53 @@ form.addEventListener('submit', async (event) => {
   captureButton.disabled = true;
   clearPreview();
   try {
-    status.textContent = await verifySiteAccess(
-      input.value,
-      async (nextTarget) => {
-        const registration = await chrome.runtime.sendMessage({
-          type: 'site.enable',
-          url: nextTarget.url,
-        });
-        if (registration?.enabled !== true)
-          throw new Error('No se pudo registrar el sitio.');
+    const result = await verifySiteAccess(input.value, async (nextTarget) => {
+      if (request !== accessRequest) return;
+      const registration = await chrome.runtime.sendMessage({
+        type: 'site.enable',
+        url: nextTarget.url,
+      });
+      if (registration?.enabled !== true)
+        throw new Error('No se pudo registrar el sitio.');
 
-        await chrome.scripting.executeScript({
-          target: {
-            tabId: nextTarget.tabId,
-            documentIds: [nextTarget.documentId],
-          },
-          files: ['content.js'],
-        });
-        const prepared = await chrome.tabs.sendMessage(
-          nextTarget.tabId,
-          { type: 'capture.prepare' },
-          { documentId: nextTarget.documentId },
-        );
-        if (prepared !== true)
-          throw new Error('El documento ya no está disponible.');
-        target = projectId ? { ...nextTarget, projectId } : nextTarget;
-        captureButton.disabled = Boolean(projects && !projectId);
-      },
-    );
+      await chrome.scripting.executeScript({
+        target: {
+          tabId: nextTarget.tabId,
+          documentIds: [nextTarget.documentId],
+        },
+        files: ['content.js'],
+      });
+      const prepared = await chrome.tabs.sendMessage(
+        nextTarget.tabId,
+        { type: 'capture.prepare' },
+        { documentId: nextTarget.documentId },
+      );
+      if (prepared !== true)
+        throw new Error('El documento ya no está disponible.');
+      if (request !== accessRequest) return;
+      target = projectId ? { ...nextTarget, projectId } : nextTarget;
+      captureButton.disabled = Boolean(projects && !projectId);
+    });
+    if (request === accessRequest) {
+      status.textContent = result;
+      if (direct && target) void captureCurrent();
+    }
   } catch {
-    status.textContent = 'Chromium no permitió comprobar el acceso al sitio.';
+    if (request === accessRequest)
+      status.textContent = 'Chromium no permitió comprobar el acceso al sitio.';
   } finally {
-    button.disabled = false;
+    if (request === accessRequest) button.disabled = direct && !target;
   }
 });
 
-captureButton.addEventListener('click', async () => {
+async function captureCurrent() {
   const current = target;
   if (!current) return;
   captureButton.disabled = true;
   clearPreview();
+  const request = captureRequest;
   const result = await readSelection(current);
-  if (target !== current) return;
+  if (target !== current || request !== captureRequest) return;
   captureButton.disabled = false;
 
   if (result.kind === 'selection') {
@@ -121,7 +135,62 @@ captureButton.addEventListener('click', async () => {
   } else {
     captureStatus.textContent = captureMessages[result.kind];
   }
-});
+}
+
+captureButton.addEventListener('click', () => void captureCurrent());
+
+function resetTarget() {
+  target = undefined;
+  highlights.clear();
+  clearPreview();
+  captureButton.disabled = true;
+  input.value = '';
+}
+
+async function attachActiveTab() {
+  if (requiresInvocation) return;
+  const request = ++accessRequest;
+  resetTarget();
+  if (urlField) urlField.hidden = true;
+  button.disabled = true;
+  button.textContent = 'Conservar resaltados al volver';
+  status.textContent =
+    'Pulsa el icono de CodificaWeb en la página que quieras codificar.';
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      lastFocusedWindow: true,
+    });
+    if (request !== accessRequest) return;
+    activeTabId = tab?.id;
+    if (tab?.id === undefined || !tab.url || !/^https?:\/\//.test(tab.url))
+      return;
+    const [script] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['content.js'],
+    });
+    if (!script?.documentId || request !== accessRequest) return;
+    const prepared: unknown = await chrome.tabs.sendMessage(
+      tab.id,
+      { type: 'capture.prepare', temporary: true },
+      { documentId: script.documentId },
+    );
+    if (prepared !== true || request !== accessRequest) return;
+    target = {
+      tabId: tab.id,
+      documentId: script.documentId,
+      url: tab.url,
+      ...(projectId ? { projectId } : {}),
+    };
+    input.value = tab.url;
+    button.disabled = false;
+    status.textContent = '';
+    captureButton.disabled = projectId === null;
+    if (projectId !== null) void captureCurrent();
+  } catch {
+    // Restricted pages and tabs without access leave the capture disabled.
+  }
+}
 
 const evidence = document.getElementById(
   'evidence-search',
@@ -155,6 +224,57 @@ if (projects) {
       const { tabId, documentId, url } = target;
       target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
       captureButton.disabled = id === null;
+      if (direct && id) void captureCurrent();
     }
+  });
+}
+
+if (chrome.tabs?.onActivated) {
+  // Opening the panel HTML in a tab keeps the original explicit controls.
+  void chrome.tabs
+    .getCurrent()
+    .then((tab) => {
+      if (tab) return;
+      direct = true;
+      if (accessRequest === 0) void attachActiveTab();
+    })
+    .catch(() => undefined);
+  chrome.tabs.onActivated.addListener(() => {
+    if (direct) void attachActiveTab();
+  });
+  chrome.tabs.onUpdated.addListener((tabId, change) => {
+    if (
+      direct &&
+      tabId === activeTabId &&
+      (change.url ||
+        change.status === 'loading' ||
+        change.status === 'complete')
+    ) {
+      void attachActiveTab();
+    }
+  });
+  chrome.permissions.onRemoved.addListener(() => {
+    if (!direct) return;
+    requiresInvocation = true;
+    accessRequest++;
+    resetTarget();
+    button.disabled = true;
+    status.textContent =
+      'Pulsa el icono de CodificaWeb para recuperar el acceso.';
+  });
+  chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+    if (sender.id !== chrome.runtime.id || !isRecord(message)) return;
+    if (message.type === 'capture.invoked' && direct && !sender.tab) {
+      requiresInvocation = false;
+      void attachActiveTab();
+    }
+    if (
+      message.type === 'capture.changed' &&
+      direct &&
+      target &&
+      sender.tab?.id === target.tabId &&
+      sender.documentId === target.documentId
+    )
+      void captureCurrent();
   });
 }

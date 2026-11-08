@@ -8,6 +8,44 @@
   <body>
     <main>
       <h1>CodificaWeb</h1>
+      <form id="site-access">
+        <span id="site-url-field">
+          <label for="site-url">URL del sitio</label>
+          <input id="site-url" type="url" required />
+        </span>
+        <button id="verify-site" type="submit">Comprobar acceso</button>
+      </form>
+      <p id="site-status" role="status"></p>
+      <section aria-labelledby="selection-title">
+        <h2 id="selection-title">Selección</h2>
+        <button id="capture-selection" type="button" disabled>
+          Capturar selección
+        </button>
+        <p id="capture-status" aria-live="polite"></p>
+        <blockquote
+          id="selection-quote"
+          style="white-space: pre-wrap"
+        ></blockquote>
+        <p id="selection-source"></p>
+        <fieldset id="fragment-codes" disabled>
+          <legend>Códigos del proyecto activo</legend>
+          <div id="coding-options"></div>
+        </fieldset>
+        <p id="coding-status" aria-live="polite"></p>
+        <label for="highlight-filter">Filtrar resaltados por código</label>
+        <select id="highlight-filter" disabled>
+          <option value="">Todos los códigos</option>
+        </select>
+        <p id="highlight-status" aria-live="polite"></p>
+        <fieldset id="fragment-note" disabled>
+          <legend>Nota del fragmento</legend>
+          <label for="note-text">Nota en texto plano</label>
+          <textarea id="note-text" maxlength="16384"></textarea>
+          <button id="note-save" type="button">Guardar nota</button>
+          <button id="note-remove" type="button" disabled>Borrar nota</button>
+        </fieldset>
+        <p id="note-status" aria-live="polite"></p>
+      </section>
       <fieldset id="projects" disabled>
         <legend>Proyectos</legend>
         <label for="project-select">Proyecto activo</label>
@@ -73,46 +111,6 @@
           <ul id="evidence-results"></ul>
         </form>
       </details>
-      <p>
-        Para comprobar el acceso, indica la URL de la página abierta en la
-        pestaña activa.
-      </p>
-      <form id="site-access">
-        <label for="site-url">URL del sitio</label>
-        <input id="site-url" type="url" required />
-        <button id="verify-site" type="submit">Comprobar acceso</button>
-      </form>
-      <p id="site-status" role="status"></p>
-      <section aria-labelledby="selection-title">
-        <h2 id="selection-title">Selección</h2>
-        <button id="capture-selection" type="button" disabled>
-          Capturar selección
-        </button>
-        <p id="capture-status" aria-live="polite"></p>
-        <blockquote
-          id="selection-quote"
-          style="white-space: pre-wrap"
-        ></blockquote>
-        <p id="selection-source"></p>
-        <fieldset id="fragment-codes" disabled>
-          <legend>Códigos del proyecto activo</legend>
-          <div id="coding-options"></div>
-        </fieldset>
-        <p id="coding-status" aria-live="polite"></p>
-        <label for="highlight-filter">Filtrar resaltados por código</label>
-        <select id="highlight-filter" disabled>
-          <option value="">Todos los códigos</option>
-        </select>
-        <p id="highlight-status" aria-live="polite"></p>
-        <fieldset id="fragment-note" disabled>
-          <legend>Nota del fragmento</legend>
-          <label for="note-text">Nota en texto plano</label>
-          <textarea id="note-text" maxlength="16384"></textarea>
-          <button id="note-save" type="button">Guardar nota</button>
-          <button id="note-remove" type="button" disabled>Borrar nota</button>
-        </fieldset>
-        <p id="note-status" aria-live="polite"></p>
-      </section>
     </main>
     <script type="module" src="./index.ts"></script>
   </body>

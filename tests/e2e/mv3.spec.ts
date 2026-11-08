@@ -23,7 +23,7 @@ test('Q11: abre el panel MV3 y Chromium bloquea la inyección previa al permiso'
                 .openPanelOnActionClick,
           ),
         )
-        .toBe(true);
+        .toBe(false);
 
       const url = 'http://127.0.0.1:32145/fixture';
       await context.route(url, (route) =>

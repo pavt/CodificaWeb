@@ -2,11 +2,17 @@ import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => vi.unstubAllGlobals());
 
-test('Q11: el botón de la extensión abre el panel lateral', async () => {
+test('Q11: el gesto de la extensión abre el panel de la pestaña invocada', async () => {
+  const addListener =
+    vi.fn<(listener: (tab: { id: number }) => void) => void>();
+  const open = vi.fn().mockResolvedValue(undefined);
+  const sendMessage = vi.fn().mockResolvedValue(undefined);
   const setPanelBehavior = vi.fn().mockResolvedValue(undefined);
   vi.stubGlobal('chrome', {
-    sidePanel: { setPanelBehavior },
+    action: { onClicked: { addListener } },
+    sidePanel: { setPanelBehavior, open },
     runtime: {
+      sendMessage,
       onMessage: { addListener: vi.fn() },
       onStartup: { addListener: vi.fn() },
       onInstalled: { addListener: vi.fn() },
@@ -15,8 +21,11 @@ test('Q11: el botón de la extensión abre el panel lateral', async () => {
   });
   await import('../../src/background');
   expect(setPanelBehavior).toHaveBeenCalledWith({
-    openPanelOnActionClick: true,
+    openPanelOnActionClick: false,
   });
+  expect(addListener).toHaveBeenCalledOnce();
+  addListener.mock.calls[0]?.[0]({ id: 7 });
+  expect(open).toHaveBeenCalledWith({ tabId: 7 });
 });
 
 test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium', async () => {
@@ -157,4 +166,149 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
   );
   expect(quote.textContent).toBe('');
   expect(source.textContent).toBe('');
+});
+
+test('Q03 y Q11: actualiza la selección directa y descarta pestañas o documentos obsoletos', async () => {
+  vi.resetModules();
+  const form = new EventTarget();
+  const captureButton = Object.assign(new EventTarget(), { disabled: true });
+  const quote = { textContent: '' };
+  const status = { textContent: '' };
+  const urlField = { hidden: false };
+  const url = 'https://example.test/articulo';
+  const selection = (exact: string) => ({
+    kind: 'selection',
+    url,
+    revision: 0,
+    selectors: {
+      profile: 'dom-text-v1',
+      quote: { type: 'TextQuoteSelector', exact, prefix: '', suffix: '' },
+      position: { type: 'TextPositionSelector', start: 0, end: exact.length },
+    },
+  });
+  const elements = new Map<string, unknown>([
+    ['site-access', form],
+    ['site-url', { value: '' }],
+    ['site-url-field', urlField],
+    ['site-status', status],
+    ['verify-site', { disabled: false, textContent: '' }],
+    ['capture-selection', captureButton],
+    ['capture-status', { textContent: '' }],
+    ['selection-quote', quote],
+    ['selection-source', { textContent: '' }],
+    ['fragment-codes', { disabled: true }],
+    ['coding-options', { replaceChildren: vi.fn() }],
+    ['coding-status', { textContent: '' }],
+    ['highlight-filter', new EventTarget()],
+    ['highlight-status', { textContent: '' }],
+    ['fragment-note', { disabled: true }],
+    ['note-text', { value: '' }],
+    ['note-save', new EventTarget()],
+    ['note-remove', new EventTarget()],
+    ['note-status', { textContent: '' }],
+  ]);
+  const onActivated = vi.fn<(listener: () => void) => void>();
+  const onUpdated =
+    vi.fn<
+      (
+        listener: (
+          id: number,
+          change: { status?: string; url?: string },
+        ) => void,
+      ) => void
+    >();
+  const onRemoved = vi.fn<(listener: () => void) => void>();
+  const onMessage =
+    vi.fn<
+      (
+        listener: (
+          message: unknown,
+          sender: chrome.runtime.MessageSender,
+        ) => void,
+      ) => void
+    >();
+  const query = vi.fn().mockResolvedValue([{ id: 7, url }]);
+  const executeScript = vi.fn().mockResolvedValue([{ documentId: 'doc' }]);
+  const sendMessage = vi
+    .fn()
+    .mockImplementation((_tab, message) =>
+      Promise.resolve(
+        message.type === 'capture.prepare' ? true : selection('Cita inicial'),
+      ),
+    );
+  vi.stubGlobal('chrome', {
+    tabs: {
+      getCurrent: vi.fn().mockResolvedValue(undefined),
+      query,
+      sendMessage,
+      onActivated: { addListener: onActivated },
+      onUpdated: { addListener: onUpdated },
+    },
+    scripting: { executeScript },
+    permissions: { onRemoved: { addListener: onRemoved } },
+    runtime: {
+      id: 'extension',
+      onMessage: { addListener: onMessage },
+      sendMessage: vi.fn().mockResolvedValue({ kind: 'error' }),
+    },
+  });
+  vi.stubGlobal('document', {
+    getElementById: (id: string) => elements.get(id),
+  });
+  await import('../../src/panel/index');
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita inicial'));
+  expect(urlField.hidden).toBe(true);
+
+  const notify = onMessage.mock.calls[0]?.[0];
+  const activate = onActivated.mock.calls[0]?.[0];
+  const update = onUpdated.mock.calls[0]?.[0];
+  const remove = onRemoved.mock.calls[0]?.[0];
+  sendMessage.mockResolvedValueOnce(selection('Cita nueva'));
+  notify?.(null, { id: 'extension' });
+  notify?.({ type: 'capture.changed' }, { id: 'other' });
+  notify?.(
+    { type: 'capture.changed' },
+    { id: 'extension', tab: { id: 6 } as chrome.tabs.Tab, documentId: 'doc' },
+  );
+  notify?.(
+    { type: 'capture.changed' },
+    { id: 'extension', tab: { id: 7 } as chrome.tabs.Tab, documentId: 'viejo' },
+  );
+  expect(quote.textContent).toBe('Cita inicial');
+  notify?.(
+    { type: 'capture.changed' },
+    { id: 'extension', tab: { id: 7 } as chrome.tabs.Tab, documentId: 'doc' },
+  );
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita nueva'));
+
+  query.mockResolvedValue([{ id: 8 }]);
+  activate?.();
+  expect(quote.textContent).toBe('');
+  await vi.waitFor(() => expect(captureButton.disabled).toBe(true));
+  update?.(7, { status: 'complete' });
+  update?.(8, {});
+  query.mockResolvedValue([{ id: 8, url }]);
+  executeScript.mockRejectedValueOnce(new Error('sin acceso'));
+  update?.(8, { status: 'complete' });
+  await vi.waitFor(() => expect(executeScript).toHaveBeenCalledTimes(2));
+  expect(captureButton.disabled).toBe(true);
+
+  executeScript.mockResolvedValueOnce([]);
+  notify?.({ type: 'capture.invoked' }, { id: 'extension' });
+  await vi.waitFor(() => expect(executeScript).toHaveBeenCalledTimes(3));
+  sendMessage.mockResolvedValueOnce(false);
+  notify?.({ type: 'capture.invoked' }, { id: 'extension' });
+  await vi.waitFor(() => expect(executeScript).toHaveBeenCalledTimes(4));
+  expect(captureButton.disabled).toBe(true);
+
+  notify?.({ type: 'capture.invoked' }, { id: 'extension' });
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita inicial'));
+  remove?.();
+  expect(quote.textContent).toBe('');
+  expect(captureButton.disabled).toBe(true);
+  expect(status.textContent).toContain('recuperar el acceso');
+  activate?.();
+  expect(captureButton.disabled).toBe(true);
+  notify?.({ type: 'capture.invoked' }, { id: 'extension' });
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita inicial'));
 });
