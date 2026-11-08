@@ -88,7 +88,9 @@ export function createPainter() {
       for (const range of ranges) highlight.add(range);
       CSS.highlights.set(name, highlight);
       owned.set(name, highlight);
-      rules.push(`::highlight(${name}) { background-color: ${color}; }`);
+      rules.push(
+        `::highlight(${name}) { text-decoration: underline solid ${color} 1px; }`,
+      );
     }
     sheet.replaceSync(rules.join('\n'));
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
