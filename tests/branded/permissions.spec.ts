@@ -345,15 +345,13 @@ for (const [name, executable] of browsers) {
           )
           .toBe('Definición guardada.');
 
+        // A native selection change can arrive without a pointerup or keyup.
         await page
           .locator('p')
           .last()
-          .evaluate((node) => {
-            node.addEventListener('pointerup', (event) =>
-              event.stopPropagation(),
-            );
+          .evaluate((paragraph) => {
+            window.getSelection()?.selectAllChildren(paragraph);
           });
-        await dragQuote(1, 'Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
         expect(
           await readPanel(

@@ -130,15 +130,33 @@ export function observeSelection(onCommit?: () => void) {
     range = snapshot.kind === 'selection' ? selected?.cloneRange() : undefined;
   };
   update();
+  let published: CaptureResult = snapshot;
+  let pending: ReturnType<typeof setTimeout> | undefined;
+  const publish = () => {
+    clearTimeout(pending);
+    if (
+      published === snapshot ||
+      (published.kind !== 'selection' && published.kind === snapshot.kind)
+    )
+      return;
+    published = snapshot;
+    onCommit?.();
+  };
   const onSelectionChange = () => {
     // Chrome may collapse the DOM selection as focus moves to the side panel.
     const selection = window.getSelection();
-    if (document.hasFocus() || (selection && !selection.isCollapsed)) update();
+    if (!document.hasFocus() && (!selection || selection.isCollapsed)) return;
+    update();
+    // Selection can settle after pointerup or change without a key or pointer.
+    if (onCommit) {
+      clearTimeout(pending);
+      pending = setTimeout(publish, 80);
+    }
   };
 
   const commit = () => {
     update();
-    onCommit?.();
+    publish();
   };
   document.addEventListener('selectionchange', onSelectionChange);
   document.addEventListener('pointerup', commit, true);
@@ -158,6 +176,7 @@ export function observeSelection(onCommit?: () => void) {
       return snapshot;
     },
     stop() {
+      clearTimeout(pending);
       observer.disconnect();
       document.removeEventListener('selectionchange', onSelectionChange);
       document.removeEventListener('pointerup', commit, true);
