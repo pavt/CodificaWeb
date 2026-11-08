@@ -24,3 +24,5 @@ cw_pnpm typecheck
 `format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. En el panel, indica la URL de la pestaña activa y comprueba el acceso. Selecciona texto en esa página y pulsa **Capturar selección** para ver la cita y su fuente. Si la pestaña navega o se recarga, vuelve a comprobar el acceso antes de capturar.
 
 Tras capturar un fragmento, marca o desmarca **Tema** y **Contexto**. Las asociaciones del proyecto inicial viven en la memoria del service worker y se pierden cuando este se reinicia.
+
+Los fragmentos codificados se resaltan en la página. Usa **Filtrar resaltados por código** para inspeccionar un color cuando se solapan. El resaltado se limpia si cambia el documento y se aplica a los rangos cuya cita y contexto siguen coincidiendo.

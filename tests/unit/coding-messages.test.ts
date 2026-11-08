@@ -58,3 +58,20 @@ test.each([
 ])('Q04: rechaza solicitudes inválidas %j', (message) => {
   expect(handleCodingRequest(message)).toEqual({ kind: 'error' });
 });
+
+test('Q05: el worker entrega únicamente los fragmentos del filtro solicitado', () => {
+  expect(
+    handleCodingRequest({
+      type: 'highlight.read',
+      url: fragment.url,
+      filter: null,
+    }),
+  ).toEqual({ kind: 'highlights', entries: [] });
+  expect(
+    handleCodingRequest({
+      type: 'highlight.read',
+      url: fragment.url,
+      filter: true,
+    }),
+  ).toEqual({ kind: 'error' });
+});

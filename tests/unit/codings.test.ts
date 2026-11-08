@@ -74,3 +74,19 @@ test('Q04: rechaza un código de otro proyecto o inexistente sin modificar asoci
     true,
   );
 });
+
+test('Q05: devuelve solo fragmentos de la fuente y del código filtrado', () => {
+  const codings = new MemoryCodings(catalog);
+  codings.set('local', fragment, 'uno', true);
+  codings.set('local', fragment, 'dos', true);
+  codings.set('externo', fragment, 'otro', true);
+  const other = { ...fragment, url: 'https://example.test/otra' };
+  codings.set('local', other, 'uno', true);
+  expect(codings.highlights('local', fragment.url, null)).toMatchObject([
+    { color: '#81D4FA' },
+  ]);
+  expect(codings.highlights('local', fragment.url, 'uno')).toMatchObject([
+    { color: '#FDD835' },
+  ]);
+  expect(codings.highlights('local', fragment.url, 'otro')).toEqual([]);
+});

@@ -1,9 +1,9 @@
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q03/Q04: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
+test('Q03–Q05: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -139,6 +139,47 @@ test('Q03/Q04: captura texto inline, asigna varios códigos y rechaza seleccione
         'contenido editable',
       );
       await expect(panel.locator('blockquote')).toBeEmpty();
+
+      // R2 measures rebuilding the registry with 200 overlaps, excluding message transport.
+      await source.evaluate(() => {
+        document.body.textContent = 'a'.repeat(100_000);
+      });
+      const p95 = await panel.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          lastFocusedWindow: true,
+        });
+        if (tab?.id === undefined || !tab.url)
+          throw new Error('Fixture sin pestaña');
+        const entries = Array.from({ length: 200 }, (_, id) => ({
+          id: String(id),
+          color: id % 2 ? '#FDD835' : '#81D4FA',
+          selectors: {
+            position: { start: id * 400, end: id * 400 + 800 },
+            quote: { exact: 'a'.repeat(800), prefix: '', suffix: '' },
+          },
+        }));
+        const samples: number[] = [];
+        for (let i = 0; i < 30; i++) {
+          const painted = await chrome.tabs.sendMessage(
+            tab.id,
+            {
+              type: 'highlight.paint',
+              url: tab.url,
+              entries,
+            },
+            { frameId: 0 },
+          );
+          if (!painted?.painted || typeof painted.durationMs !== 'number')
+            throw new Error('Falló el repintado de R2');
+          samples.push(painted.durationMs);
+        }
+        return samples.sort((a, b) => a - b)[
+          Math.ceil(samples.length * 0.95) - 1
+        ];
+      });
+      console.log(`R2 p95=${p95} ms · ${platform()} · ${cpus()[0]?.model}`);
+      expect(p95).toBeLessThanOrEqual(150);
 
       await source.reload();
       await capture.click();

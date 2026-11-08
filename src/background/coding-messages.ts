@@ -1,6 +1,10 @@
 import { decodeSelectors, isRecord } from '../capture-contract';
 import { MemoryCodings } from '../domain/codings';
-import type { CodeAssignment, Fragment } from '../domain/codings';
+import type {
+  CodeAssignment,
+  Fragment,
+  HighlightEntry,
+} from '../domain/codings';
 
 const projectId = '00000000-0000-4000-8000-000000000001';
 const codings = new MemoryCodings([
@@ -39,9 +43,24 @@ function decodeFragment(value: unknown): Fragment | undefined {
 
 export function handleCodingRequest(
   message: unknown,
-): { kind: 'codings'; codes: CodeAssignment[] } | { kind: 'error' } {
+):
+  | { kind: 'codings'; codes: CodeAssignment[] }
+  | { kind: 'highlights'; entries: HighlightEntry[] }
+  | { kind: 'error' } {
   const error = { kind: 'error' } as const;
   if (!isRecord(message)) return error;
+  if (message.type === 'highlight.read') {
+    const { url, filter } = message;
+    if (
+      typeof url !== 'string' ||
+      (filter !== null && typeof filter !== 'string')
+    )
+      return error;
+    return {
+      kind: 'highlights',
+      entries: codings.highlights(projectId, url, filter),
+    };
+  }
   const fragment = decodeFragment(message.fragment);
   if (!fragment) return error;
   if (message.type === 'coding.read')
