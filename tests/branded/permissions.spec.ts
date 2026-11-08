@@ -53,7 +53,7 @@ for (const [name, executable] of browsers) {
       const cdp = await browser.newBrowserCDPSession();
       const { product } = await cdp.send('Browser.getVersion');
       const { id } = await cdp.send('Extensions.loadUnpacked', {
-        path: resolve('dist'),
+        path: resolve(process.env.CODIFICAWEB_DIST ?? 'dist'),
       });
       const [context] = browser.contexts();
       if (!context) throw new Error('No se encontró el perfil temporal');
@@ -354,6 +354,63 @@ for (const [name, executable] of browsers) {
           )
           .toBe(true);
 
+        await page.evaluate(() => {
+          const third = document.createElement('p');
+          third.textContent = 'Tercera cita.';
+          document.body.append(third);
+        });
+        const newProjectColors = [
+          [citation, '#7FC97F'],
+          ['Otra cita.', '#BEAED4'],
+          ['Tercera cita.', '#FDC086'],
+        ] as const;
+        for (const [index, [text, color]] of newProjectColors.entries()) {
+          await dragQuote(index, text);
+          await expect.poll(quote).toBe(text);
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#fragment-codes').disabled"),
+            )
+            .toBe(false);
+          await readPanel(`(() => {
+            document.querySelector('#category-open').click();
+            document.querySelector('#category-name').value = 'Categoría ${index + 1}';
+            document.querySelector('#category-definition').value = 'Definición de prueba';
+            document.querySelector('#category-create').requestSubmit();
+          })()`);
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#coding-status').textContent"),
+            )
+            .toBe('Categoría guardada y aplicada.');
+          expect(
+            await readPanel(
+              "document.querySelector('#quote-card').style.getPropertyValue('--category-color')",
+            ),
+          ).toBe(color);
+          expect(
+            await readPanel(
+              `Array.from(document.querySelectorAll('#coding-options label')).find(label => label.textContent === 'Categoría ${index + 1}').style.getPropertyValue('--category-color')`,
+            ),
+          ).toBe(color);
+          await expect
+            .poll(() =>
+              page.evaluate(
+                (color) =>
+                  Array.from(
+                    CSS.highlights.get(
+                      'codificaweb-' + color.slice(1).toLowerCase(),
+                    ) ?? [],
+                    (range) => range.toString(),
+                  ).join(''),
+                color,
+              ),
+            )
+            .toBe(text);
+        }
+        console.log(
+          'Proyecto nuevo: verde #7FC97F, lila #BEAED4, naranja #FDC086 verificados en la cita, la etiqueta y el resaltado.',
+        );
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');

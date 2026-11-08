@@ -38,3 +38,23 @@ El paquete de T013 se verificó con Chrome 157.0.8103.38 y Brave 157.1.99.55 en 
 Se observaron solicitudes HTTP(S) y WebSocket mediante CDP en los destinos de página y service worker durante el recorrido. En cada navegador se registró solo la navegación al fixture de loopback. La observación corresponde al intervalo y los destinos instrumentados. Los perfiles comenzaron separados y el resultado de Chrome no apareció en Brave.
 
 CI cubre el flujo funcional ampliado en Chromium, incluidos solapamientos, notas, búsqueda, navegación y transferencia JSON. La prueba nativa verificó el comportamiento del navegador y la conservación de la evidencia tras revocar el permiso.
+
+## T018 · Validación del paquete del panel renovado
+
+Se compiló el código de producto de `67bb9e3` y se empaquetó `dist/` en un ZIP. Se comprobó la integridad del archivo, se extrajo a un directorio temporal y se cargó la copia extraída con `Extensions.loadUnpacked` en perfiles nuevos. El ZIP contiene el manifiesto, las entradas y los recursos de la extensión, incluida la licencia de ColorBrewer. [Issue #33](https://github.com/pavt/CodificaWeb/issues/33) · [CI de la base integrada](https://github.com/pavt/CodificaWeb/actions/runs/42520403621)
+
+| Entorno                    | Evidencia                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Chrome 156.0.8078.80       | Carga del ZIP extraído, arrastre de texto, apertura del panel mediante CDP, guardado y reutilización.                          |
+| Brave, motor 156.0.8078.48 | Mismo recorrido con su propio perfil temporal.                                                                                 |
+| Chromium en CI             | Captura, filtros, resaltados, teclado, anchos estrechos, proyectos, notas, búsqueda, apertura de fuentes y transferencia JSON. |
+
+En Chrome y Brave, un proyecto nuevo recibió `#7FC97F`, `#BEAED4` y `#FDC086`. Cada valor coincidió en la cita guardada, la etiqueta y el resaltado. El rechazo del permiso opcional se simuló en la API del navegador. El recorrido conservó la captura y no observó solicitudes HTTP(S) o WebSocket inesperadas. La auditoría volvió a dar cero avisos de producción y mantuvo el aviso moderado de desarrollo de minimatch registrado arriba.
+
+Para repetir la comprobación, ejecuta `pnpm build` y `pnpm test:e2e:branded`. Para usar un ZIP ya extraído, indica su carpeta `dist` con `CODIFICAWEB_DIST`. Para instalarlo, abre `chrome://extensions` o `brave://extensions`, activa **Modo desarrollador**, pulsa **Cargar descomprimida** y selecciona la carpeta extraída que contiene `manifest.json`. [Prueba reproducible](../tests/branded/permissions.spec.ts)
+
+### Observación de primer uso
+
+Sirve la [página sintética](examples/primera-codificacion.html) con `python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/examples` y abre `http://127.0.0.1:8765/primera-codificacion.html` en el perfil de prueba. La persona recibe solo el objetivo: «Guarda un pasaje con una categoría nueva y usa esa misma categoría en otro pasaje». Registra si completó la tarea sin ayuda, dónde dudó y si reconoció el color asignado.
+
+La comprobación automatizada está completa. Queda pendiente observar a una persona completar el recorrido sin indicaciones sobre qué pulsar.
