@@ -131,15 +131,18 @@ export function createMarginLabels() {
     if (event.buttons || isMarginInteraction(event)) return;
     const { clientX: x, clientY: y } = event;
     timer = setTimeout(() => {
-      const match = priority.find(({ range }) =>
-        [...range.getClientRects()].some(
-          (rect) =>
-            x >= rect.left &&
-            x <= rect.right &&
-            y >= rect.top &&
-            y <= rect.bottom,
-        ),
-      );
+      let underline: MarginCitation | undefined;
+      const text = priority.find((citation) => {
+        for (const rect of citation.range.getClientRects()) {
+          if (x < rect.left || x > rect.right || y < rect.top) continue;
+          if (y <= rect.bottom) return true;
+          // The 3 px decoration and its font-relative offset can extend
+          // below the text rectangle reported by the browser.
+          if (y <= rect.bottom + 3 + rect.height * 0.14) underline ??= citation;
+        }
+        return false;
+      });
+      const match = text ?? underline;
       if (!match?.id || match.id === lastPreview) return;
       lastPreview = match.id;
       void chrome.runtime

@@ -87,6 +87,16 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
     );
     vi.advanceTimersByTime(130);
     expect(send).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new MouseEvent('pointerout'));
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 42 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenLastCalledWith({
+      type: 'citation.preview',
+      id: 'narrow',
+    });
     const button = shadow.querySelector('button');
     button?.dispatchEvent(
       new MouseEvent('pointermove', {
@@ -97,7 +107,7 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
       }),
     );
     vi.advanceTimersByTime(130);
-    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledTimes(2);
     send.mockResolvedValueOnce(true);
     button?.click();
     await Promise.resolve();

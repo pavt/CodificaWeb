@@ -394,11 +394,24 @@ for (const [name, executable] of browsers) {
           readPanel(
             "document.querySelector('#citation-inspection-quote')?.textContent ?? ''",
           );
-        await page
+        const underline = await page
           .locator('p')
           .first()
-          .hover({ position: { x: 12, y: 8 } });
+          .evaluate((paragraph) => {
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            const box = range.getBoundingClientRect();
+            return { x: box.left + 12, y: box.bottom + 2 };
+          });
+        await page.mouse.move(underline.x, underline.y);
         await expect.poll(inspect).toBe(citation);
+        expect(
+          await readPanel(`(() => {
+          const card = document.querySelector('#citation-inspection').getBoundingClientRect();
+          const editor = document.querySelector('#quote-card').getBoundingClientRect();
+          return card.top >= 0 && card.top < innerHeight && card.bottom <= editor.top;
+        })()`),
+        ).toBe(true);
         await expect.poll(quote).toBe('Otra cita.');
         await page
           .locator('p')

@@ -10,6 +10,20 @@
     <main>
       <h1>CodificaWeb</h1>
       <p id="active-project-label"></p>
+      <section id="citation-inspection" aria-label="Cita guardada" hidden>
+        <header>
+          <strong>Cita guardada</strong>
+          <button id="citation-inspection-close" type="button">
+            Cerrar ficha
+          </button>
+        </header>
+        <p id="citation-inspection-quote"></p>
+        <div id="citation-inspection-categories"></div>
+        <div id="citation-inspection-detail" hidden>
+          <strong id="citation-inspection-name"></strong>
+          <p id="citation-inspection-definition"></p>
+        </div>
+      </section>
       <section aria-labelledby="selection-title">
         <div id="quote-card" class="card">
           <h2 id="selection-title">Texto seleccionado</h2>
@@ -110,20 +124,6 @@
           <ul id="evidence-results"></ul>
         </form>
       </details>
-      <section id="citation-inspection" aria-label="Cita guardada" hidden>
-        <header>
-          <strong>Cita guardada</strong>
-          <button id="citation-inspection-close" type="button">
-            Cerrar ficha
-          </button>
-        </header>
-        <p id="citation-inspection-quote"></p>
-        <div id="citation-inspection-categories"></div>
-        <div id="citation-inspection-detail" hidden>
-          <strong id="citation-inspection-name"></strong>
-          <p id="citation-inspection-definition"></p>
-        </div>
-      </section>
       <details id="page-citations" hidden>
         <summary>Categorías en esta página</summary>
         <ol id="page-citation-list"></ol>

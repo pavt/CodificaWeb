@@ -276,6 +276,7 @@ section:has(#category-assign[hidden]) .saved-next-step {
 }
 
 #citation-inspection {
+  background: #fff;
   border: 1px solid currentColor;
   border-radius: 0.6rem;
   padding: 0.75rem;
