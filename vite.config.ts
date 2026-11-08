@@ -20,6 +20,9 @@ export default defineConfig({
     target: 'chrome123',
     rolldownOptions: {
       input: {
+        content: fileURLToPath(
+          new URL('./src/content/index.ts', import.meta.url),
+        ),
         panel: fileURLToPath(
           new URL(manifest.side_panel.default_path, import.meta.url),
         ),
@@ -31,7 +34,9 @@ export default defineConfig({
         entryFileNames: (entry) =>
           entry.name === 'background'
             ? manifest.background.service_worker
-            : 'assets/[name]-[hash].js',
+            : entry.name === 'content'
+              ? 'content.js'
+              : 'assets/[name]-[hash].js',
       },
     },
   },
