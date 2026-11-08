@@ -295,11 +295,26 @@ if (chrome.tabs?.onActivated) {
     status.textContent =
       'Pulsa el icono de CodificaWeb para recuperar el acceso.';
   });
-  chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     if (sender.id !== chrome.runtime.id || !isRecord(message)) return;
     if (message.type === 'capture.invoked' && direct && !sender.tab) {
       requiresInvocation = false;
       void attachActiveTab();
+    }
+    if (
+      direct &&
+      target &&
+      sender.tab?.id === target.tabId &&
+      sender.documentId === target.documentId &&
+      sender.url === target.url &&
+      typeof message.id === 'string'
+    ) {
+      if (message.type === 'citation.preview') highlights.inspect(message.id);
+      if (
+        message.type === 'citation.open' &&
+        typeof message.categoryId === 'string'
+      )
+        respond(highlights.inspect(message.id, message.categoryId));
     }
     if (
       message.type === 'capture.changed' &&

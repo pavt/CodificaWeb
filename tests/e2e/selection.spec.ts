@@ -141,7 +141,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       );
       await expect(panel.locator('#category-create')).toBeHidden();
       await expect(
-        panel.getByText('Cita guardada', { exact: true }),
+        panel.getByRole('heading', { name: 'Cita guardada', exact: true }),
       ).toBeVisible();
       await expect(
         panel.getByRole('heading', { name: 'Categoría aplicada' }),

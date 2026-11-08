@@ -6,9 +6,13 @@ import {
   readMarginCategories,
 } from '../../src/content/margin-labels';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
-test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel', () => {
+test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel', async () => {
   document.body.innerHTML = '<p><em>Cita</em></p><aside>Columna</aside>';
   const viewport = document.documentElement;
   const block = document.querySelector('p') as HTMLElement;
@@ -43,13 +47,15 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
   const records = new MutationObserver(() => {});
   records.observe(viewport, { childList: true });
   const margin = createMarginLabels();
+  const send = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('chrome', { runtime: { sendMessage: send } });
   const categories = [{ id: 'a', name: 'Contexto', color: '#BEAED4' }];
   try {
     margin.clear();
     margin.show([]);
     margin.show([
-      { anchor: range, categories },
-      { anchor: range, categories },
+      { id: 'wide', anchor: range, range, length: 8, categories },
+      { id: 'narrow', anchor: range, range, length: 4, categories },
     ]);
     const shadow = attach.mock.results[0]?.value as ShadowRoot;
     expect(shadow.mode).toBe('closed');
@@ -57,6 +63,68 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
     render?.(0);
     expect(shadow.querySelectorAll('.citation-row')).toHaveLength(1);
     expect(shadow.textContent).toBe('Contexto');
+    vi.useFakeTimers();
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 25, buttons: 1 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).not.toHaveBeenCalled();
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 25 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenLastCalledWith({
+      type: 'citation.preview',
+      id: 'narrow',
+    });
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 25 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 250, clientY: 25 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new MouseEvent('pointerout'));
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 42 }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenLastCalledWith({
+      type: 'citation.preview',
+      id: 'narrow',
+    });
+    const button = shadow.querySelector('button');
+    button?.dispatchEvent(
+      new MouseEvent('pointermove', {
+        bubbles: true,
+        composed: true,
+        clientX: 15,
+        clientY: 25,
+      }),
+    );
+    vi.advanceTimersByTime(130);
+    expect(send).toHaveBeenCalledTimes(2);
+    send.mockResolvedValueOnce(true);
+    button?.click();
+    await Promise.resolve();
+    expect(shadow.querySelector('[role="dialog"]')).toBeNull();
+    send.mockRejectedValueOnce(new Error('Panel cerrado'));
+    button?.click();
+    await Promise.resolve();
+    expect(send).toHaveBeenLastCalledWith({
+      type: 'citation.open',
+      id: 'wide',
+      categoryId: 'a',
+    });
+    const dialog = shadow.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Sin definición');
+    dialog?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(shadow.querySelector('[role="dialog"]')).toBeNull();
+    button?.blur();
     background = [sidebar, document.body, viewport];
     render?.(0);
     expect(shadow.querySelector('.citation-row')).toBeNull();
@@ -75,8 +143,10 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
     box = undefined;
     render?.(0);
     expect(shadow.querySelector('.citation-row')).toBeNull();
+    const frameCount = vi.mocked(window.requestAnimationFrame).mock.calls
+      .length;
     window.dispatchEvent(new Event('resize'));
-    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(2);
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(frameCount + 1);
   } finally {
     margin.clear();
     expect(records.takeRecords().map(isPageMutation)).toEqual([false]);

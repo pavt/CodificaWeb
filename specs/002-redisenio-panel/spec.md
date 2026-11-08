@@ -27,3 +27,5 @@ T019 amplía la paleta cualitativa según el número de categorías del proyecto
 | UX-08    | Pulsar una etiqueta con el ratón o activarla con el teclado abre la ficha de esa categoría y su cita. La ficha muestra nombre, color y definición vigente, o «Sin definición» si está vacía. Se puede activar otra etiqueta sin cambiar la selección de texto ni mover la página.                                                      |
 
 Aplican FR-02/CA-02, FR-04/CA-04, FR-05/CA-05 y FR-06/CA-06 de la [especificación base](../001-codificacion-web/spec.md). Se mantienen la selección automática, la asignación desde el panel, los filtros, la privacidad local y la recuperación con los permisos vigentes.
+
+**UX-08 · Vista previa.** Con el panel abierto, mantener el cursor brevemente sobre una cita subrayada muestra el fragmento exacto y todas sus categorías. La vista previa cambia al pasar a otra cita, usa el desempate visual en solapamientos y deja intactos la selección y los formularios. Activar una etiqueta fija la ficha hasta cerrarla y muestra la definición vigente.

@@ -36,7 +36,10 @@ export function fragmentKey(fragment: Fragment): string {
   ]);
 }
 
-export type HighlightCategory = Pick<CodeAssignment, 'id' | 'name' | 'color'>;
+export type HighlightCategory = Pick<
+  CodeAssignment,
+  'id' | 'name' | 'color' | 'description'
+>;
 
 export interface HighlightEntry {
   id: string;
