@@ -89,7 +89,7 @@ export function createPainter() {
       CSS.highlights.set(name, highlight);
       owned.set(name, highlight);
       rules.push(
-        `::highlight(${name}) { text-decoration: underline solid ${color} 1px; }`,
+        `::highlight(${name}) { text-decoration: underline solid ${color} 3px; text-underline-offset: 0.14em; }`,
       );
     }
     sheet.replaceSync(rules.join('\n'));

@@ -54,3 +54,5 @@ Milestone [M6 · Lectura de citas](https://github.com/pavt/CodificaWeb/milestone
 Los issues registran alcance, criterios, dependencias, etiquetas, prioridad y milestone. Completar aquí los enlaces a PR, pruebas, CI y SHA de integración. Partir de `origin/main` en una rama `codex/issue-<n>-<resumen>` por issue. Aplicar Red–Green–Refactor y abrir un PR a `main` con `Closes #<n>`. Integrar tras revisión y CI verde sobre el último commit. Verificar cierre del issue y CI verde en `main` antes de avanzar al siguiente. [Flujo del proyecto](../../docs/github-flow.md)
 
 **Evidencia de T020.** [PR #44](https://github.com/pavt/CodificaWeb/pull/44). La prueba de selección observó primero un fondo naranja sin decoración. Después comprobó el subrayado de 1 px, su color y el fondo transparente. Pasaron las 97 pruebas con cobertura, ambos E2E de Chromium y los recorridos en Chrome y Brave. R2 p95 local de 1,9 ms.
+
+**Ajuste visual de T020.** Tras la revisión de un titular de varias líneas, el trazo pasa de 1 a 3 px y se separa de la base de las letras. La prueba E2E comprueba el nuevo grosor.

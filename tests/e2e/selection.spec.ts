@@ -209,7 +209,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         )
         .toEqual([
           'underline',
-          '1px',
+          '3px',
           'rgb(253, 192, 134)',
           'rgba(0, 0, 0, 0)',
         ]);
