@@ -1,4 +1,5 @@
 import type { CaptureTarget } from '../capture-contract';
+import { createCodingControls } from './coding-controls';
 import { readSelection } from './read-selection';
 import { verifySiteAccess } from './site-access';
 
@@ -13,6 +14,11 @@ const captureButton = document.getElementById(
 const captureStatus = document.getElementById('capture-status') as HTMLElement;
 const quote = document.getElementById('selection-quote') as HTMLElement;
 const source = document.getElementById('selection-source') as HTMLElement;
+const coding = createCodingControls(
+  document.getElementById('fragment-codes') as HTMLFieldSetElement,
+  document.getElementById('coding-options') as HTMLElement,
+  document.getElementById('coding-status') as HTMLElement,
+);
 let target: CaptureTarget | undefined;
 
 const captureMessages = {
@@ -27,6 +33,7 @@ function clearPreview() {
   quote.textContent = '';
   source.textContent = '';
   captureStatus.textContent = '';
+  coding.clear();
 }
 
 form.addEventListener('submit', async (event) => {
@@ -71,6 +78,7 @@ captureButton.addEventListener('click', async () => {
     quote.textContent = result.selectors.quote.exact;
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
+    void coding.show(current, result);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
   }
