@@ -1,6 +1,6 @@
 # Tareas · Seleccionar y categorizar
 
-**Milestone propuesto** · M5 · Experiencia de codificación. Los enlaces llevan a los issues del milestone. Los PR se registran al abrirlos.
+**Milestone propuesto** · M5 · Experiencia de codificación. Los enlaces llevan a los issues del milestone. T014 está en revisión como borrador. [PR #34](https://github.com/pavt/CodificaWeb/pull/34)
 
 | Tarea                                                                                                        | Depende de             | Etiquetas                                   | Criterio y evidencia esperada                                                                                                                                                                                                                                                                            |
 | ------------------------------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
