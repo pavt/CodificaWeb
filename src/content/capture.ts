@@ -6,15 +6,11 @@ export const maxDocumentLength = 1_000_000;
 const maxQuoteLength = 16_384;
 const contextLength = 32;
 
-function captureSelection(
-  selection: Selection | null,
+function captureRange(
+  range: Range | undefined,
   revision: number,
 ): CaptureResult {
-  if (document.activeElement?.closest(excluded)) return { kind: 'excluded' };
-  if (selection?.rangeCount !== 1 || selection.isCollapsed)
-    return { kind: 'empty' };
-
-  const range = selection.getRangeAt(0);
+  if (!range || range.collapsed) return { kind: 'empty' };
   const body = document.body;
   if (!body?.contains(range.commonAncestorContainer))
     return { kind: 'excluded' };
@@ -66,6 +62,15 @@ function captureSelection(
   };
 }
 
+function sameAnchor(first: CaptureResult, second: CaptureResult) {
+  return (
+    first.kind === 'selection' &&
+    second.kind === 'selection' &&
+    first.url === second.url &&
+    JSON.stringify(first.selectors) === JSON.stringify(second.selectors)
+  );
+}
+
 export function observeSelection(onCommit?: () => void) {
   let revision = 0;
   const observer = new MutationObserver(() => revision++);
@@ -81,10 +86,21 @@ export function observeSelection(onCommit?: () => void) {
     if (observer.takeRecords().length) revision++;
     return revision;
   };
-  let snapshot = captureSelection(window.getSelection(), currentRevision());
+  let snapshot: CaptureResult = { kind: 'empty' };
+  let range: Range | undefined;
+  let validatedRevision = 0;
   const update = () => {
-    snapshot = captureSelection(window.getSelection(), currentRevision());
+    const selection = window.getSelection();
+    const selected =
+      selection?.rangeCount === 1 ? selection.getRangeAt(0) : undefined;
+    validatedRevision = currentRevision();
+    const latest: CaptureResult = document.activeElement?.closest(excluded)
+      ? { kind: 'excluded' }
+      : captureRange(selected, validatedRevision);
+    if (!sameAnchor(snapshot, latest)) snapshot = latest;
+    range = snapshot.kind === 'selection' ? selected?.cloneRange() : undefined;
   };
+  update();
   const onSelectionChange = () => {
     // Chrome may collapse the DOM selection as focus moves to the side panel.
     const selection = window.getSelection();
@@ -96,24 +112,27 @@ export function observeSelection(onCommit?: () => void) {
     onCommit?.();
   };
   document.addEventListener('selectionchange', onSelectionChange);
-  document.addEventListener('pointerup', commit);
-  document.addEventListener('keyup', commit);
+  document.addEventListener('pointerup', commit, true);
+  document.addEventListener('keyup', commit, true);
   return {
     read(): CaptureResult {
       const revision = currentRevision();
-      if (
-        snapshot.kind === 'selection' &&
-        (snapshot.revision !== revision || snapshot.url !== location.href)
-      ) {
-        return { kind: 'stale' };
+      if (snapshot.kind !== 'selection') return snapshot;
+      if (snapshot.url !== location.href) return { kind: 'stale' };
+      if (validatedRevision !== revision) {
+        // Reproject the original range. Background UI changes are safe only
+        // if the text, context and position still describe the same fragment.
+        const latest = captureRange(range, revision);
+        if (!sameAnchor(snapshot, latest)) return { kind: 'stale' };
+        validatedRevision = revision;
       }
       return snapshot;
     },
     stop() {
       observer.disconnect();
       document.removeEventListener('selectionchange', onSelectionChange);
-      document.removeEventListener('pointerup', commit);
-      document.removeEventListener('keyup', commit);
+      document.removeEventListener('pointerup', commit, true);
+      document.removeEventListener('keyup', commit, true);
     },
   };
 }

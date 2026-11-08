@@ -132,10 +132,29 @@ for (const [name, executable] of browsers) {
       expect(blocked).toMatch(/cannot access/i);
       await panel.close();
       await page.bringToFront();
-      await page
-        .locator('p')
-        .first()
-        .evaluate((node) => window.getSelection()?.selectAllChildren(node));
+      async function dragQuote(index: number, expected: string) {
+        const box = await page
+          .locator('p')
+          .nth(index)
+          .evaluate((paragraph) => {
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            const rect = range.getBoundingClientRect();
+            return {
+              x: rect.left,
+              right: rect.right,
+              y: rect.top + rect.height / 2,
+            };
+          });
+        await page.mouse.move(box.x, box.y);
+        await page.mouse.down();
+        await page.mouse.move(box.right + 2, box.y, { steps: 10 });
+        await page.mouse.up();
+        await expect
+          .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+          .toBe(expected);
+      }
+      await dragQuote(0, citation);
       const { targetInfos } = await cdp.send('Target.getTargets', {
         filter: [{ type: 'tab' }, { exclude: true }],
       });
@@ -206,6 +225,13 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#fragment-codes').disabled"),
           )
           .toBe(false);
+        // A live page can update unrelated UI while the category is being edited.
+        await page.evaluate(() => {
+          const activity = document.createElement('span');
+          activity.hidden = true;
+          activity.textContent = 'Actualización de fondo';
+          document.body.append(activity);
+        });
         await readPanel(`(() => {
           document.querySelector('#category-open').click();
           document.querySelector('#category-name').value = 'Categoría sintética';
@@ -222,9 +248,11 @@ for (const [name, executable] of browsers) {
           .locator('p')
           .last()
           .evaluate((node) => {
-            window.getSelection()?.selectAllChildren(node);
-            node.dispatchEvent(new Event('pointerup', { bubbles: true }));
+            node.addEventListener('pointerup', (event) =>
+              event.stopPropagation(),
+            );
           });
+        await dragQuote(1, 'Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
         await expect
           .poll(() =>
