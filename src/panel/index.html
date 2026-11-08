@@ -97,7 +97,32 @@
         </p>
       </section>
       <p id="site-status" role="status"></p>
-      <details id="panel-tools" open>
+      <details id="panel-evidence" class="card">
+        <summary>Buscar evidencias</summary>
+        <form id="evidence-search">
+          <fieldset disabled>
+            <legend>Filtros del proyecto activo</legend>
+            <label for="evidence-text">Texto de la cita o nota</label>
+            <input id="evidence-text" type="search" maxlength="16384" />
+            <label for="evidence-code">Código de la evidencia</label>
+            <select id="evidence-code">
+              <option value="">Todos los códigos</option>
+            </select>
+            <label for="evidence-source">Fuente de la evidencia</label>
+            <select id="evidence-source">
+              <option value="">Todas las fuentes</option>
+            </select>
+            <button type="submit">Buscar</button>
+          </fieldset>
+          <p>
+            Incluye citas guardadas aunque su ubicación actual no se pueda
+            verificar.
+          </p>
+          <p id="evidence-status" aria-live="polite"></p>
+          <ul id="evidence-results"></ul>
+        </form>
+      </details>
+      <details id="panel-tools" class="card" open>
         <summary>Herramientas del proyecto</summary>
         <button id="capture-selection" type="button" disabled>
           Capturar selección
@@ -123,19 +148,22 @@
           </span>
           <button id="verify-site" type="submit">Comprobar acceso</button>
         </form>
-        <fieldset id="projects" disabled>
-          <legend>Proyectos</legend>
-          <label for="project-select">Proyecto activo</label>
-          <select id="project-select"></select>
-          <label for="project-name">Nombre del proyecto</label>
-          <input id="project-name" maxlength="256" />
-          <label for="project-description">Descripción del proyecto</label>
-          <textarea id="project-description" maxlength="16384"></textarea>
-          <button id="project-create" type="button">Crear proyecto</button>
-          <button id="project-save" type="button">Guardar proyecto</button>
-          <button id="project-remove" type="button">Borrar proyecto</button>
-          <p id="project-status" aria-live="polite"></p>
-        </fieldset>
+        <details class="management-group">
+          <summary>Gestionar proyectos</summary>
+          <fieldset id="projects" disabled>
+            <legend>Proyectos</legend>
+            <label for="project-select">Proyecto activo</label>
+            <select id="project-select"></select>
+            <label for="project-name">Nombre del proyecto</label>
+            <input id="project-name" maxlength="256" />
+            <label for="project-description">Descripción del proyecto</label>
+            <textarea id="project-description" maxlength="16384"></textarea>
+            <button id="project-create" type="button">Crear proyecto</button>
+            <button id="project-save" type="button">Guardar proyecto</button>
+            <button id="project-remove" type="button">Borrar proyecto</button>
+            <p id="project-status" aria-live="polite"></p>
+          </fieldset>
+        </details>
         <details id="project-transfer">
           <summary>Importar o exportar proyecto</summary>
           <button id="project-export" type="button" disabled>
@@ -152,45 +180,23 @@
           </button>
           <p id="transfer-status" aria-live="polite"></p>
         </details>
-        <fieldset id="catalog" disabled>
-          <legend>Catálogo de códigos</legend>
-          <label for="catalog-select">Código del catálogo</label>
-          <select id="catalog-select"></select>
-          <label for="catalog-name">Nombre del código</label>
-          <input id="catalog-name" maxlength="256" />
-          <label for="catalog-description">Descripción del código</label>
-          <textarea id="catalog-description" maxlength="16384"></textarea>
-          <label for="catalog-color">Color del código</label>
-          <input id="catalog-color" type="color" value="#fdd835" />
-          <button id="catalog-create" type="button">Crear código</button>
-          <button id="catalog-save" type="button">Guardar código</button>
-          <button id="catalog-remove" type="button">Borrar código</button>
-          <p id="catalog-status" aria-live="polite"></p>
-        </fieldset>
-        <details>
-          <summary>Buscar evidencias</summary>
-          <form id="evidence-search">
-            <fieldset disabled>
-              <legend>Filtros del proyecto activo</legend>
-              <label for="evidence-text">Texto de la cita o nota</label>
-              <input id="evidence-text" type="search" maxlength="16384" />
-              <label for="evidence-code">Código de la evidencia</label>
-              <select id="evidence-code">
-                <option value="">Todos los códigos</option>
-              </select>
-              <label for="evidence-source">Fuente de la evidencia</label>
-              <select id="evidence-source">
-                <option value="">Todas las fuentes</option>
-              </select>
-              <button type="submit">Buscar</button>
-            </fieldset>
-            <p>
-              Incluye citas guardadas aunque su ubicación actual no se pueda
-              verificar.
-            </p>
-            <p id="evidence-status" aria-live="polite"></p>
-            <ul id="evidence-results"></ul>
-          </form>
+        <details class="management-group">
+          <summary>Gestionar categorías</summary>
+          <fieldset id="catalog" disabled>
+            <legend>Catálogo de códigos</legend>
+            <label for="catalog-select">Código del catálogo</label>
+            <select id="catalog-select"></select>
+            <label for="catalog-name">Nombre del código</label>
+            <input id="catalog-name" maxlength="256" />
+            <label for="catalog-description">Descripción del código</label>
+            <textarea id="catalog-description" maxlength="16384"></textarea>
+            <label for="catalog-color">Color del código</label>
+            <input id="catalog-color" type="color" value="#fdd835" />
+            <button id="catalog-create" type="button">Crear código</button>
+            <button id="catalog-save" type="button">Guardar código</button>
+            <button id="catalog-remove" type="button">Borrar código</button>
+            <p id="catalog-status" aria-live="polite"></p>
+          </fieldset>
         </details>
       </details>
     </main>

@@ -181,7 +181,8 @@ button:disabled {
   color: #215e49;
   font-weight: 600;
 }
-#panel-tools > summary {
+:is(#panel-tools, #panel-evidence, .management-group, #project-transfer)
+  > summary {
   cursor: pointer;
   color: #526760;
 }
@@ -207,4 +208,31 @@ section:has(#category-assign[hidden]) .saved-next-step {
 }
 .saved-next-step {
   color: #526760;
+}
+
+#evidence-search,
+#evidence-search fieldset,
+#projects,
+#catalog {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+:is(#evidence-search, #projects, #catalog)
+  :is(input:not([type='color']), select, textarea) {
+  width: 100%;
+}
+:is(#evidence-search, #projects, #catalog) button {
+  justify-self: start;
+}
+#panel-evidence form,
+.management-group fieldset {
+  margin-block-start: 8px;
+}
+#evidence-results {
+  padding-inline-start: 1.25rem;
+  overflow-wrap: anywhere;
+}
+#evidence-results li + li {
+  margin-block-start: 12px;
 }

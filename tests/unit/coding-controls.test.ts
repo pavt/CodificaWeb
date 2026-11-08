@@ -209,3 +209,23 @@ test('T016: permite añadir la definición después de aplicar y conserva el bor
   expect(view.fieldset.textContent).toContain('Concepto principal');
   expect(view.code('Tema').checked).toBe(true);
 });
+
+test('T017: no devuelve el foco a la categoría si el usuario pulsa fuera mientras guarda', async () => {
+  const view = panel();
+  await view.show(target, snapshot);
+  const initial = view.code('Contexto').checked;
+  let release!: () => void;
+  read.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = () => resolve(snapshot);
+      }),
+  );
+  view.code('Contexto').focus();
+  view.code('Contexto').click();
+  await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+  document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+  release();
+  await vi.waitFor(() => expect(view.code('Contexto').checked).toBe(!initial));
+  expect(document.activeElement).toBe(document.body);
+});

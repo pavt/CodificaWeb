@@ -179,8 +179,20 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         0,
       );
       await panel.getByLabel('Buscar categorías').clear();
-      await finding.click();
+      await finding.focus();
+      await panel.keyboard.press('Space');
       await expect(finding).not.toBeChecked();
+      await expect(finding).toBeFocused();
+      await expect(finding).toHaveCSS('outline-style', 'solid');
+      await panel.keyboard.press('Space');
+      await expect(finding).toBeChecked();
+      await expect(finding).toBeFocused();
+      await panel.keyboard.press('Space');
+      await expect(finding).not.toBeChecked();
+      await panel.keyboard.press('Tab');
+      await expect(
+        panel.getByRole('button', { name: 'Crear categoría' }),
+      ).toBeFocused();
       await expect(
         panel.getByText('Selecciona otro fragmento para seguir.'),
       ).toBeHidden();
@@ -283,6 +295,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         original,
       );
 
+      await panel.getByText('Gestionar proyectos', { exact: true }).click();
       const project = panel.getByLabel('Proyecto activo');
       const projectName = panel.getByLabel('Nombre del proyecto');
       await projectName.fill('Proyecto B');
@@ -427,6 +440,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await source.evaluate(() => history.pushState(null, '', '/otra-ruta'));
       await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
       // Q02: one user-created code is reused in two independent sources.
+      await panel.getByText('Gestionar categorías', { exact: true }).click();
       const catalog = panel.getByLabel('Código del catálogo');
       const codeName = panel.getByLabel('Nombre del código');
       const codeColor = panel.getByLabel('Color del código');
@@ -507,7 +521,13 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await source.evaluate(() => {
         document.body.textContent = 'Sin cita en esta página';
       });
-      await panel.getByText('Buscar evidencias', { exact: true }).click();
+      const tools = panel.locator('#panel-tools');
+      await tools.locator(':scope > summary').click();
+      const evidenceEntry = panel.getByText('Buscar evidencias', {
+        exact: true,
+      });
+      await expect(evidenceEntry).toBeVisible();
+      await evidenceEntry.click();
       const search = panel.getByRole('button', { name: 'Buscar', exact: true });
       await search.click();
       const evidence = panel.locator('#evidence-results');
@@ -559,6 +579,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(destination).toHaveURL(firstSource);
       await expect(destination.locator('#catalog-fixture')).toBeInViewport();
       // Q10: round-trip the published fixture through the actual file controls.
+      await tools.locator(':scope > summary').click();
       await panel
         .getByText('Importar o exportar proyecto', { exact: true })
         .click();
@@ -606,6 +627,18 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(
         project.locator('option', { hasText: 'Movilidad' }),
       ).toHaveCount(2);
+      for (const width of [320, 480]) {
+        await panel.setViewportSize({ width, height: 700 });
+        await expect
+          .poll(() =>
+            panel.evaluate(
+              () =>
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth,
+            ),
+          )
+          .toBe(0);
+      }
       expect(unexpectedTraffic).toEqual([]);
     } finally {
       await context.close();
