@@ -32,7 +32,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T006  | T005                 | M2        | p0        | feature | anchor    | [#7](https://github.com/pavt/CodificaWeb/issues/7)   | [#21](https://github.com/pavt/CodificaWeb/pull/21) |
 | T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   | [#22](https://github.com/pavt/CodificaWeb/pull/22) |
 | T008  | T006, T007           | M3        | p1        | feature | data      | [#9](https://github.com/pavt/CodificaWeb/issues/9)   | [#23](https://github.com/pavt/CodificaWeb/pull/23) |
-| T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) |                                                    |
+| T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) | [#24](https://github.com/pavt/CodificaWeb/pull/24) |
 | T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) |                                                    |
 | T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) |                                                    |
 | T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) |                                                    |
