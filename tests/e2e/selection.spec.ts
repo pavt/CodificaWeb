@@ -791,6 +791,20 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await relate.press('Enter');
       const relation = panel.getByRole('region', { name: 'Relacionar citas' });
       await expect(relation.getByText('Paso 2 de 4')).toBeVisible();
+      const originCategories = relation.locator(
+        '#relation-origin .citation-category',
+      );
+      await expect(
+        originCategories
+          .filter({ hasText: 'Accesibilidad' })
+          .locator('.citation-swatch'),
+      ).toHaveCSS('background-color', 'rgb(253, 216, 53)');
+      await expect(
+        originCategories
+          .filter({ hasText: 'Transporte público' })
+          .locator('.citation-swatch'),
+      ).toHaveCSS('background-color', 'rgb(129, 212, 250)');
+
       await expect(panel.locator('#panel-evidence')).toBeHidden();
       await relation.getByLabel('Buscar citas guardadas').fill('informe');
       const candidate = relation

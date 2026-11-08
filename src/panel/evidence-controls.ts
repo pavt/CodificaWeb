@@ -1,5 +1,8 @@
 import { isRecord } from '../capture-contract';
-import type { EvidenceResult } from '../domain/evidence-search';
+import type {
+  EvidenceCategory,
+  EvidenceResult,
+} from '../domain/evidence-search';
 
 function isSource(value: unknown): value is { id: string; url: string } {
   return (
@@ -9,11 +12,13 @@ function isSource(value: unknown): value is { id: string; url: string } {
   );
 }
 
-function isCode(value: unknown): value is { id: string; name: string } {
+function isCode(value: unknown): value is EvidenceCategory {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
-    typeof value.name === 'string'
+    typeof value.name === 'string' &&
+    typeof value.color === 'string' &&
+    /^#[0-9a-f]{6}$/i.test(value.color)
   );
 }
 

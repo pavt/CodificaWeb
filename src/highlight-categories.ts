@@ -22,6 +22,14 @@ export function readHighlightCategories(value: unknown): HighlightCategory[] {
   });
 }
 
+export function categorySwatch(color: string) {
+  const swatch = document.createElement('span');
+  swatch.className = 'citation-swatch';
+  swatch.style.backgroundColor = color;
+  swatch.setAttribute('aria-hidden', 'true');
+  return swatch;
+}
+
 export function categoryLabel(
   { id, name, color }: HighlightCategory,
   activate: () => void,
@@ -30,11 +38,7 @@ export function categoryLabel(
   label.type = 'button';
   label.dataset.category = id;
   label.addEventListener('click', activate);
-  const swatch = document.createElement('span');
-  swatch.className = 'citation-swatch';
-  swatch.style.backgroundColor = color;
-  swatch.setAttribute('aria-hidden', 'true');
   label.className = 'citation-category';
-  label.append(swatch, name);
+  label.append(categorySwatch(color), name);
   return label;
 }

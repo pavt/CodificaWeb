@@ -1,5 +1,6 @@
 import { isRecord } from '../capture-contract';
 import type { EvidenceResult } from '../domain/evidence-search';
+import { categorySwatch } from '../highlight-categories';
 import { isEvidence } from './evidence-controls';
 
 interface Citation {
@@ -7,7 +8,7 @@ interface Citation {
   quote: string;
   url: string;
   title?: string;
-  codes?: readonly { name: string }[];
+  codes?: EvidenceResult['codes'];
   note?: string | null;
   context?: EvidenceResult['context'];
 }
@@ -53,17 +54,26 @@ function excerpt(
   exactLabel.textContent = 'Texto citado';
   exact.append(exactLabel, text);
   element.append(exact, source);
-  const metadata = [
-    ['Categorías', codes?.map(({ name }) => name).join(' · ')],
-    ['Nota', note],
-  ];
-  for (const [caption, value] of metadata) {
-    if (!value) continue;
+  if (codes?.length) {
+    const categories = document.createElement('div');
+    categories.className = 'relation-categories relation-context';
+    const caption = document.createElement('strong');
+    caption.textContent = 'Categorías';
+    categories.append(caption);
+    for (const { name, color } of codes) {
+      const badge = document.createElement('span');
+      badge.className = 'citation-category';
+      badge.append(categorySwatch(color), name);
+      categories.append(badge);
+    }
+    element.append(categories);
+  }
+  if (note) {
     const detail = document.createElement('p');
-    const label = document.createElement('strong');
+    const caption = document.createElement('strong');
     detail.className = 'relation-context';
-    label.textContent = caption + ' · ';
-    detail.append(label, value);
+    caption.textContent = 'Nota · ';
+    detail.append(caption, note);
     element.append(detail);
   }
   if (context && (context.prefix.trim() || context.suffix.trim())) {

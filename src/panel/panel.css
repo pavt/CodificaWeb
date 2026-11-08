@@ -393,6 +393,20 @@ main:has(> #citation-relation:not([hidden]))
   max-block-size: 5rem;
   overflow: auto;
 }
+#citation-relation .relation-categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  max-block-size: none;
+}
+.relation-categories .citation-category {
+  align-items: center;
+  margin: 0;
+  padding: 2px 6px;
+  border: 1px solid #ccdcd2;
+  border-radius: 6px;
+}
 #citation-relation .relation-surrounding {
   color: #526760;
   font-size: 12px;

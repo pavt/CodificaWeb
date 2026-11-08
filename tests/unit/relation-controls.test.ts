@@ -236,7 +236,7 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
     id: String(index),
     url: index === 0 ? legacyUrl : longUrl,
     quote: `Cita ${index}`,
-    codes: [{ id: 'movilidad', name: 'Movilidad' }],
+    codes: [{ id: 'movilidad', name: 'Movilidad', color: '#7FC97F' }],
     note: 'Registro de terreno',
     context: { prefix: 'Esperamos el bus. ', suffix: ' describe la espera.' },
   }));
@@ -269,6 +269,12 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
   const firstCard = resultList.querySelector('li');
   expect(firstCard?.textContent).toMatch(/Cita 0.*example.test\/busqueda/);
   expect(firstCard?.textContent).toContain('Movilidad');
+  const badge = firstCard?.querySelector('.citation-category');
+  expect(badge?.textContent).toBe('Movilidad');
+  expect(
+    badge?.querySelector<HTMLElement>('.citation-swatch')?.style
+      .backgroundColor,
+  ).toBe('rgb(127, 201, 127)');
   expect(
     firstCard?.querySelector('.relation-exact blockquote')?.textContent,
   ).toBe('«Cita 0»');
