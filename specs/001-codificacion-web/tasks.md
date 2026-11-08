@@ -35,7 +35,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) | [#24](https://github.com/pavt/CodificaWeb/pull/24) |
 | T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) | [#25](https://github.com/pavt/CodificaWeb/pull/25) |
 | T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) | [#26](https://github.com/pavt/CodificaWeb/pull/26) |
-| T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) |                                                    |
+| T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) | [#27](https://github.com/pavt/CodificaWeb/pull/27) |
 | T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) |                                                    |
 
 T006 y T007 quedan disponibles tras T005. Priorizar T006 y coordinar los cambios compartidos. T008 espera ambos resultados. T013 cierra la validación del conjunto.
