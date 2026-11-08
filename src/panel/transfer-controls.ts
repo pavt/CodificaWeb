@@ -43,7 +43,7 @@ export function mountTransfer(root: HTMLElement) {
       status.textContent = 'Copia del proyecto importada.';
     } catch {
       status.textContent =
-        'No se pudo importar el archivo. Comprueba que sea un proyecto JSON v1 válido.';
+        'No se pudo importar el archivo. Comprueba que sea un proyecto JSON v1 o v2 válido.';
     } finally {
       busy = false;
       updateButtons();
@@ -72,7 +72,7 @@ export function mountTransfer(root: HTMLElement) {
       );
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'codificaweb-proyecto-v1.json';
+      link.download = 'codificaweb-proyecto-v2.json';
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       status.textContent = 'Proyecto exportado.';

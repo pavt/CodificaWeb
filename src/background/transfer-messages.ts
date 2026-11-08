@@ -16,9 +16,22 @@ export async function handleTransferRequest(message: Record<string, unknown>) {
       return { kind: 'error' };
     }
     const snapshot = await transfer.exportProject(message.projectId);
-    const { sources, codes, annotations, codings } = snapshot;
+    const {
+      sources,
+      codes,
+      annotations,
+      codings,
+      relationTypes,
+      quotationLinks,
+    } = snapshot;
     if (
-      1 + sources.length + codes.length + annotations.length + codings.length >
+      1 +
+        sources.length +
+        codes.length +
+        annotations.length +
+        codings.length +
+        relationTypes.length +
+        quotationLinks.length >
       maxProjectRecords
     )
       return { kind: 'error' };

@@ -1,5 +1,6 @@
 import { codeNameKey } from '../domain/codings';
 import { decodeProjectFile } from '../domain/project-file';
+import { orderLinkEndpoints } from '../domain/relations';
 import type { CodingDatabase } from './database';
 
 export class ProjectTransfer {
@@ -9,7 +10,15 @@ export class ProjectTransfer {
     const { db } = this;
     return db.transaction(
       'r',
-      [db.projects, db.sources, db.codes, db.annotations, db.codings],
+      [
+        db.projects,
+        db.sources,
+        db.codes,
+        db.annotations,
+        db.codings,
+        db.relationTypes,
+        db.quotationLinks,
+      ],
       async () => {
         const project = await db.projects.get(id);
         if (!project) throw new Error('Proyecto inexistente.');
@@ -63,14 +72,41 @@ export class ProjectTransfer {
           .where('[projectId+annotationId]')
           .between([id, ''], [id, '\uffff'])
           .toArray();
+        const relationTypes = (
+          await db.relationTypes.where('projectId').equals(id).toArray()
+        ).map(
+          ({
+            id,
+            projectId,
+            name,
+            description,
+            direction,
+            createdAt,
+            updatedAt,
+          }) => ({
+            id,
+            projectId,
+            name,
+            description,
+            direction,
+            createdAt,
+            updatedAt,
+          }),
+        );
+        const quotationLinks = await db.quotationLinks
+          .where('projectId')
+          .equals(id)
+          .toArray();
         return {
-          schemaVersion: 1 as const,
+          schemaVersion: 2 as const,
           exportedAt: new Date().toISOString(),
           project,
           sources,
           codes,
           annotations,
           codings,
+          relationTypes,
+          quotationLinks,
         };
       },
     );
@@ -89,6 +125,12 @@ export class ProjectTransfer {
     const annotationIds = new Map(
       data.annotations.map(({ id }) => [id, crypto.randomUUID()]),
     );
+    const typeIds = new Map(
+      data.relationTypes.map(({ id }) => [id, crypto.randomUUID()]),
+    );
+    const directionById = new Map(
+      data.relationTypes.map(({ id, direction }) => [id, direction]),
+    );
     function remap(ids: Map<string, string>, id: string) {
       const mapped = ids.get(id);
       if (!mapped) throw new Error('Referencia inválida.');
@@ -96,7 +138,15 @@ export class ProjectTransfer {
     }
     await db.transaction(
       'rw',
-      [db.projects, db.sources, db.codes, db.annotations, db.codings],
+      [
+        db.projects,
+        db.sources,
+        db.codes,
+        db.annotations,
+        db.codings,
+        db.relationTypes,
+        db.quotationLinks,
+      ],
       async () => {
         await db.projects.add({ ...data.project, id: projectId });
         await db.sources.bulkAdd(
@@ -132,6 +182,31 @@ export class ProjectTransfer {
             annotationId: remap(annotationIds, row.annotationId),
             codeId: remap(codeIds, row.codeId),
           })),
+        );
+        await db.relationTypes.bulkAdd(
+          data.relationTypes.map((row) => ({
+            ...row,
+            projectId,
+            id: remap(typeIds, row.id),
+            nameKey: codeNameKey(row.name),
+          })),
+        );
+        await db.quotationLinks.bulkAdd(
+          data.quotationLinks.map((row) => {
+            const direction = directionById.get(row.relationTypeId);
+            if (!direction) throw new Error('Tipo de relación inválido.');
+            return {
+              ...row,
+              ...orderLinkEndpoints(
+                direction,
+                remap(annotationIds, row.fromAnnotationId),
+                remap(annotationIds, row.toAnnotationId),
+              ),
+              id: crypto.randomUUID(),
+              projectId,
+              relationTypeId: remap(typeIds, row.relationTypeId),
+            };
+          }),
         );
       },
     );

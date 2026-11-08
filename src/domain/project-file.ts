@@ -2,11 +2,12 @@ import { decodeSelectors, isRecord } from '../capture-contract';
 
 import { maxProjectBytes, maxProjectRecords } from './project-file-limits';
 import { codeNameKey } from './codings';
+import { orderLinkEndpoints, type RelationType } from './relations';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 function invalid(): never {
-  throw new Error('El archivo no cumple el formato de proyecto JSON v1.');
+  throw new Error('El archivo no cumple el formato de proyecto JSON v1 o v2.');
 }
 
 function record(value: unknown, keys: string) {
@@ -100,12 +101,17 @@ export function decodeProjectFile(input: string) {
   ) {
     throw new Error('El archivo supera el límite de 10 MiB.');
   }
-  const envelope = record(
-    JSON.parse(input),
-    'schemaVersion exportedAt project sources codes annotations codings',
-  );
-  if (envelope.schemaVersion !== 1)
+  const raw: unknown = JSON.parse(input);
+  if (!isRecord(raw)) invalid();
+  const { schemaVersion } = raw;
+  if (schemaVersion !== 1 && schemaVersion !== 2)
     throw new Error('Versión de proyecto no admitida.');
+  const keys =
+    'schemaVersion exportedAt project sources codes annotations codings';
+  const envelope = record(
+    raw,
+    schemaVersion === 2 ? keys + ' relationTypes quotationLinks' : keys,
+  );
   const exportedAt = date(envelope.exportedAt);
   const projectRow = record(
     envelope.project,
@@ -120,12 +126,16 @@ export function decodeProjectFile(input: string) {
   const codeRows = list(envelope.codes);
   const annotationRows = list(envelope.annotations);
   const codingRows = list(envelope.codings);
+  const typeRows = schemaVersion === 2 ? list(envelope.relationTypes) : [];
+  const linkRows = schemaVersion === 2 ? list(envelope.quotationLinks) : [];
   if (
     1 +
       sourceRows.length +
       codeRows.length +
       annotationRows.length +
-      codingRows.length >
+      codingRows.length +
+      typeRows.length +
+      linkRows.length >
     maxProjectRecords
   )
     invalid();
@@ -190,13 +200,60 @@ export function decodeProjectFile(input: string) {
   });
   unique(codings, (row) => row.id);
   unique(codings, (row) => `${row.annotationId}/${row.codeId}`);
+  const relationTypes = typeRows.map<Omit<RelationType, 'nameKey'>>((value) => {
+    const row = record(
+      value,
+      'id projectId name description direction createdAt updatedAt',
+    );
+    const { direction } = row;
+    if (direction !== 'directed' && direction !== 'symmetric') invalid();
+    return {
+      ...owned(row, project.id),
+      name: text(row.name, 256, true).trim().normalize('NFC'),
+      direction,
+      ...('description' in row
+        ? { description: text(row.description, 16_384) }
+        : {}),
+    };
+  });
+  unique(relationTypes, (row) => row.id);
+  unique(relationTypes, (row) => codeNameKey(row.name));
+  const typeById = new Map(relationTypes.map((row) => [row.id, row]));
+  const sourceByAnnotation = new Map(
+    annotations.map((row) => [row.id, row.sourceId]),
+  );
+  const quotationLinks = linkRows.map((value) => {
+    const row = record(
+      value,
+      'id projectId fromAnnotationId toAnnotationId relationTypeId note createdAt updatedAt',
+    );
+    const relationTypeId = id(row.relationTypeId);
+    const from = id(row.fromAnnotationId);
+    const to = id(row.toAnnotationId);
+    const fromSource = sourceByAnnotation.get(from);
+    const toSource = sourceByAnnotation.get(to);
+    const type = typeById.get(relationTypeId);
+    if (!type || !fromSource || !toSource || fromSource === toSource) invalid();
+    return {
+      ...owned(row, project.id),
+      ...orderLinkEndpoints(type.direction, from, to),
+      relationTypeId,
+      ...('note' in row ? { note: text(row.note, 16_384) } : {}),
+    };
+  });
+  unique(quotationLinks, (row) => row.id);
+  unique(quotationLinks, (row) =>
+    [row.fromAnnotationId, row.toAnnotationId, row.relationTypeId].join('/'),
+  );
   return {
-    schemaVersion: 1 as const,
+    schemaVersion,
     exportedAt,
     project,
     sources,
     codes,
     annotations,
     codings,
+    relationTypes,
+    quotationLinks,
   };
 }

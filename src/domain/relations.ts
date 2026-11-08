@@ -45,3 +45,13 @@ export interface RelationEvidence extends QuotationLink {
   to: LinkedCitation;
   direction: 'outgoing' | 'incoming' | 'symmetric';
 }
+
+export function orderLinkEndpoints(
+  direction: RelationTypeFields['direction'],
+  fromAnnotationId: string,
+  toAnnotationId: string,
+) {
+  return direction === 'symmetric' && fromAnnotationId > toAnnotationId
+    ? { fromAnnotationId: toAnnotationId, toAnnotationId: fromAnnotationId }
+    : { fromAnnotationId, toAnnotationId };
+}
