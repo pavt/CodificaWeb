@@ -4,10 +4,14 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q10 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
+test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
+  const fixtureUrls = new Set([
+    url,
+    ...['uno', 'dos'].map((path) => new URL(`/catalogo-${path}`, url).href),
+  ]);
   try {
     await cp(resolve('dist'), dist, { recursive: true });
     // Grant only the synthetic fixture host in this copy. Q11 loads the unmodified package.
@@ -34,6 +38,18 @@ test('Q01–Q10 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       },
     );
     try {
+      const unexpectedTraffic: string[] = [];
+      await context.route(/^https?:\/\//, (route) => route.abort());
+      context.on('request', (request) => {
+        const address = request.url();
+        if (!/^https?:\/\//.test(address)) return;
+        if (fixtureUrls.has(address) && request.isNavigationRequest()) return;
+        unexpectedTraffic.push(`${request.method()} ${address}`);
+      });
+      await context.routeWebSocket(/^wss?:\/\//, async (socket) => {
+        unexpectedTraffic.push(socket.url());
+        await socket.close();
+      });
       const worker =
         context.serviceWorkers()[0] ??
         (await context.waitForEvent('serviceworker'));
@@ -524,6 +540,7 @@ test('Q01–Q10 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       await expect(
         project.locator('option', { hasText: 'Movilidad' }),
       ).toHaveCount(2);
+      expect(unexpectedTraffic).toEqual([]);
     } finally {
       await context.close();
     }

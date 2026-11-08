@@ -27,11 +27,13 @@ Cada comportamiento empieza con una prueba observable. Ejecutarla sola y verific
 
 Usar Vitest en Node para lógica y Dexie con fake-indexeddb para integración rápida. Confirmar IndexedDB, selección y pintura también en Chromium real. La prueba de producción usa `pnpm build` y `pnpm exec playwright install chromium`, después `pnpm test:e2e`. Crear un perfil temporal con `chromium.launchPersistentContext`, canal `chromium`, argumentos `--disable-extensions-except` y `--load-extension` apuntando a dist. Obtener ID del service worker. Abrir fixtures HTTP locales y la página real del panel para automatización. La apertura nativa del panel y el diálogo de permisos tienen validación manual adicional. Cerrar contexto y borrar perfil al terminar. Usar fixtures y trazas sin información privada. [Playwright para extensiones](https://playwright.dev/docs/chrome-extensions) · [Cobertura Vitest](https://vitest.dev/guide/coverage)
 
+El [registro de validación de T013](release-validation.md) reúne la evidencia y el recorrido manual pendiente.
+
 ## Definición de terminado
 
 - El PR enlaza al issue, pasa CI sobre la última revisión y completa la revisión antes del merge. Verificar el cierre al integrar.
 
 - Cada CA cubierto tiene evidencia reproducible y traza hasta archivos de prueba y código.
 - Lint, formato, tipos, compilación, unitarias, integración, E2E y cobertura pasan. La auditoría se revisa y se resuelven hallazgos aplicables.
-- La prueba manual registra versiones de Chrome y Brave, sistema, flujo de permisos, solapamientos, notas y recarga, búsqueda, navegación y transferencia JSON. Registrar resultados y fallos.
+- La E2E cubre solapamientos, notas y recarga, búsqueda, navegación y transferencia JSON. Registrar versiones de Chrome y Brave, sistema, resultados y fallos de las comprobaciones que requieren la interfaz nativa, incluidos el icono, el diálogo de permisos y la revocación.
 - La revisión comprueba que el corpus queda en el perfil y que la extensión solo accede a sitios autorizados. No hay riesgos críticos abiertos ni criterios pendientes del incremento.

@@ -15,7 +15,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q08. Evidencia en `tests/unit/evidence-search.test.ts`, `tests/unit/evidence-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T011 [US3] · Abrir fuente, validar destino y ubicar rango o mostrar causa. `src/background/`, `src/content/`, `src/panel/`. Q09. Evidencia en `tests/unit/open-evidence.test.ts`, `tests/unit/locate-evidence.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T012 [US4] · Exportar snapshot, validar e importar como copia transaccional. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q10, Q13. Evidencia en `tests/integration/project-transfer.test.ts`, `tests/unit/project-file.test.ts`, `tests/unit/transfer-controls.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T013 · Validar versión en Chrome y Brave, ejecutar auditoría y revisar permisos y tráfico. `tests/`, `docs/quality.md`. Q11, Q14.
+- [ ] T013 · Validar versión en Chrome y Brave, ejecutar auditoría y revisar permisos y tráfico. `tests/`, `docs/quality.md`. Q11, Q14. Evidencia en `tests/e2e/mv3.spec.ts`, `tests/e2e/selection.spec.ts` y [registro de validación](../../docs/release-validation.md).
 
 ## Orden de implementación
 
@@ -36,7 +36,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) | [#25](https://github.com/pavt/CodificaWeb/pull/25) |
 | T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) | [#26](https://github.com/pavt/CodificaWeb/pull/26) |
 | T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) | [#27](https://github.com/pavt/CodificaWeb/pull/27) |
-| T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) |                                                    |
+| T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) | [#28](https://github.com/pavt/CodificaWeb/pull/28) |
 
 T006 y T007 quedan disponibles tras T005. Priorizar T006 y coordinar los cambios compartidos. T008 espera ambos resultados. T013 cierra la validación del conjunto.
 
