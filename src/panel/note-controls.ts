@@ -64,6 +64,9 @@ export function createNoteControls(
     try {
       const message = {
         type: 'note.set',
+        ...(current.target.projectId
+          ? { projectId: current.target.projectId }
+          : {}),
         fragment: latest,
         note,
         operationId: crypto.randomUUID(),
@@ -98,6 +101,9 @@ export function createNoteControls(
         const note = decodeNote(
           await chrome.runtime.sendMessage({
             type: 'note.read',
+            ...(current.target.projectId
+              ? { projectId: current.target.projectId }
+              : {}),
             fragment: snapshot,
           }),
         );

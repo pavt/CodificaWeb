@@ -25,6 +25,7 @@ export function createHighlightFilter(
       }
       const result: unknown = await chrome.runtime.sendMessage({
         type: 'highlight.read',
+        ...(current.projectId ? { projectId: current.projectId } : {}),
         url: current.url,
         filter: filter.value || null,
       });
@@ -40,6 +41,7 @@ export function createHighlightFilter(
         current.tabId,
         {
           type: 'highlight.paint',
+          ...(current.projectId ? { projectId: current.projectId } : {}),
           filter: filter.value || null,
           url: current.url,
           entries: result.entries,

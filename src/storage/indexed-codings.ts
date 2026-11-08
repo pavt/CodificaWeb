@@ -203,7 +203,11 @@ export class IndexedCodings {
           annotation.updatedAt = time;
           await this.db.annotations.put(annotation);
         }
-        await this.db.operations.add({ id: operationId, fingerprint });
+        await this.db.operations.add({
+          id: operationId,
+          fingerprint,
+          projectId,
+        });
         return note;
       },
     );
@@ -258,7 +262,7 @@ export class IndexedCodings {
           await this.db.codings.delete(existing.id);
         }
       }
-      await this.db.operations.add({ id: operationId, fingerprint });
+      await this.db.operations.add({ id: operationId, fingerprint, projectId });
       return this.readCurrent(projectId, fragment);
     });
   }

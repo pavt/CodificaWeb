@@ -8,7 +8,7 @@ interface Entity {
   updatedAt: string;
 }
 
-interface Project extends Entity {
+export interface Project extends Entity {
   name: string;
   description: string;
 }
@@ -41,6 +41,7 @@ interface Coding extends Entity {
 }
 
 interface Operation {
+  projectId?: string;
   id: string;
   fingerprint: string;
 }
@@ -53,6 +54,7 @@ export class CodingDatabase extends Dexie {
   declare codes: Table<StoredCode, string>;
   declare annotations: Table<Annotation, string>;
   declare codings: Table<Coding, string>;
+  declare preferences: Table<{ key: string; value: string }, string>;
   declare sites: Table<{ origin: string }, string>;
   declare operations: Table<Operation, string>;
 
@@ -68,6 +70,22 @@ export class CodingDatabase extends Dexie {
       operations: 'id',
     });
     this.version(2).stores({ sites: 'origin' });
+    this.version(3)
+      .stores({ preferences: 'key', operations: 'id, projectId' })
+      .upgrade((tx) =>
+        tx
+          .table<Operation>('operations')
+          .toCollection()
+          .modify((operation) => {
+            const fingerprint: unknown = JSON.parse(operation.fingerprint);
+            if (Array.isArray(fingerprint)) {
+              const projectId: unknown =
+                fingerprint[fingerprint[0] === 'note' ? 1 : 0];
+              if (typeof projectId === 'string')
+                operation.projectId = projectId;
+            }
+          }),
+      );
     this.on('populate', async () => {
       const time = new Date().toISOString();
       await this.projects.add({

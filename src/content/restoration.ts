@@ -5,6 +5,7 @@ export function startRestoration(
   onAllowed: () => void,
 ) {
   let url = location.href;
+  let projectId: string | null | undefined;
   let filter: string | null = null;
   let entries: unknown[] = [];
   let generation = 0;
@@ -38,10 +39,11 @@ export function startRestoration(
     return painter.paint(entries);
   }
 
-  async function restore() {
-    if (url !== location.href) filter = null;
+  async function restore(resetFilter = false) {
+    if (resetFilter || url !== location.href) filter = null;
     url = location.href;
     clear();
+    projectId = undefined;
     const id = generation;
     try {
       const result = await chrome.runtime.sendMessage({
@@ -56,6 +58,7 @@ export function startRestoration(
         !Array.isArray(result.entries)
       )
         return false;
+      projectId = result.projectId;
       onAllowed();
       paint(result.entries, filter);
       return true;
@@ -77,6 +80,9 @@ export function startRestoration(
   return {
     clear,
     restore,
+    matchesProject(id: unknown) {
+      return id === undefined || id === projectId;
+    },
     paint(next: unknown[], selected: string | null) {
       generation++;
       clearTimeout(timer);

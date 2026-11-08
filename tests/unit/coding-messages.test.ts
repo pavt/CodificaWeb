@@ -82,7 +82,7 @@ test('Q05: el worker entrega únicamente los fragmentos del filtro solicitado', 
       url: fragment.url,
       filter: null,
     }),
-  ).toEqual({ kind: 'highlights', entries: [] });
+  ).toMatchObject({ kind: 'highlights', entries: [] });
   expect(
     await handleCodingRequest({
       type: 'highlight.read',

@@ -2,6 +2,7 @@ import type { CaptureTarget } from '../capture-contract';
 import { createCodingControls } from './coding-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
+import { mountProjects } from './project-controls';
 import { readSelection } from './read-selection';
 import { verifySiteAccess } from './site-access';
 
@@ -34,6 +35,7 @@ const notes = createNoteControls(
   document.getElementById('note-status') as HTMLElement,
 );
 let target: CaptureTarget | undefined;
+let projectId: string | null | undefined;
 
 const captureMessages = {
   empty: 'Selecciona texto en la página e inténtalo de nuevo.',
@@ -84,8 +86,8 @@ form.addEventListener('submit', async (event) => {
         );
         if (prepared !== true)
           throw new Error('El documento ya no está disponible.');
-        target = nextTarget;
-        captureButton.disabled = false;
+        target = projectId ? { ...nextTarget, projectId } : nextTarget;
+        captureButton.disabled = Boolean(projects && !projectId);
       },
     );
   } catch {
@@ -114,3 +116,20 @@ captureButton.addEventListener('click', async () => {
     captureStatus.textContent = captureMessages[result.kind];
   }
 });
+
+const projects = document.getElementById(
+  'projects',
+) as HTMLFieldSetElement | null;
+if (projects) {
+  mountProjects(projects, (id) => {
+    if (projectId === id) return;
+    projectId = id;
+    highlights.clear();
+    clearPreview();
+    if (target) {
+      const { tabId, documentId, url } = target;
+      target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
+      captureButton.disabled = id === null;
+    }
+  });
+}

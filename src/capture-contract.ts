@@ -1,6 +1,7 @@
 import type { Fragment } from './domain/codings';
 
 export interface CaptureTarget {
+  projectId?: string;
   tabId: number;
   documentId: string;
   url: string;

@@ -1,0 +1,44 @@
+import { projects } from './coding-messages';
+
+export async function handleProjectRequest(message: Record<string, unknown>) {
+  const { type, id, name, description } = message;
+  if (type === 'project.list')
+    return { kind: 'projects', ...(await projects.list()) };
+  if (type === 'project.create' || type === 'project.update') {
+    if (
+      typeof name !== 'string' ||
+      !name.trim() ||
+      name.length > 256 ||
+      typeof description !== 'string' ||
+      description.length > 16_384
+    )
+      return { kind: 'error' };
+    if (type === 'project.create')
+      await projects.create(name.trim(), description);
+    else if (typeof id === 'string')
+      await projects.update(id, name.trim(), description);
+    else return { kind: 'error' };
+  } else if (type === 'project.select' || type === 'project.remove') {
+    if (typeof id !== 'string') return { kind: 'error' };
+    if (type === 'project.select') await projects.select(id);
+    else await projects.remove(id);
+    const tabs = await chrome.tabs.query({});
+    await Promise.allSettled(
+      tabs.flatMap(({ id: tabId }) =>
+        tabId === undefined
+          ? []
+          : [
+              chrome.tabs.sendMessage(
+                tabId,
+                { type: 'highlight.project' },
+                { frameId: 0 },
+              ),
+            ],
+      ),
+    );
+  } else return { kind: 'error' };
+  void chrome.runtime
+    .sendMessage({ type: 'project.changed' })
+    .catch(() => undefined);
+  return { kind: 'projects', ...(await projects.list()) };
+}
