@@ -13,7 +13,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T008 [US3] · CRUD de proyectos y cambio de proyecto activo. `src/storage/`, `src/background/`, `src/panel/`. Q01. Evidencia en `tests/integration/projects.test.ts`, `tests/unit/project-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T009 [US3] · CRUD de códigos y propagación de color. `src/storage/`, `src/background/`, `src/panel/`. Q02. Evidencia en `tests/integration/catalog.test.ts`, `tests/unit/catalog-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q08. Evidencia en `tests/unit/evidence-search.test.ts`, `tests/unit/evidence-controls.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T011 [US3] · Abrir fuente, validar destino y ubicar rango o mostrar causa. `src/background/`, `src/content/`, `src/panel/`. Q09.
+- [ ] T011 [US3] · Abrir fuente, validar destino y ubicar rango o mostrar causa. `src/background/`, `src/content/`, `src/panel/`. Q09. Evidencia en `tests/unit/open-evidence.test.ts`, `tests/unit/locate-evidence.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T012 [US4] · Exportar snapshot, validar e importar como copia transaccional. `src/domain/`, `src/storage/`, `src/panel/`. Q10, Q13.
 - [ ] T013 · Validar versión en Chrome y Brave, ejecutar auditoría y revisar permisos y tráfico. `tests/`, `docs/quality.md`. Q11, Q14.
 
@@ -34,7 +34,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T008  | T006, T007           | M3        | p1        | feature | data      | [#9](https://github.com/pavt/CodificaWeb/issues/9)   | [#23](https://github.com/pavt/CodificaWeb/pull/23) |
 | T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) | [#24](https://github.com/pavt/CodificaWeb/pull/24) |
 | T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) | [#25](https://github.com/pavt/CodificaWeb/pull/25) |
-| T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) |                                                    |
+| T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) | [#26](https://github.com/pavt/CodificaWeb/pull/26) |
 | T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) |                                                    |
 | T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) |                                                    |
 

@@ -5,6 +5,18 @@ import type { CodingDatabase } from './database';
 export class IndexedEvidence {
   constructor(private readonly db: CodingDatabase) {}
 
+  getFragment(projectId: string, id: string) {
+    const { db } = this;
+    return db.transaction('r', [db.annotations, db.sources], async () => {
+      const annotation = await db.annotations.get(id);
+      if (annotation?.projectId !== projectId) return undefined;
+      const source = await db.sources.get(annotation.sourceId);
+      return source?.projectId === projectId
+        ? { url: source.url, selectors: annotation.selectors }
+        : undefined;
+    });
+  }
+
   search(projectId: string, filters: SearchFilters) {
     const { db } = this;
     return db.transaction(

@@ -1,3 +1,4 @@
+import { openEvidence } from './open-evidence';
 import { IndexedEvidence } from '../storage/indexed-evidence';
 import { database, projects } from './coding-messages';
 
@@ -18,4 +19,17 @@ export async function handleEvidenceSearch(message: Record<string, unknown>) {
     kind: 'evidence',
     ...(await evidence.search(projectId, { text, codeId, sourceId })),
   };
+}
+
+export async function handleEvidenceOpen(message: Record<string, unknown>) {
+  const { projectId, id } = message;
+  if (
+    typeof id !== 'string' ||
+    typeof projectId !== 'string' ||
+    projectId !== (await projects.activeId())
+  )
+    return { kind: 'unavailable' };
+  const fragment = await evidence.getFragment(projectId, id);
+  if (!fragment) return { kind: 'unavailable' };
+  return openEvidence(projectId, fragment.url, fragment.selectors);
 }

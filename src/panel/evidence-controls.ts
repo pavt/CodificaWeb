@@ -42,6 +42,15 @@ function fillOptions(
   select.value = items.some(({ value }) => value === previous) ? previous : '';
 }
 
+const navigationMessages: Record<string, string> = {
+  located: 'Fragmento localizado en la fuente.',
+  unlocated: 'Fuente abierta. No se pudo ubicar la cita.',
+  permission: 'Fuente abierta. Autoriza el sitio para ubicar la cita.',
+  redirected: 'La pestaña abrió un destino distinto o no verificable.',
+  timeout: 'Fuente abierta. La página no respondió a tiempo.',
+  unavailable: 'No se pudo abrir la fuente.',
+};
+
 export function mountEvidence(root: HTMLFormElement) {
   const fields = root.querySelector('fieldset') as HTMLFieldSetElement;
   const query = root.querySelector('#evidence-text') as HTMLInputElement;
@@ -109,6 +118,34 @@ export function mountEvidence(root: HTMLFormElement) {
           note.textContent = row.note;
           item.append(note);
         }
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.textContent = 'Abrir fuente';
+        const navigation = document.createElement('p');
+        navigation.setAttribute('aria-live', 'polite');
+        open.addEventListener('click', async () => {
+          open.disabled = true;
+          navigation.textContent = 'Abriendo fuente…';
+          try {
+            const result: unknown = await chrome.runtime.sendMessage({
+              type: 'evidence.open',
+              projectId,
+              id: row.id,
+            });
+            const kind =
+              isRecord(result) && typeof result.kind === 'string'
+                ? result.kind
+                : 'unavailable';
+            navigation.textContent = Object.hasOwn(navigationMessages, kind)
+              ? (navigationMessages[kind] ?? '')
+              : 'No se pudo abrir la fuente.';
+          } catch {
+            navigation.textContent = 'No se pudo abrir la fuente.';
+          } finally {
+            open.disabled = false;
+          }
+        });
+        item.append(open, navigation);
         list.append(item);
       }
       status.textContent = result.results.length

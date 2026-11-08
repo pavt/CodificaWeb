@@ -138,6 +138,30 @@ test('Q05: el content script pinta solo para el panel y la URL autorizados', asy
   );
   expect(registry.size).toBe(1);
   handle(
+    {
+      type: 'evidence.locate',
+      url: 'https://otro.test/',
+      projectId: 'actual',
+      selectors: {},
+    },
+    { id: 'id' },
+    respond,
+  );
+  expect(respond).toHaveBeenLastCalledWith({ kind: 'redirected' });
+  respond.mockClear();
+  handle(
+    { type: 'evidence.locate', url, projectId: 'ajeno', selectors: {} },
+    { id: 'id' },
+    respond,
+  );
+  expect(respond).not.toHaveBeenCalled();
+  handle(
+    { type: 'evidence.locate', url, projectId: undefined, selectors: {} },
+    { id: 'id' },
+    respond,
+  );
+  expect(respond).toHaveBeenLastCalledWith({ kind: 'unlocated' });
+  handle(
     { type: 'highlight.revoke', origins: [location.origin] },
     { id: 'id' },
     respond,

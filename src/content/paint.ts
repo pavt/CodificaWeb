@@ -1,6 +1,6 @@
 import { segmentHighlights } from '../domain/highlights';
 import { resolveAnchor } from './resolve-anchor';
-import { excluded, maxDocumentLength } from './capture';
+import { indexDocument } from './text-index';
 
 export function createPainter() {
   const owned = new Map<string, Highlight>();
@@ -32,22 +32,9 @@ export function createPainter() {
     )
       return { painted: false, unresolved: 0 };
 
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-    );
-    const nodes: { node: Text; start: number; end: number }[] = [];
-    let text = '';
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      if (node.parentElement?.closest(excluded)) continue;
-      const value = (node as Text).data;
-      if (text.length + value.length > maxDocumentLength)
-        return { painted: false, unresolved: 0 };
-      if (!value) continue;
-      const start = text.length;
-      text += value;
-      nodes.push({ node: node as Text, start, end: text.length });
-    }
+    const index = indexDocument();
+    if (!index) return { painted: false, unresolved: 0 };
+    const { nodes, text } = index;
 
     const ranges = entries.flatMap((entry) => {
       const { id, color, selectors } = entry ?? {};

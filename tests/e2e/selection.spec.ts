@@ -3,7 +3,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q08 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
+test('Q01–Q09 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -448,6 +448,33 @@ test('Q01–Q08 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       await expect(panel.locator('#evidence-status')).toHaveText(
         'Sin resultados.',
       );
+      await panel
+        .getByLabel('Fuente de la evidencia')
+        .selectOption({ label: sources[0] ?? '' });
+      await search.click();
+      const open = evidence.getByRole('button', { name: 'Abrir fuente' });
+      await open.click();
+      await expect(evidence).toContainText('No se pudo ubicar la cita.');
+      await expect(evidence).toContainText('Evidencia del catálogo');
+
+      const firstSource = sources[0] ?? '';
+      await source.close();
+      await context.unroute(firstSource);
+      await context.route(firstSource, (route) =>
+        route.fulfill({
+          contentType: 'text/html; charset=utf-8',
+          body: '<div style="height: 2200px"></div><p id="catalog-fixture">Evidencia del catálogo</p>',
+        }),
+      );
+      const [destination] = await Promise.all([
+        context.waitForEvent('page'),
+        open.click(),
+      ]);
+      await expect(evidence).toContainText(
+        'Fragmento localizado en la fuente.',
+      );
+      await expect(destination).toHaveURL(firstSource);
+      await expect(destination.locator('#catalog-fixture')).toBeInViewport();
     } finally {
       await context.close();
     }

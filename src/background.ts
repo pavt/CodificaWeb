@@ -1,7 +1,10 @@
 import { isRecord } from './capture-contract';
 import { handleCodingRequest } from './background/coding-messages';
 import { handleCodeRequest } from './background/code-messages';
-import { handleEvidenceSearch } from './background/evidence-messages';
+import {
+  handleEvidenceOpen,
+  handleEvidenceSearch,
+} from './background/evidence-messages';
 import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
@@ -24,6 +27,7 @@ async function handle(
       return handleCodeRequest(message);
     if (message.type === 'evidence.search')
       return handleEvidenceSearch(message);
+    if (message.type === 'evidence.open') return handleEvidenceOpen(message);
     return handleCodingRequest(message);
   }
   if (

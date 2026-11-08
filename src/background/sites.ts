@@ -66,6 +66,15 @@ export function enableSite(value: unknown) {
   });
 }
 
+export async function hasSiteAccess(value: unknown) {
+  const site = parseSite(value);
+  return (
+    site !== undefined &&
+    Boolean(await database.sites.get(site.origin)) &&
+    (await chrome.permissions.contains({ origins: [site.pattern] }))
+  );
+}
+
 export async function canRestore(
   sender: chrome.runtime.MessageSender,
   value: unknown,
@@ -76,8 +85,7 @@ export async function canRestore(
     sender.tab?.id !== undefined &&
     site !== undefined &&
     parseSite(sender.url)?.origin === site.origin &&
-    Boolean(await database.sites.get(site.origin)) &&
-    (await chrome.permissions.contains({ origins: [site.pattern] }))
+    (await hasSiteAccess(value))
   );
 }
 
