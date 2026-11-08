@@ -5,6 +5,7 @@ import {
   handleEvidenceOpen,
   handleEvidenceSearch,
 } from './background/evidence-messages';
+import { handleTransferRequest } from './background/transfer-messages';
 import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
@@ -28,6 +29,11 @@ async function handle(
     if (message.type === 'evidence.search')
       return handleEvidenceSearch(message);
     if (message.type === 'evidence.open') return handleEvidenceOpen(message);
+    if (
+      message.type === 'transfer.import' ||
+      message.type === 'transfer.export'
+    )
+      return handleTransferRequest(message);
     return handleCodingRequest(message);
   }
   if (

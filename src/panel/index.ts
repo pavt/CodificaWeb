@@ -6,6 +6,7 @@ import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
 import { mountProjects } from './project-controls';
 import { readSelection } from './read-selection';
+import { mountTransfer } from './transfer-controls';
 import { verifySiteAccess } from './site-access';
 
 const form = document.getElementById('site-access') as HTMLFormElement;
@@ -136,6 +137,8 @@ const setCatalogProject =
     refreshEvidence?.(projectId ?? null);
     if (target && selected) void coding.show(target, selected);
   });
+const transfer = document.getElementById('project-transfer');
+const setTransferProject = transfer && mountTransfer(transfer);
 const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
@@ -144,6 +147,7 @@ if (projects) {
     if (projectId === id) return;
     projectId = id;
     setCatalogProject?.(id);
+    setTransferProject?.(id);
     refreshEvidence?.(id);
     highlights.clear();
     clearPreview();

@@ -1,3 +1,4 @@
+import { codeNameKey } from '../domain/codings';
 import type { CodingDatabase } from './database';
 
 export interface CodeFields {
@@ -18,7 +19,7 @@ function normalize(fields: CodeFields) {
   return {
     ...fields,
     name,
-    nameKey: name.toLowerCase().normalize('NFC'),
+    nameKey: codeNameKey(name),
     color: fields.color.toUpperCase(),
   };
 }

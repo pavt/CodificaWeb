@@ -34,3 +34,5 @@ En **Proyectos** puedes crear, seleccionar, renombrar y borrar proyectos. Cada u
 En **Buscar evidencias** puedes combinar texto de la cita o nota, código y fuente dentro del proyecto activo. La búsqueda incluye evidencias guardadas aunque su ubicación en la página no se pueda verificar.
 
 Pulsa **Abrir fuente** junto a un resultado para abrir o enfocar su página y localizar el fragmento. Si el sitio no está autorizado o la cita ya no se puede localizar, el resultado conserva la cita y muestra el motivo.
+
+En **Importar o exportar proyecto** puedes descargar un JSON del proyecto activo o cargar un archivo v1 como copia independiente. La importación valida todo el archivo antes de guardarlo.
