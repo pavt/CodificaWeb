@@ -31,4 +31,4 @@ Seleccionar el expediente existente sin crear rama mediante `SPECIFY_FEATURE_DIR
 
 ## Resultado de auditoría inicial
 
-`pnpm audit` detectó un aviso moderado para minimatch 10.2.6, dependencia de desarrollo de ESLint y typescript-eslint. El aviso indica corrección desde 11.0.1, fuera del major resuelto por esas herramientas. Se conserva el árbol compatible y se deja abierta la actualización de sus consumidores en T013. El árbol de ejecución de la extensión se auditará por separado cuando exista un artefacto compilado. [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)
+`pnpm audit` detectó un aviso moderado para minimatch 10.2.6, dependencia de desarrollo de ESLint y typescript-eslint. El aviso indica corrección desde 11.0.1, fuera del major resuelto por esas herramientas. T013 volvió a revisar este aviso y auditó por separado el árbol de producción. Los resultados constan en el [registro de validación](release-validation.md). [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)
