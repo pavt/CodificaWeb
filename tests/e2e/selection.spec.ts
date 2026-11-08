@@ -119,6 +119,36 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         '🙂 hola mundo',
       );
       await expect(panel.locator('#selection-source')).toHaveText(url);
+      await panel.getByLabel('Nombre de la categoría').fill('Patrón rápido');
+      await panel
+        .getByLabel('Definición de la categoría')
+        .fill('Una definición sintética');
+      await panel.getByLabel('Color de la categoría').fill('#126abc');
+      await panel.getByRole('button', { name: 'Guardar y aplicar' }).click();
+      await expect(panel.locator('#coding-status')).toHaveText(
+        'Categoría guardada y aplicada.',
+      );
+      const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
+      await expect(finding).toBeChecked();
+      await expect(panel.getByText('Una definición sintética')).toBeVisible();
+      await expect
+        .poll(() =>
+          source.evaluate(() =>
+            Array.from(
+              CSS.highlights.get('codificaweb-126abc') ?? [],
+              (range) => range.toString(),
+            ).join(''),
+          ),
+        )
+        .toBe('🙂 hola mundo');
+      await panel.getByLabel('Buscar categorías').fill('patrón');
+      await expect(panel.getByRole('checkbox', { name: 'Tema' })).toHaveCount(
+        0,
+      );
+      await panel.getByLabel('Buscar categorías').clear();
+      await finding.click();
+      await expect(finding).not.toBeChecked();
+
       const note = panel.getByLabel('Nota en texto plano');
       const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
       const removeNote = panel.getByRole('button', { name: 'Borrar nota' });

@@ -5,6 +5,8 @@ import type {
   HighlightEntry,
 } from '../domain/codings';
 import type { CodingDatabase } from './database';
+import { IndexedCatalog, type CodeFields } from './indexed-catalog';
+import { IndexedProjects } from './indexed-projects';
 
 export class IndexedCodings {
   constructor(private readonly db: CodingDatabase) {}
@@ -44,10 +46,11 @@ export class IndexedCodings {
       .where('projectId')
       .equals(projectId)
       .sortBy('id');
-    return catalog.map(({ id, name, color }) => ({
+    return catalog.map(({ id, name, color, description }) => ({
       id,
       name,
       color,
+      description,
       projectId,
       assigned: assigned.has(id),
     }));
@@ -213,6 +216,75 @@ export class IndexedCodings {
     );
   }
 
+  private async writeAssignment(
+    projectId: string,
+    fragment: Fragment,
+    codeId: string,
+    assigned: boolean,
+  ) {
+    const time = new Date().toISOString();
+    const annotation = await this.findOrCreateAnnotation(
+      projectId,
+      fragment,
+      assigned,
+      time,
+    );
+    if (annotation) {
+      const existing = await this.db.codings.get({
+        '[annotationId+codeId]': [annotation.id, codeId],
+      });
+      if (assigned && !existing) {
+        await this.db.codings.add({
+          id: crypto.randomUUID(),
+          projectId,
+          annotationId: annotation.id,
+          codeId,
+          createdAt: time,
+          updatedAt: time,
+        });
+      } else if (!assigned && existing) {
+        await this.db.codings.delete(existing.id);
+      }
+    }
+  }
+
+  createAndApply(
+    projectId: string,
+    fragment: Fragment,
+    fields: CodeFields,
+    operationId: string,
+  ) {
+    const fingerprint = JSON.stringify([
+      'create-and-apply',
+      projectId,
+      fragmentKey(fragment),
+      fields.name,
+      fields.description,
+      fields.color,
+    ]);
+    return this.db.transaction('rw', this.db.tables, async () => {
+      if ((await new IndexedProjects(this.db).activeId()) !== projectId)
+        throw new Error('Proyecto inactivo.');
+      const receipt = await this.db.operations.get(operationId);
+      if (receipt) {
+        if (receipt.fingerprint !== fingerprint)
+          throw new Error('Operación reutilizada con otros datos.');
+      } else {
+        const codeId = await new IndexedCatalog(this.db).create(
+          projectId,
+          fields,
+        );
+        await this.writeAssignment(projectId, fragment, codeId, true);
+        await this.db.operations.add({
+          id: operationId,
+          fingerprint,
+          projectId,
+        });
+      }
+      return this.readCurrent(projectId, fragment);
+    });
+  }
+
   set(
     projectId: string,
     fragment: Fragment,
@@ -238,30 +310,7 @@ export class IndexedCodings {
       if (!project || code?.projectId !== projectId)
         throw new Error('Código fuera del proyecto.');
 
-      const time = new Date().toISOString();
-      const annotation = await this.findOrCreateAnnotation(
-        projectId,
-        fragment,
-        assigned,
-        time,
-      );
-      if (annotation) {
-        const existing = await this.db.codings.get({
-          '[annotationId+codeId]': [annotation.id, codeId],
-        });
-        if (assigned && !existing) {
-          await this.db.codings.add({
-            id: crypto.randomUUID(),
-            projectId,
-            annotationId: annotation.id,
-            codeId,
-            createdAt: time,
-            updatedAt: time,
-          });
-        } else if (!assigned && existing) {
-          await this.db.codings.delete(existing.id);
-        }
-      }
+      await this.writeAssignment(projectId, fragment, codeId, assigned);
       await this.db.operations.add({ id: operationId, fingerprint, projectId });
       return this.readCurrent(projectId, fragment);
     });

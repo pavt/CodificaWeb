@@ -201,6 +201,22 @@ for (const [name, executable] of browsers) {
         expect(
           await readPanel("document.querySelector('#site-url-field').hidden"),
         ).toBe(true);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-name').value = 'Categoría sintética';
+          document.querySelector('#category-color').value = '#126abc';
+          document.querySelector('#category-definition').value = 'Definición sintética';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
         await page
           .locator('p')
           .last()
@@ -209,6 +225,51 @@ for (const [name, executable] of browsers) {
             node.dispatchEvent(new Event('pointerup', { bubbles: true }));
           });
         await expect.poll(quote).toBe('Otra cita.');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-options').textContent"),
+          )
+          .toContain('Definición sintética');
+        await readPanel(`Array.from(document.querySelectorAll('#coding-options label'))
+          .find(label => label.textContent === 'Categoría sintética').querySelector('input').click()`);
+        await expect
+          .poll(() =>
+            readPanel(`Array.from(document.querySelectorAll('#coding-options label'))
+          .find(label => label.textContent === 'Categoría sintética')?.querySelector('input').checked`),
+          )
+          .toBe(true);
+        await expect
+          .poll(() =>
+            page.evaluate(() =>
+              Array.from(
+                CSS.highlights.get('codificaweb-126abc') ?? [],
+                (range) => range.toString(),
+              ),
+            ),
+          )
+          .toEqual([citation, 'Otra cita.']);
+        await readPanel(`(() => {
+          document.querySelector('#project-name').value = 'Otro proyecto';
+          document.querySelector('#project-create').click();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel(`Array.from(document.querySelector('#project-select').options)
+          .some(option => option.text === 'Otro proyecto')`),
+          )
+          .toBe(true);
+        await readPanel(`(() => {
+          const projects = document.querySelector('#project-select');
+          projects.value = Array.from(projects.options).find(option => option.text === 'Otro proyecto').value;
+          projects.dispatchEvent(new Event('change'));
+        })()`);
+        await expect.poll(quote).toBe('');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(true);
+
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');

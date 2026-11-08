@@ -94,6 +94,31 @@ export async function handleCodingRequest(
       kind: 'codings',
       codes: await codings.read(projectId, fragment),
     };
+  if (message.type === 'coding.createAndApply') {
+    const { name, description, color, operationId } = message;
+    if (
+      typeof message.projectId !== 'string' ||
+      typeof name !== 'string' ||
+      typeof description !== 'string' ||
+      typeof color !== 'string' ||
+      typeof operationId !== 'string' ||
+      !operationIdPattern.test(operationId)
+    )
+      return error;
+    try {
+      return {
+        kind: 'codings',
+        codes: await codings.createAndApply(
+          projectId,
+          fragment,
+          { name, description, color },
+          operationId,
+        ),
+      };
+    } catch {
+      return error;
+    }
+  }
   if (
     message.type !== 'coding.set' ||
     typeof message.codeId !== 'string' ||
@@ -102,17 +127,21 @@ export async function handleCodingRequest(
     !operationIdPattern.test(message.operationId)
   )
     return error;
+  const { codeId, assigned, operationId } = message;
   try {
-    return {
-      kind: 'codings',
-      codes: await codings.set(
-        projectId,
-        fragment,
-        message.codeId,
-        message.assigned,
-        message.operationId,
-      ),
-    };
+    return await database.transaction('rw', database.tables, async () => {
+      if ((await projects.activeId()) !== projectId) return error;
+      return {
+        kind: 'codings' as const,
+        codes: await codings.set(
+          projectId,
+          fragment,
+          codeId,
+          assigned,
+          operationId,
+        ),
+      };
+    });
   } catch {
     return error;
   }

@@ -3,6 +3,7 @@
 import 'fake-indexeddb/auto';
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { initialProjectId } from '../../src/storage/database';
 import { handleCodingRequest } from '../../src/background/coding-messages';
 import type { SelectionSnapshot } from '../../src/capture-contract';
 import { createCodingControls } from '../../src/panel/coding-controls';
@@ -43,7 +44,11 @@ function panel() {
   const fieldset = document.createElement('fieldset');
   const options = document.createElement('div');
   const status = document.createElement('p');
-  fieldset.append(options, status);
+  const form = document.createElement('form');
+  form.id = 'category-create';
+  form.innerHTML =
+    '<input name="name" required><textarea name="description"></textarea><input name="color" type="color" value="#fdd835"><button type="submit">Guardar y aplicar</button>';
+  fieldset.append(options, form, status);
   document.body.append(fieldset);
 
   const controls = createCodingControls(fieldset, options, status);
@@ -127,4 +132,34 @@ test('Q12: un fallo de transporte reintenta la misma mutación con el mismo iden
   expect(retry).toEqual(first);
   view.code('Tema').click();
   await vi.waitFor(() => expect(view.code('Tema').checked).toBe(false));
+});
+
+test('T016: conserva el formulario y reintenta con la misma operación', async () => {
+  const view = panel();
+  await view.show({ ...target, projectId: initialProjectId }, snapshot);
+  const form = view.fieldset.querySelector('form');
+  if (!form) throw new Error('Formulario ausente');
+  const name = form.elements.namedItem('name') as HTMLInputElement;
+  const definition = form.elements.namedItem(
+    'description',
+  ) as HTMLTextAreaElement;
+  const color = form.elements.namedItem('color') as HTMLInputElement;
+  name.value = 'Categoría tras reintento';
+  definition.value = 'Definición local';
+  color.value = '#126abc';
+
+  sendMessage.mockResolvedValueOnce({ kind: 'error' });
+  form.dispatchEvent(new Event('submit', { cancelable: true }));
+  await vi.waitFor(() =>
+    expect(view.status.textContent).toContain('Vuelve a intentarlo'),
+  );
+  expect(view.fieldset.disabled).toBe(false);
+  expect(name.value).toBe('Categoría tras reintento');
+  expect(definition.value).toBe('Definición local');
+  expect(color.value).toBe('#126abc');
+  form.dispatchEvent(new Event('submit', { cancelable: true }));
+  await vi.waitFor(() =>
+    expect(view.code('Categoría tras reintento').checked).toBe(true),
+  );
+  expect(sendMessage.mock.calls[2]).toEqual(sendMessage.mock.calls[1]);
 });

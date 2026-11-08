@@ -31,6 +31,11 @@ const coding = createCodingControls(
   document.getElementById('coding-options') as HTMLElement,
   document.getElementById('coding-status') as HTMLElement,
   highlights.update,
+  ({ projectId }) => {
+    if (!projectId) return;
+    setCatalogProject?.(projectId);
+    refreshEvidence?.(projectId);
+  },
 );
 const notes = createNoteControls(
   document.getElementById('fragment-note') as HTMLFieldSetElement,
@@ -214,6 +219,7 @@ const projects = document.getElementById(
 if (projects) {
   mountProjects(projects, (id) => {
     if (projectId === id) return;
+    const loadingInitialProject = projectId === undefined;
     projectId = id;
     setCatalogProject?.(id);
     setTransferProject?.(id);
@@ -224,7 +230,7 @@ if (projects) {
       const { tabId, documentId, url } = target;
       target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
       captureButton.disabled = id === null;
-      if (direct && id) void captureCurrent();
+      if (direct && id && loadingInitialProject) void captureCurrent();
     }
   });
 }
