@@ -20,7 +20,7 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
   });
   const filter = document.createElement('select');
   const status = document.createElement('p');
-  const controls = createHighlightFilter(filter, status);
+  const controls = createHighlightFilter(filter, status, vi.fn());
   const target = { tabId: 7, documentId: 'doc', url: 'https://example.test/' };
   const codes = [
     {
@@ -106,7 +106,7 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
     tabs: { query, sendMessage: paint },
     runtime: { sendMessage: read },
   });
-  const controller = createHighlightFilter(filter, status);
+  const controller = createHighlightFilter(filter, status, vi.fn());
   controller.track(target);
   await vi.waitFor(() => expect(citations.hidden).toBe(false));
   expect(

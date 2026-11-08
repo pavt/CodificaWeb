@@ -300,3 +300,30 @@ section:has(#category-assign[hidden]) .saved-next-step {
   max-height: 10rem;
   overflow: auto;
 }
+
+#citation-relation :is(form, fieldset, #relation-new-type) {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+#relation-fields {
+  border: 0;
+  padding: 0;
+}
+#citation-relation :is(input, select, textarea) {
+  width: 100%;
+}
+#citation-relation :is(ul, ol) {
+  padding-inline-start: 20px;
+  margin: 0;
+}
+#citation-relation li + li {
+  margin-top: 8px;
+}
+#citation-relation blockquote {
+  white-space: pre-wrap;
+}
+#citation-relation small {
+  display: block;
+  overflow-wrap: anywhere;
+}

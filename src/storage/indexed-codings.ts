@@ -29,6 +29,13 @@ export class IndexedCodings {
       .first();
   }
 
+  async citationId(projectId: string, fragment: Fragment) {
+    const source = await this.findSource(projectId, fragment.url);
+    return source
+      ? ((await this.findAnnotation(source.id, fragment))?.id ?? null)
+      : null;
+  }
+
   private async readCurrent(
     projectId: string,
     fragment: Fragment,

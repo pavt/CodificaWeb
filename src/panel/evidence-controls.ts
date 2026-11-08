@@ -17,7 +17,7 @@ function isCode(value: unknown): value is { id: string; name: string } {
   );
 }
 
-function isEvidence(value: unknown): value is EvidenceResult {
+export function isEvidence(value: unknown): value is EvidenceResult {
   return (
     isSource(value) &&
     'sourceId' in value &&
@@ -51,7 +51,10 @@ const navigationMessages: Record<string, string> = {
   unavailable: 'No se pudo abrir la fuente.',
 };
 
-export function mountEvidence(root: HTMLFormElement) {
+export function mountEvidence(
+  root: HTMLFormElement,
+  relationAction?: (row: EvidenceResult) => HTMLElement,
+) {
   const fields = root.querySelector('fieldset') as HTMLFieldSetElement;
   const query = root.querySelector('#evidence-text') as HTMLInputElement;
   const code = root.querySelector('#evidence-code') as HTMLSelectElement;
@@ -145,7 +148,9 @@ export function mountEvidence(root: HTMLFormElement) {
             open.disabled = false;
           }
         });
-        item.append(open, navigation);
+        item.append(open);
+        if (relationAction) item.append(relationAction(row));
+        item.append(navigation);
         list.append(item);
       }
       status.textContent = result.results.length

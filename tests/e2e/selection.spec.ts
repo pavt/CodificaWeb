@@ -4,7 +4,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', async () => {
+test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad local', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -157,6 +157,17 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         'background-color',
         'rgb(253, 192, 134)',
       );
+      const savedRelation = panel.locator('#quote-card').getByRole('button', {
+        name: 'Relacionar con otra cita',
+      });
+      await savedRelation.press('Enter');
+      await expect(panel.locator('#relation-origin')).toContainText(
+        '🙂 hola mundo',
+      );
+      await panel
+        .getByRole('button', { name: 'Cancelar', exact: true })
+        .press('Enter');
+      await expect(savedRelation).toBeFocused();
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(finding.locator('..')).toHaveCSS(
@@ -710,6 +721,120 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           )
           .toBe(0);
       }
+      // Q16: relate citations from two sources using the panel at 320 px.
+      await panel.setViewportSize({ width: 320, height: 700 });
+      const secondUrl = 'https://example.org/informe';
+      const secondId = '00000000-0000-4000-8000-000000000010';
+      const secondQuote = 'Instalaron rampas';
+      const annotation = fixture.annotations[0];
+      if (!annotation) throw new Error('Falta la primera cita del ejemplo.');
+      await file.setInputFiles({
+        name: 'relaciones.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(
+          JSON.stringify({
+            ...fixture,
+            project: { ...fixture.project, name: 'Relaciones' },
+            sources: [
+              ...fixture.sources,
+              { ...fixture.sources[0], id: secondId, url: secondUrl },
+            ],
+            annotations: [
+              ...fixture.annotations,
+              {
+                ...annotation,
+                id: '00000000-0000-4000-8000-000000000011',
+                sourceId: secondId,
+                selectors: {
+                  ...annotation.selectors,
+                  quote: { ...annotation.selectors.quote, exact: secondQuote },
+                  position: {
+                    ...annotation.selectors.position,
+                    end: secondQuote.length,
+                  },
+                },
+              },
+            ],
+          }),
+        ),
+      });
+      await importProject.click();
+      await expect(panel.locator('#transfer-status')).toHaveText(
+        'Copia del proyecto importada.',
+      );
+      await project.selectOption({ label: 'Relaciones' });
+      if (!(await panel.locator('#evidence-search').isVisible()))
+        await evidenceEntry.click();
+      await panel.getByLabel('Texto de la cita o nota').fill('');
+      await panel
+        .locator('#evidence-search')
+        .getByRole('button', { name: 'Buscar', exact: true })
+        .click();
+      const origin = panel
+        .locator('#evidence-results li')
+        .filter({ hasText: 'Faltan rampas' });
+      const relate = origin.getByRole('button', {
+        name: 'Relacionar con otra cita',
+      });
+      await expect(relate).toBeVisible();
+      await relate.press('Enter');
+      const relation = panel.getByRole('region', { name: 'Relacionar citas' });
+      await relation.getByLabel('Buscar por texto o URL').fill('informe');
+      await relation
+        .getByRole('button', { name: 'Buscar cita' })
+        .press('Enter');
+      await relation
+        .getByRole('button', { name: 'Elegir esta cita' })
+        .press('Enter');
+      await relation
+        .getByLabel('Tipo de relación', { exact: true })
+        .selectOption('__new__');
+      await relation
+        .getByLabel('Nombre del tipo')
+        .fill('Actualiza el diagnóstico');
+      await relation
+        .getByLabel('Definición')
+        .fill('Aporta información posterior');
+      await relation
+        .getByRole('button', { name: 'Invertir dirección' })
+        .press('Enter');
+      await panel.evaluate(() => {
+        const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+        chrome.runtime.sendMessage = ((message: { type?: string }) => {
+          if (message.type === 'relations.createWithType') {
+            chrome.runtime.sendMessage = send;
+            return Promise.resolve({ kind: 'error' });
+          }
+          return send(message);
+        }) as typeof chrome.runtime.sendMessage;
+      });
+      const save = relation.getByRole('button', { name: 'Guardar vínculo' });
+      await save.press('Enter');
+      await expect(relation.getByRole('status').first()).toHaveText(
+        /No se pudo guardar/,
+      );
+      await expect(relation.getByLabel('Nombre del tipo')).toHaveValue(
+        'Actualiza el diagnóstico',
+      );
+      await save.press('Enter');
+      await expect(relation.getByRole('status').first()).toHaveText(
+        'Vínculo guardado.',
+      );
+      await expect(
+        relation.getByText('Actualiza el diagnóstico · Hacia esta cita'),
+      ).toBeVisible();
+      const other = panel
+        .locator('#evidence-results li')
+        .filter({ hasText: secondQuote });
+      await other
+        .getByRole('button', { name: 'Relacionar con otra cita' })
+        .press('Enter');
+      await expect(
+        relation.getByText('Actualiza el diagnóstico · Desde esta cita'),
+      ).toBeVisible();
+      expect(
+        await panel.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(320);
       expect(unexpectedTraffic).toEqual([]);
     } finally {
       await context.close();

@@ -6,6 +6,7 @@ import { mountEvidence } from './evidence-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
 import { mountProjects } from './project-controls';
+import { mountRelations } from './relation-controls';
 import { readSelection } from './read-selection';
 import { mountTransfer } from './transfer-controls';
 import { verifySiteAccess } from './site-access';
@@ -22,9 +23,56 @@ const captureButton = document.getElementById(
 const captureStatus = document.getElementById('capture-status') as HTMLElement;
 const quote = document.getElementById('selection-quote') as HTMLElement;
 const source = document.getElementById('selection-source') as HTMLElement;
+const relationRoot = document.getElementById('citation-relation');
+const relations = relationRoot && mountRelations(relationRoot);
+const selectionRelation = document.getElementById('selection-relation');
+const inspectionRelation = document.getElementById('inspection-relation');
+
+async function updateSelectionRelation(
+  snapshot: SelectionSnapshot,
+  id: string,
+) {
+  if (!selectionRelation || !relations) return;
+  selectionRelation.hidden = true;
+  try {
+    const response: unknown = await chrome.runtime.sendMessage({
+      type: 'coding.citation',
+      projectId: id,
+      fragment: snapshot,
+    });
+    if (selected !== snapshot || projectId !== id) return;
+    if (
+      isRecord(response) &&
+      response.kind === 'citation' &&
+      typeof response.id === 'string'
+    ) {
+      selectionRelation.replaceChildren(
+        relations.action({
+          id: response.id,
+          quote: snapshot.selectors.quote.exact,
+          url: snapshot.url,
+        }),
+      );
+      selectionRelation.hidden = false;
+    }
+  } catch {
+    // Saved citations are also available through evidence search.
+  }
+}
+
 const highlights = createHighlightFilter(
   document.getElementById('highlight-filter') as HTMLSelectElement,
   document.getElementById('highlight-status') as HTMLElement,
+  (id, quote, url) => {
+    if (
+      !relations ||
+      !inspectionRelation ||
+      inspectionRelation.dataset.citation === id
+    )
+      return;
+    inspectionRelation.dataset.citation = id;
+    inspectionRelation.replaceChildren(relations.action({ id, quote, url }));
+  },
 );
 const coding = createCodingControls(
   document.getElementById('fragment-codes') as HTMLFieldSetElement,
@@ -32,6 +80,8 @@ const coding = createCodingControls(
   document.getElementById('coding-status') as HTMLElement,
   (target, codes) => {
     highlights.update(target, codes);
+    if (selected && projectId)
+      void updateSelectionRelation(selected, projectId);
     const applied = codes.find(({ assigned }) => assigned);
     const card = document.getElementById('quote-card');
     const title = document.getElementById('selection-title');
@@ -74,6 +124,7 @@ const captureMessages = {
 function clearPreview() {
   captureRequest++;
   selected = undefined;
+  if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
   document.getElementById('quote-card')?.removeAttribute('data-saved');
   const title = document.getElementById('selection-title');
@@ -224,7 +275,7 @@ async function attachActiveTab() {
 const evidence = document.getElementById(
   'evidence-search',
 ) as HTMLFormElement | null;
-const refreshEvidence = evidence && mountEvidence(evidence);
+const refreshEvidence = evidence && mountEvidence(evidence, relations?.action);
 const catalog = document.getElementById(
   'catalog',
 ) as HTMLFieldSetElement | null;
@@ -246,6 +297,7 @@ if (projects) {
     if (projectId === id) return;
     const loadingInitialProject = projectId === undefined;
     projectId = id;
+    relations?.setProject(id);
     setCatalogProject?.(id);
     setTransferProject?.(id);
     refreshEvidence?.(id);
