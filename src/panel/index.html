@@ -21,6 +21,21 @@
         <button id="project-remove" type="button">Borrar proyecto</button>
         <p id="project-status" aria-live="polite"></p>
       </fieldset>
+      <fieldset id="catalog" disabled>
+        <legend>Catálogo de códigos</legend>
+        <label for="catalog-select">Código del catálogo</label>
+        <select id="catalog-select"></select>
+        <label for="catalog-name">Nombre del código</label>
+        <input id="catalog-name" maxlength="256" />
+        <label for="catalog-description">Descripción del código</label>
+        <textarea id="catalog-description" maxlength="16384"></textarea>
+        <label for="catalog-color">Color del código</label>
+        <input id="catalog-color" type="color" value="#fdd835" />
+        <button id="catalog-create" type="button">Crear código</button>
+        <button id="catalog-save" type="button">Guardar código</button>
+        <button id="catalog-remove" type="button">Borrar código</button>
+        <p id="catalog-status" aria-live="polite"></p>
+      </fieldset>
       <p>
         Para comprobar el acceso, indica la URL de la página abierta en la
         pestaña activa.

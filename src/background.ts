@@ -1,5 +1,6 @@
 import { isRecord } from './capture-contract';
 import { handleCodingRequest } from './background/coding-messages';
+import { handleCodeRequest } from './background/code-messages';
 import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
@@ -18,6 +19,8 @@ async function handle(
       return { enabled: await enableSite(message.url) };
     if (typeof message.type === 'string' && message.type.startsWith('project.'))
       return handleProjectRequest(message);
+    if (typeof message.type === 'string' && message.type.startsWith('code.'))
+      return handleCodeRequest(message);
     return handleCodingRequest(message);
   }
   if (

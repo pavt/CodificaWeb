@@ -31,7 +31,8 @@ if (!world.codificawebCaptureInstalled) {
       capture = undefined;
     }
     if (message.type === 'highlight.project' && !sender.tab) {
-      void restoration.restore(true);
+      void restoration.restore(true).then(respond);
+      return true;
     }
     if (sender.url !== chrome.runtime.getURL('src/panel/index.html')) return;
     if (message.type === 'capture.prepare') {

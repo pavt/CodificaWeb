@@ -3,7 +3,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01, Q03–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
+test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -339,6 +339,81 @@ test('Q01, Q03–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y re
         .toBe('🙂 hola');
       await source.evaluate(() => history.pushState(null, '', '/otra-ruta'));
       await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      // Q02: one user-created code is reused in two independent sources.
+      const catalog = panel.getByLabel('Código del catálogo');
+      const codeName = panel.getByLabel('Nombre del código');
+      const codeColor = panel.getByLabel('Color del código');
+      await codeName.fill('Hallazgo');
+      await codeColor.fill('#aa0000');
+      await panel.getByRole('button', { name: 'Crear código' }).click();
+      await expect(
+        catalog.locator('option', { hasText: 'Hallazgo' }),
+      ).toHaveCount(1);
+      const sources = ['uno', 'dos'].map(
+        (path) => new URL(`/catalogo-${path}`, url).href,
+      );
+      async function captureSource(address: string) {
+        await source.goto(address);
+        await panel.getByLabel('URL del sitio').fill(address);
+        await panel.getByRole('button', { name: 'Comprobar acceso' }).click();
+        await expect(panel.getByRole('status')).toHaveText(
+          'Acceso al sitio verificado.',
+        );
+        await source.bringToFront();
+        await source
+          .locator('#catalog-fixture')
+          .evaluate((node) => window.getSelection()?.selectAllChildren(node));
+        await panel.bringToFront();
+        await capture.click();
+        await expect(panel.locator('blockquote')).toHaveText(
+          'Evidencia del catálogo',
+        );
+      }
+      for (const address of sources) {
+        await context.route(address, (route) =>
+          route.fulfill({
+            contentType: 'text/html; charset=utf-8',
+            body: '<p id="catalog-fixture">Evidencia del catálogo</p>',
+          }),
+        );
+        await captureSource(address);
+        const finding = panel.getByRole('checkbox', { name: 'Hallazgo' });
+        await finding.click();
+        await expect(finding).toBeChecked();
+        await expect
+          .poll(() => paintedText('codificaweb-aa0000'))
+          .toBe('Evidencia del catálogo');
+        await note.fill('Nota conservada');
+        await saveNote.click();
+        await expect(panel.locator('#note-status')).toHaveText(
+          'Nota guardada.',
+        );
+      }
+      await catalog.selectOption({ label: 'Hallazgo' });
+      await codeName.fill('Hallazgo editado');
+      await panel
+        .getByLabel('Descripción del código')
+        .fill('Descripción nueva');
+      await codeColor.fill('#123456');
+      await panel.getByRole('button', { name: 'Guardar código' }).click();
+      await expect(
+        panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
+      ).toBeChecked();
+      await expect
+        .poll(() => paintedText('codificaweb-123456'))
+        .toBe('Evidencia del catálogo');
+      await captureSource(sources[0] ?? '');
+      await expect
+        .poll(() => paintedText('codificaweb-123456'))
+        .toBe('Evidencia del catálogo');
+      await catalog.selectOption({ label: 'Hallazgo editado' });
+      panel.once('dialog', (dialog) => void dialog.accept());
+      await panel.getByRole('button', { name: 'Borrar código' }).click();
+      await expect(
+        panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
+      ).toHaveCount(0);
+      await expect.poll(() => paintedText('codificaweb-123456')).toBe('');
+      await expect(note).toHaveValue('Nota conservada');
     } finally {
       await context.close();
     }
