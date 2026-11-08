@@ -62,6 +62,8 @@ export class IndexedProjects {
 
   remove(id: string) {
     return this.db.transaction('rw', this.db.tables, async () => {
+      await this.db.quotationLinks.where('projectId').equals(id).delete();
+      await this.db.relationTypes.where('projectId').equals(id).delete();
       const ids = await this.db.annotations
         .where('projectId')
         .equals(id)
