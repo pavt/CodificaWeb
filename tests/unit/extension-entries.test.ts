@@ -21,6 +21,10 @@ test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium
     ['site-url', input],
     ['site-status', status],
     ['verify-site', button],
+    ['capture-selection', new EventTarget()],
+    ['capture-status', { textContent: '' }],
+    ['selection-quote', { textContent: '' }],
+    ['selection-source', { textContent: '' }],
   ]);
   const request = vi
     .fn()
@@ -47,4 +51,75 @@ test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium
     ),
   );
   expect(button.disabled).toBe(false);
+});
+
+test('Q03: instala la captura en el documento autorizado y muestra la cita como texto', async () => {
+  vi.resetModules();
+  const form = new EventTarget();
+  const captureButton = Object.assign(new EventTarget(), { disabled: true });
+  const status = { textContent: '' };
+  const quote = { textContent: '' };
+  const source = { textContent: '' };
+  const url = 'https://example.test/articulo';
+  const elements = new Map<string, unknown>([
+    ['site-access', form],
+    ['site-url', { value: url }],
+    ['site-status', { textContent: '' }],
+    ['verify-site', { disabled: false }],
+    ['capture-selection', captureButton],
+    ['capture-status', status],
+    ['selection-quote', quote],
+    ['selection-source', source],
+  ]);
+  const executeScript = vi
+    .fn()
+    .mockResolvedValueOnce([{ result: true, documentId: 'documento' }])
+    .mockResolvedValueOnce([]);
+  const sendMessage = vi
+    .fn()
+    .mockResolvedValueOnce({
+      kind: 'selection',
+      url,
+      revision: 0,
+      selectors: {
+        profile: 'dom-text-v1',
+        quote: {
+          type: 'TextQuoteSelector',
+          exact: '<b>cita</b>',
+          prefix: '',
+          suffix: '',
+        },
+        position: { type: 'TextPositionSelector', start: 0, end: 11 },
+      },
+    })
+    .mockResolvedValueOnce({ kind: 'excluded' });
+  vi.stubGlobal('chrome', {
+    permissions: { request: vi.fn().mockResolvedValue(true) },
+    scripting: { executeScript },
+    tabs: { query: vi.fn().mockResolvedValue([{ id: 7, url }]), sendMessage },
+  });
+  vi.stubGlobal('document', {
+    getElementById: (id: string) => elements.get(id),
+  });
+  await import('../../src/panel/index');
+  form.dispatchEvent(new Event('submit'));
+  await vi.waitFor(() => expect(captureButton.disabled).toBe(false));
+  expect(executeScript).toHaveBeenLastCalledWith({
+    target: { tabId: 7, documentIds: ['documento'] },
+    files: ['content.js'],
+  });
+
+  captureButton.dispatchEvent(new Event('click'));
+  await vi.waitFor(() =>
+    expect(status.textContent).toBe('Selección capturada.'),
+  );
+  expect(quote.textContent).toBe('<b>cita</b>');
+  expect(source.textContent).toBe(url);
+
+  captureButton.dispatchEvent(new Event('click'));
+  await vi.waitFor(() =>
+    expect(status.textContent).toContain('contenido editable'),
+  );
+  expect(quote.textContent).toBe('');
+  expect(source.textContent).toBe('');
 });

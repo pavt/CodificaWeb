@@ -21,4 +21,4 @@ cw_pnpm format:check
 cw_pnpm typecheck
 ```
 
-`format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. El panel inicial permite solicitar acceso por sitio y comprobarlo en la pestaña activa.
+`format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. En el panel, indica la URL de la pestaña activa y comprueba el acceso. Selecciona texto en esa página y pulsa **Capturar selección** para ver la cita y su fuente. Si la pestaña navega o se recarga, vuelve a comprobar el acceso antes de capturar.

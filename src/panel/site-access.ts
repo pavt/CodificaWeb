@@ -1,4 +1,9 @@
-export async function verifySiteAccess(value: string): Promise<string> {
+import type { CaptureTarget } from '../capture-contract';
+
+export async function verifySiteAccess(
+  value: string,
+  prepareCapture?: (target: CaptureTarget) => Promise<void>,
+): Promise<string> {
   let url: URL;
   try {
     url = new URL(value);
@@ -36,7 +41,13 @@ export async function verifySiteAccess(value: string): Promise<string> {
     args: [url.origin],
     func: (origin: string) => location.origin === origin,
   });
-  return probe?.result
-    ? 'Acceso al sitio verificado.'
-    : 'La pestaña cambió antes de comprobar el acceso.';
+  if (!probe?.result) return 'La pestaña cambió antes de comprobar el acceso.';
+  if (prepareCapture) {
+    await prepareCapture({
+      tabId: tab.id,
+      documentId: probe.documentId,
+      url: tab.url,
+    });
+  }
+  return 'Acceso al sitio verificado.';
 }

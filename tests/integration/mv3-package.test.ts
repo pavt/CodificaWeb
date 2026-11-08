@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Script } from 'node:vm';
 import { expect, test } from 'vitest';
 
 test('Q11: el build genera una extensión MV3 con entradas locales y permisos opcionales', () => {
@@ -25,6 +26,9 @@ test('Q11: el build genera una extensión MV3 con entradas locales y permisos op
     });
     expect(manifest).not.toHaveProperty('host_permissions');
     expect(manifest).not.toHaveProperty('content_scripts');
+    expect(
+      () => new Script(readFileSync(join(dist, 'content.js'), 'utf8')),
+    ).not.toThrow();
     expect(existsSync(join(dist, manifest.background.service_worker))).toBe(
       true,
     );

@@ -18,6 +18,18 @@
         <button id="verify-site" type="submit">Comprobar acceso</button>
       </form>
       <p id="site-status" role="status"></p>
+      <section aria-labelledby="selection-title">
+        <h2 id="selection-title">Selección</h2>
+        <button id="capture-selection" type="button" disabled>
+          Capturar selección
+        </button>
+        <p id="capture-status" aria-live="polite"></p>
+        <blockquote
+          id="selection-quote"
+          style="white-space: pre-wrap"
+        ></blockquote>
+        <p id="selection-source"></p>
+      </section>
     </main>
     <script type="module" src="./index.ts"></script>
   </body>
