@@ -12,7 +12,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T007 [US2] · Crear, editar, consultar y borrar nota en texto plano. `src/storage/`, `src/background/`, `src/panel/`. Q07, Q13. Evidencia en `tests/integration/coding-storage.test.ts`, `tests/unit/note-controls.test.ts`, `tests/unit/coding-messages.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T008 [US3] · CRUD de proyectos y cambio de proyecto activo. `src/storage/`, `src/background/`, `src/panel/`. Q01. Evidencia en `tests/integration/projects.test.ts`, `tests/unit/project-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T009 [US3] · CRUD de códigos y propagación de color. `src/storage/`, `src/background/`, `src/panel/`. Q02. Evidencia en `tests/integration/catalog.test.ts`, `tests/unit/catalog-controls.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/panel/`. Q08.
+- [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q08. Evidencia en `tests/unit/evidence-search.test.ts`, `tests/unit/evidence-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T011 [US3] · Abrir fuente, validar destino y ubicar rango o mostrar causa. `src/background/`, `src/content/`, `src/panel/`. Q09.
 - [ ] T012 [US4] · Exportar snapshot, validar e importar como copia transaccional. `src/domain/`, `src/storage/`, `src/panel/`. Q10, Q13.
 - [ ] T013 · Validar versión en Chrome y Brave, ejecutar auditoría y revisar permisos y tráfico. `tests/`, `docs/quality.md`. Q11, Q14.

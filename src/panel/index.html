@@ -36,6 +36,31 @@
         <button id="catalog-remove" type="button">Borrar código</button>
         <p id="catalog-status" aria-live="polite"></p>
       </fieldset>
+      <details>
+        <summary>Buscar evidencias</summary>
+        <form id="evidence-search">
+          <fieldset disabled>
+            <legend>Filtros del proyecto activo</legend>
+            <label for="evidence-text">Texto de la cita o nota</label>
+            <input id="evidence-text" type="search" maxlength="16384" />
+            <label for="evidence-code">Código de la evidencia</label>
+            <select id="evidence-code">
+              <option value="">Todos los códigos</option>
+            </select>
+            <label for="evidence-source">Fuente de la evidencia</label>
+            <select id="evidence-source">
+              <option value="">Todas las fuentes</option>
+            </select>
+            <button type="submit">Buscar</button>
+          </fieldset>
+          <p>
+            Incluye citas guardadas aunque su ubicación actual no se pueda
+            verificar.
+          </p>
+          <p id="evidence-status" aria-live="polite"></p>
+          <ul id="evidence-results"></ul>
+        </form>
+      </details>
       <p>
         Para comprobar el acceso, indica la URL de la página abierta en la
         pestaña activa.

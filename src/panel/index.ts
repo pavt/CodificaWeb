@@ -1,6 +1,7 @@
 import type { CaptureTarget, SelectionSnapshot } from '../capture-contract';
 import { mountCatalog } from './catalog-controls';
 import { createCodingControls } from './coding-controls';
+import { mountEvidence } from './evidence-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
 import { mountProjects } from './project-controls';
@@ -121,6 +122,10 @@ captureButton.addEventListener('click', async () => {
   }
 });
 
+const evidence = document.getElementById(
+  'evidence-search',
+) as HTMLFormElement | null;
+const refreshEvidence = evidence && mountEvidence(evidence);
 const catalog = document.getElementById(
   'catalog',
 ) as HTMLFieldSetElement | null;
@@ -128,6 +133,7 @@ const setCatalogProject =
   catalog &&
   mountCatalog(catalog, () => {
     highlights.clear();
+    refreshEvidence?.(projectId ?? null);
     if (target && selected) void coding.show(target, selected);
   });
 const projects = document.getElementById(
@@ -138,6 +144,7 @@ if (projects) {
     if (projectId === id) return;
     projectId = id;
     setCatalogProject?.(id);
+    refreshEvidence?.(id);
     highlights.clear();
     clearPreview();
     if (target) {

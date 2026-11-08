@@ -1,0 +1,63 @@
+import { filterEvidence } from '../domain/evidence-search';
+import type { EvidenceResult, SearchFilters } from '../domain/evidence-search';
+import type { CodingDatabase } from './database';
+
+export class IndexedEvidence {
+  constructor(private readonly db: CodingDatabase) {}
+
+  search(projectId: string, filters: SearchFilters) {
+    const { db } = this;
+    return db.transaction(
+      'r',
+      [db.sources, db.annotations, db.codes, db.codings],
+      async () => {
+        const sources = (
+          await db.sources.where('projectId').equals(projectId).sortBy('url')
+        ).map(({ id, url }) => ({ id, url }));
+        const codes = (
+          await db.codes.where('projectId').equals(projectId).sortBy('nameKey')
+        ).map(({ id, name }) => ({ id, name }));
+        const annotations = (
+          await db.annotations
+            .where('projectId')
+            .equals(projectId)
+            .sortBy('createdAt')
+        ).reverse();
+        const associations = await db.codings
+          .where('annotationId')
+          .anyOf(annotations.map(({ id }) => id))
+          .toArray();
+        const codeById = new Map(codes.map((code) => [code.id, code]));
+        const sourceById = new Map(
+          sources.map((source) => [source.id, source]),
+        );
+        const byAnnotation = new Map<string, typeof codes>();
+        for (const association of associations) {
+          const code = codeById.get(association.codeId);
+          if (!code || association.projectId !== projectId) continue;
+          const assigned = byAnnotation.get(association.annotationId) ?? [];
+          assigned.push(code);
+          byAnnotation.set(association.annotationId, assigned);
+        }
+        const rows: EvidenceResult[] = annotations.flatMap(
+          ({ id, sourceId, selectors, note }) => {
+            const source = sourceById.get(sourceId);
+            return source
+              ? [
+                  {
+                    id,
+                    sourceId,
+                    url: source.url,
+                    quote: selectors.quote.exact,
+                    note: note ?? null,
+                    codes: byAnnotation.get(id) ?? [],
+                  },
+                ]
+              : [];
+          },
+        );
+        return { sources, codes, results: filterEvidence(rows, filters) };
+      },
+    );
+  }
+}
