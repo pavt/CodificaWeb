@@ -3,7 +3,7 @@
 Las tareas de producto comienzan con una prueba roja del comportamiento indicado. Cada tarea se vincula a un issue al aprobar el [flujo de trabajo](../../docs/github-flow.md). Las rutas son propuestas para la implementación aprobada.
 
 - [ ] T000 · Integrar el plan, las plantillas y CI base mediante PR tras aprobación. Verificar que `CI / Verificación` pasa en planificación y revisar la protección de main con el mantenedor. Criterio técnico sin FR asociado.
-- [ ] T001 · Empaquetar MV3 en `vite.config.ts`, `src/manifest.json` y entradas mínimas en `src/`. Probar contenido de dist, carga en Chromium y permiso por gesto, sin acceso previo. Incluir la suite Vitest inicial y el smoke E2E. Cambiar `CODIFICAWEB_CI_PHASE` a `product` en el mismo PR. Q11.
+- [ ] T001 · Empaquetar MV3 en `vite.config.ts`, `src/manifest.json` y entradas mínimas en `src/`. Probar contenido de dist, carga en Chromium y permiso por gesto, sin acceso previo. Incluir la suite Vitest inicial y el smoke E2E. Cambiar `CODIFICAWEB_CI_PHASE` a `product` en el mismo PR. Q11. Evidencia en `tests/integration/mv3-package.test.ts`, `tests/unit/site-access.test.ts`, `tests/unit/extension-entries.test.ts` y `tests/e2e/mv3.spec.ts`.
 - [ ] T002 [US1] · Capturar Range y selectores, transferir instantánea identificada al panel. `src/content/`, `src/panel/`. Q03.
 - [ ] T003 [US1] · Gestionar asociaciones de un proyecto inicial y códigos iniciales, inicialmente en memoria. `src/domain/`, `src/background/`. Q04.
 - [ ] T004 [US1] · Segmentar y pintar rangos con prioridad y filtro. `src/content/`, `src/panel/`. Q05.
@@ -24,7 +24,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | Tarea | Bloqueantes directos | Milestone | Prioridad | Tipo    | Área      | Issue                                                | PR                                                 |
 | ----- | -------------------- | --------- | --------- | ------- | --------- | ---------------------------------------------------- | -------------------------------------------------- |
 | T000  | —                    | M0        | p0        | infra   | quality   | [#1](https://github.com/pavt/CodificaWeb/issues/1)   | [#15](https://github.com/pavt/CodificaWeb/pull/15) |
-| T001  | T000                 | M1        | p0        | infra   | extension | [#2](https://github.com/pavt/CodificaWeb/issues/2)   |                                                    |
+| T001  | T000                 | M1        | p0        | infra   | extension | [#2](https://github.com/pavt/CodificaWeb/issues/2)   | [#16](https://github.com/pavt/CodificaWeb/pull/16) |
 | T002  | T001                 | M1        | p0        | feature | anchor    | [#3](https://github.com/pavt/CodificaWeb/issues/3)   |                                                    |
 | T003  | T002                 | M1        | p0        | feature | data      | [#4](https://github.com/pavt/CodificaWeb/issues/4)   |                                                    |
 | T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   |                                                    |
