@@ -723,7 +723,8 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       }
       // Q16: relate citations from two sources using the panel at 320 px.
       await panel.setViewportSize({ width: 320, height: 700 });
-      const secondUrl = 'https://example.org/informe';
+      const secondUrl =
+        'https://example.org/informe?tracking=parametros-antiguos#fragmento';
       const secondId = '00000000-0000-4000-8000-000000000010';
       const secondQuote = 'Instalaron rampas';
       const annotation = fixture.annotations[0];
@@ -737,7 +738,12 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
             project: { ...fixture.project, name: 'Relaciones' },
             sources: [
               ...fixture.sources,
-              { ...fixture.sources[0], id: secondId, url: secondUrl },
+              {
+                ...fixture.sources[0],
+                id: secondId,
+                url: secondUrl,
+                title: secondUrl,
+              },
             ],
             annotations: [
               ...fixture.annotations,
@@ -782,6 +788,17 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(relation.getByText('Paso 2 de 4')).toBeVisible();
       await expect(panel.locator('#panel-evidence')).toBeHidden();
       await relation.getByLabel('Buscar citas guardadas').fill('informe');
+      const candidate = relation
+        .locator('#relation-results li')
+        .filter({ hasText: secondQuote });
+      await expect(candidate.locator('.relation-source')).toHaveText(
+        'example.org/informe',
+      );
+      await expect(candidate).not.toContainText('tracking=');
+      await expect(candidate).toContainText(
+        'Instalaron rampas en la estación.',
+      );
+
       await relation
         .getByRole('button', { name: 'Elegir cita' })
         .press('Enter');

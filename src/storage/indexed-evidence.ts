@@ -61,6 +61,15 @@ export class IndexedEvidence {
                     sourceId,
                     url: source.url,
                     quote: selectors.quote.exact,
+                    ...(selectors.quote.exact.length < 80
+                      ? {
+                          context: [
+                            selectors.quote.prefix,
+                            selectors.quote.exact,
+                            selectors.quote.suffix,
+                          ].join(''),
+                        }
+                      : {}),
                     note: note ?? null,
                     codes: byAnnotation.get(id) ?? [],
                   },

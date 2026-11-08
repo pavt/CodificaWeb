@@ -6,6 +6,9 @@ interface Citation {
   quote: string;
   url: string;
   title?: string;
+  codes?: readonly { name: string }[];
+  note?: string | null;
+  context?: string;
 }
 
 const newType = '__new__';
@@ -23,21 +26,43 @@ function sourceLabel(url: string) {
   return address.hostname + (address.pathname === '/' ? '' : address.pathname);
 }
 
-function excerpt({ quote, url, title }: Citation, label?: string) {
+function excerpt(
+  { quote, url, title, codes, note, context }: Citation,
+  label?: string,
+) {
   const element = document.createElement('div');
   element.className = 'relation-quote';
   const text = document.createElement('blockquote');
-  const source = document.createElement('strong');
+  const source = document.createElement('small');
+  source.className = 'relation-source';
   const compact = sourceLabel(url);
+  const titleText = title?.trim();
   text.textContent = `«${quote}»`;
-  source.textContent = title || compact;
+  source.textContent =
+    titleText && !URL.canParse(titleText) ? titleText : compact;
   source.title = compact;
   if (label) {
     const heading = document.createElement('small');
     heading.textContent = label;
     element.append(heading);
   }
-  element.append(source, text);
+  element.append(text, source);
+  const metadata = [
+    codes?.map(({ name }) => name).join(' · '),
+    typeof context === 'string' &&
+    quote.length < 80 &&
+    context.trim() !== quote.trim()
+      ? context
+      : '',
+    note,
+  ];
+  for (const value of metadata) {
+    if (!value) continue;
+    const detail = document.createElement('p');
+    detail.className = 'relation-context';
+    detail.textContent = value;
+    element.append(detail);
+  }
   return element;
 }
 
@@ -228,19 +253,28 @@ export function mountRelations(root: HTMLElement) {
             titles.set(source.url, source.title);
         }
       }
-      const title = titles.get(current.first.url);
-      if (title) current.first = { ...current.first, title };
+      const rows = result.results.filter(isEvidence);
+      const originRow = rows.find((row) => row.id === current.first.id);
+      current.first = {
+        ...current.first,
+        ...originRow,
+        title: titles.get(current.first.url) ?? current.first.url,
+      };
       origin.replaceChildren(excerpt(current.first, 'Cita A · Origen'));
-      const matches = result.results
-        .filter(isEvidence)
-        .filter(
-          (row) =>
-            row.id !== current.first.id &&
-            row.url !== current.first.url &&
-            [row.quote, row.url, titles.get(row.url) ?? ''].some((text) =>
-              text.toLowerCase().normalize('NFC').includes(needle),
-            ),
-        );
+      const matches = rows.filter(
+        (row) =>
+          row.id !== current.first.id &&
+          row.url !== current.first.url &&
+          [
+            row.quote,
+            row.url,
+            titles.get(row.url) ?? '',
+            row.note ?? '',
+            ...row.codes.map(({ name }) => name),
+          ].some((text) =>
+            text.toLowerCase().normalize('NFC').includes(needle),
+          ),
+      );
       let shown = 0;
       const more = button('Mostrar más citas', () => appendPage());
       function appendPage() {

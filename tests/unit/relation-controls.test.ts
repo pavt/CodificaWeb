@@ -230,11 +230,15 @@ test('Q16: un error al cargar citas o tipos se puede reintentar en el panel', as
 
 test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserva el tipo al volver a editar', async () => {
   const longUrl = 'https://example.test/informe?tracking=parametro-largo';
+  const legacyUrl = 'https://example.test/busqueda?tracking=secreto#largo';
   const page = Array.from({ length: 7 }, (_, index) => ({
     ...results[1],
     id: String(index),
-    url: longUrl,
+    url: index === 0 ? legacyUrl : longUrl,
     quote: `Cita ${index}`,
+    codes: [{ id: 'movilidad', name: 'Movilidad' }],
+    note: 'Registro de terreno',
+    context: 'Esperamos el bus durante veinte minutos.',
   }));
   const send = vi.fn(async (message: { type: string }) => {
     if (message.type === 'evidence.search')
@@ -243,6 +247,7 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
         sources: [
           { url: a.url, title: 'Entrevista' },
           { url: longUrl, title: 'Informe municipal' },
+          { url: legacyUrl, title: legacyUrl },
           null,
         ],
         results: page,
@@ -261,6 +266,11 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
   );
   expect(find('origin').textContent).toContain('Entrevista');
   expect(resultList.textContent).not.toContain('tracking=');
+  const firstCard = resultList.querySelector('li');
+  expect(firstCard?.textContent).toMatch(/Cita 0.*example.test\/busqueda/);
+  expect(firstCard?.textContent).toContain('Movilidad');
+  expect(firstCard?.textContent).toContain('Esperamos el bus');
+  expect(firstCard?.textContent).toContain('Registro de terreno');
   const more = [...resultList.querySelectorAll('button')].find(
     (button) => button.textContent === 'Mostrar más citas',
   );

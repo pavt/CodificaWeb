@@ -364,11 +364,21 @@ main:has(> #citation-relation:not([hidden]))
   padding: 10px 12px;
   overflow-wrap: anywhere;
 }
-#relation-results blockquote {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+#citation-relation blockquote {
+  font-weight: 650;
+  max-block-size: 10rem;
+  overflow: auto;
+}
+#citation-relation .relation-source {
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#citation-relation .relation-context {
+  color: #526760;
+  font-size: 12px;
+  max-block-size: 5rem;
+  overflow: auto;
 }
 #relation-results button,
 #relation-close {
