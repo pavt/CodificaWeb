@@ -256,8 +256,15 @@ for (const [name, executable] of browsers) {
           document.body.append(activity);
         });
         await readPanel(`(() => {
+          const search = document.querySelector('#category-search');
+          search.value = 'Categoría sintética';
+          search.dispatchEvent(new Event('input'));
           document.querySelector('#category-open').click();
-          document.querySelector('#category-name').value = 'Categoría sintética';
+        })()`);
+        expect(
+          await readPanel("document.querySelector('#category-name').value"),
+        ).toBe('Categoría sintética');
+        await readPanel(`(() => {
           document.querySelector('#category-definition').value = 'Definición sintética';
           document.querySelector('#category-create').requestSubmit();
         })()`);

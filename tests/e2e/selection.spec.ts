@@ -120,11 +120,15 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       );
       await expect(panel.locator('#selection-source')).toHaveText(url);
       await expect(panel.locator('#category-create')).toBeHidden();
+      await panel.getByLabel('Buscar categorías').fill('Patrón rápido');
       await panel.getByRole('button', { name: 'Crear categoría' }).click();
       await expect(panel.locator('#selection-quote')).toHaveText(
         '🙂 hola mundo',
       );
-      await panel.getByLabel('Nombre de la categoría').fill('Patrón rápido');
+      await expect(panel.getByLabel('Nombre de la categoría')).toHaveValue(
+        'Patrón rápido',
+        { timeout: 2000 },
+      );
       await panel
         .getByLabel('Definición de la categoría')
         .fill('Una definición sintética');

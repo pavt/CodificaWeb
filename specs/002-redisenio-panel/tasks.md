@@ -32,3 +32,5 @@ Después de aprobar el alcance, crear un issue por tarea con criterios y depende
 **Visibilidad del color asignado.** La cita guardada muestra una muestra explícita de **Color asignado**. Chromium verifica que usa el mismo color automático que la etiqueta y el resaltado y que desaparece cuando se retira la categoría.
 
 **Evidencia de T018.** [Issue #33](https://github.com/pavt/CodificaWeb/issues/33) · [PR #40](https://github.com/pavt/CodificaWeb/pull/40). El [registro de validación](../../docs/release-validation.md) documenta la instalación del ZIP extraído, Chromium, Chrome y Brave, los tres colores Accent en un proyecto nuevo y la auditoría. Queda pendiente la observación de primer uso con una persona.
+
+**Ajuste de primer uso en T018.** `tests/e2e/selection.spec.ts` reprodujo el nombre vacío al abrir la creación desde la búsqueda. La corrección conserva el texto y las pruebas de navegador guardan la categoría sin introducir el nombre otra vez.

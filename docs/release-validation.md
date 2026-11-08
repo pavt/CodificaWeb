@@ -58,3 +58,5 @@ Para repetir la comprobación, ejecuta `pnpm build` y `pnpm test:e2e:branded`. P
 Sirve la [página sintética](examples/primera-codificacion.html) con `python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/examples` y abre `http://127.0.0.1:8765/primera-codificacion.html` en el perfil de prueba. La persona recibe solo el objetivo: «Guarda un pasaje con una categoría nueva y usa esa misma categoría en otro pasaje». Registra si completó la tarea sin ayuda, dónde dudó y si reconoció el color asignado.
 
 La comprobación automatizada está completa. Queda pendiente observar a una persona completar el recorrido sin indicaciones sobre qué pulsar.
+
+Durante T018 se reprodujo que, al buscar un nombre y pulsar **Crear categoría**, el formulario volvía a pedirlo. El formulario ahora reutiliza el texto de búsqueda y permite editarlo antes de guardar. Las pruebas de Chromium, Chrome y Brave cubren el guardado sin volver a escribir el nombre. El ZIP se recompiló y se comprobó nuevamente tras la corrección.

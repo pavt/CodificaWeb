@@ -132,7 +132,11 @@ export function createCodingControls(
   open?.addEventListener('click', () => {
     setEditing(true);
     status.textContent = '';
-    form?.querySelector<HTMLInputElement>('#category-name')?.focus();
+    const name = form?.querySelector<HTMLInputElement>('#category-name');
+    if (name) {
+      name.value = search?.value.trim() ?? '';
+      name.focus();
+    }
   });
   cancel?.addEventListener('click', () => {
     form?.reset();
