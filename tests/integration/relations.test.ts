@@ -254,3 +254,118 @@ test('Q15: valida límites, fuentes e identidad al modificar registros existente
   );
   expect(await db.quotationLinks.get(link.id)).toEqual(link);
 });
+
+test('Q15: crea tipo y vínculo juntos y consulta las citas desde ambos extremos', async () => {
+  const a = await quote('a');
+  const b = await quote('b');
+  const endpoints = { fromAnnotationId: a, toAnnotationId: b };
+  await expect(
+    relations.createWithType(
+      projectId,
+      { ...endpoints, toAnnotationId: 'ausente' },
+      fields,
+    ),
+  ).rejects.toThrow();
+  expect(await relations.listTypes(projectId)).toEqual([]);
+  const link = await relations.createWithType(projectId, endpoints, fields);
+  expect(await relations.createWithType(projectId, endpoints, fields)).toEqual(
+    link,
+  );
+  const source = await db.sources.get({
+    '[projectId+url]': [projectId, 'https://example.test/a'],
+  });
+  if (!source) throw new Error('Fuente ausente');
+  expect(await relations.listBySource(projectId, source.id)).toMatchObject([
+    {
+      source: { url: 'https://example.test/b' },
+      links: [
+        {
+          id: link.id,
+          direction: 'outgoing',
+          type: { name: 'Amplía' },
+          from: { id: a, quote: 'Cita' },
+          to: { id: b },
+        },
+      ],
+    },
+  ]);
+  expect(await relations.listByCitation(projectId, b)).toMatchObject([
+    { id: link.id, direction: 'incoming' },
+  ]);
+});
+
+test('Q15: agrupa varios vínculos por fuente y omite referencias que ya no se pueden resolver', async () => {
+  const a = await quote('a');
+  const b = await quote('b');
+  const c = await quote('c');
+  const pair = { fromAnnotationId: a, toAnnotationId: b };
+  const link = await relations.createWithType(projectId, pair, fields);
+  await expect(
+    relations.createWithType(projectId, { ...pair, note: 'Otra' }, fields),
+  ).rejects.toThrow('Ya existe');
+  await expect(
+    relations.createWithType(projectId, pair, {
+      ...fields,
+      description: 'Distinta',
+    }),
+  ).rejects.toThrow('Ya existe');
+  await expect(
+    relations.createWithType(projectId, pair, {
+      ...fields,
+      direction: 'symmetric',
+    }),
+  ).rejects.toThrow('Ya existe');
+  await expect(
+    relations.createWithType(projectId, pair, { ...fields, name: 'AMPLÍA' }),
+  ).rejects.toThrow('Ya existe');
+  const symmetric = await relations.createType(projectId, {
+    name: 'Coincide',
+    direction: 'symmetric',
+  });
+  const shared = await relations.createLink(projectId, {
+    ...pair,
+    relationTypeId: symmetric.id,
+  });
+  await relations.createLink(projectId, {
+    fromAnnotationId: c,
+    toAnnotationId: a,
+    relationTypeId: link.relationTypeId,
+  });
+  const source = await db.sources.get({
+    '[projectId+url]': [projectId, 'https://example.test/a'],
+  });
+  if (!source) throw new Error('Fuente ausente');
+  expect(await relations.listBySource(projectId, source.id)).toMatchObject([
+    {
+      source: { url: 'https://example.test/b' },
+      links: expect.arrayContaining([
+        {
+          ...link,
+          direction: 'outgoing',
+          type: expect.anything(),
+          from: expect.anything(),
+          to: expect.anything(),
+        },
+        expect.objectContaining({ id: shared.id, direction: 'symmetric' }),
+      ]),
+    },
+    {
+      source: { url: 'https://example.test/c' },
+      links: [{ direction: 'incoming' }],
+    },
+  ]);
+  // Simulate corrupt data to verify queries never reveal incomplete evidence.
+  await db.relationTypes.delete(symmetric.id);
+  expect(
+    (await relations.listByCitation(projectId, a)).map(({ id }) => id),
+  ).not.toContain(shared.id);
+  const foreign = await new IndexedProjects(db).create('Otro', '');
+  await db.annotations.update(c, { projectId: foreign });
+  expect(await relations.listByCitation(projectId, a)).toHaveLength(1);
+  const otherSource = await db.sources.get({
+    '[projectId+url]': [projectId, 'https://example.test/b'],
+  });
+  if (!otherSource) throw new Error('Fuente ausente');
+  await db.sources.delete(otherSource.id);
+  expect(await relations.listByCitation(projectId, a)).toEqual([]);
+});

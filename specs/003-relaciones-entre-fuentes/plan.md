@@ -31,3 +31,9 @@ Ejemplo: la persona crea los tipos «Apoya» y «Contradice». La cita A1 de la 
 La interfaz se incorpora después de la persistencia, los contratos y la transferencia. La acción «Relacionar con otra cita» parte de la ficha de una cita guardada. El borrador queda asociado al proyecto activo y conserva el primer fragmento durante la navegación dentro de ese proyecto. Cambiar de proyecto exige volver a iniciar la relación. La búsqueda reutiliza el servicio de evidencias y solo ofrece citas de otras fuentes del mismo proyecto.
 
 La revisión muestra los fragmentos y sus fuentes, el nombre de la relación y su dirección. Guardar un tipo nuevo y su primer vínculo usa una única operación transaccional en el servicio de fondo. Si la operación falla, el panel conserva los campos para reintentar. Tras guardar, la ficha de cada cita permite consultar el vínculo y abrir la fuente de la otra. La entrega incluye el recorrido completo con teclado y una comprobación del panel a 320 px.
+
+## Contrato interno de T024
+
+Todos los mensajes llevan `projectId` y solo se aceptan desde el panel interno. Las consultas reciben `id` de la cita o fuente. Devuelven el vínculo, el tipo actual y ambas citas con su texto y sus fuentes. La consulta por fuente agrupa los vínculos por la otra fuente.
+
+Para guardar con un tipo existente, `relations.create` recibe `fromAnnotationId`, `toAnnotationId`, `relationTypeId` y `note` opcional. Para guardar un tipo nuevo con el vínculo, `relations.createWithType` sustituye `relationTypeId` por `fields` con nombre, dirección y definición opcional. Un reintento idéntico devuelve el mismo vínculo. Un nombre ya usado para una operación diferente devuelve un error. El proyecto activo se comprueba dentro de la transacción.
