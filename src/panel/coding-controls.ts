@@ -35,6 +35,7 @@ export function createCodingControls(
   fieldset: HTMLFieldSetElement,
   options: HTMLElement,
   status: HTMLElement,
+  onCodes?: (target: CaptureTarget, codes: readonly CodeAssignment[]) => void,
 ) {
   let active:
     { target: CaptureTarget; snapshot: SelectionSnapshot } | undefined;
@@ -58,7 +59,12 @@ export function createCodingControls(
         checkbox.checked = code.assigned;
         void change(code.id, assigned);
       });
-      label.append(checkbox, code.name);
+      const swatch = document.createElement('span');
+      swatch.setAttribute('aria-hidden', 'true');
+      swatch.style.cssText =
+        'display:inline-block;width:0.8em;height:0.8em;margin:0 0.3em;border:1px solid currentColor';
+      swatch.style.backgroundColor = code.color;
+      label.append(checkbox, swatch, code.name);
       const row = document.createElement('div');
       row.append(label);
       options.append(row);
@@ -93,6 +99,7 @@ export function createCodingControls(
       });
       if (active === current) {
         render(codes);
+        onCodes?.(current.target, codes);
         status.textContent = 'Códigos actualizados en memoria.';
       }
     } catch {
@@ -113,7 +120,10 @@ export function createCodingControls(
         type: 'coding.read',
         fragment: snapshot,
       });
-      if (active === current) render(codes);
+      if (active === current) {
+        render(codes);
+        onCodes?.(target, codes);
+      }
     } catch {
       if (active === current)
         status.textContent = 'No se pudieron consultar los códigos.';

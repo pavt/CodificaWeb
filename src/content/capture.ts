@@ -1,8 +1,8 @@
 import type { CaptureResult } from '../capture-contract';
 
-const excluded =
+export const excluded =
   'script,style,template,noscript,[hidden],[contenteditable]:not([contenteditable="false" i]),input,textarea,select';
-const maxDocumentLength = 1_000_000;
+export const maxDocumentLength = 1_000_000;
 const maxQuoteLength = 16_384;
 const contextLength = 32;
 

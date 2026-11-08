@@ -35,8 +35,17 @@ export function fragmentKey(fragment: Fragment): string {
   ]);
 }
 
+export interface HighlightEntry {
+  id: string;
+  selectors: Fragment['selectors'];
+  color: string;
+}
+
 export class MemoryCodings {
-  private readonly assignments = new Map<string, Set<string>>();
+  private readonly assignments = new Map<
+    string,
+    { projectId: string; fragment: Fragment; codes: Set<string> }
+  >();
 
   constructor(private readonly catalog: readonly Code[]) {}
 
@@ -46,7 +55,36 @@ export class MemoryCodings {
     );
     return this.catalog
       .filter((code) => code.projectId === projectId)
-      .map((code) => ({ ...code, assigned: assigned?.has(code.id) ?? false }));
+      .map((code) => ({
+        ...code,
+        assigned: assigned?.codes.has(code.id) ?? false,
+      }));
+  }
+
+  highlights(
+    projectId: string,
+    url: string,
+    filter: string | null,
+  ): HighlightEntry[] {
+    const entries: HighlightEntry[] = [];
+    for (const [id, entry] of this.assignments) {
+      if (entry.projectId !== projectId || entry.fragment.url !== url) continue;
+      const code = this.catalog
+        .filter(
+          (code) =>
+            code.projectId === projectId &&
+            entry.codes.has(code.id) &&
+            (filter === null || filter === code.id),
+        )
+        .sort((a, b) => a.id.localeCompare(b.id))[0];
+      if (code)
+        entries.push({
+          id,
+          selectors: entry.fragment.selectors,
+          color: code.color,
+        });
+    }
+    return entries;
   }
 
   set(
@@ -64,10 +102,10 @@ export class MemoryCodings {
     }
 
     const key = JSON.stringify([projectId, fragmentKey(fragment)]);
-    const codes = this.assignments.get(key) ?? new Set<string>();
+    const codes = this.assignments.get(key)?.codes ?? new Set<string>();
     if (assigned) codes.add(codeId);
     else codes.delete(codeId);
-    if (codes.size) this.assignments.set(key, codes);
+    if (codes.size) this.assignments.set(key, { projectId, fragment, codes });
     else this.assignments.delete(key);
     return this.read(projectId, fragment);
   }

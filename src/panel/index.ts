@@ -1,5 +1,6 @@
 import type { CaptureTarget } from '../capture-contract';
 import { createCodingControls } from './coding-controls';
+import { createHighlightFilter } from './highlight-filter';
 import { readSelection } from './read-selection';
 import { verifySiteAccess } from './site-access';
 
@@ -14,10 +15,15 @@ const captureButton = document.getElementById(
 const captureStatus = document.getElementById('capture-status') as HTMLElement;
 const quote = document.getElementById('selection-quote') as HTMLElement;
 const source = document.getElementById('selection-source') as HTMLElement;
+const highlights = createHighlightFilter(
+  document.getElementById('highlight-filter') as HTMLSelectElement,
+  document.getElementById('highlight-status') as HTMLElement,
+);
 const coding = createCodingControls(
   document.getElementById('fragment-codes') as HTMLFieldSetElement,
   document.getElementById('coding-options') as HTMLElement,
   document.getElementById('coding-status') as HTMLElement,
+  highlights.update,
 );
 let target: CaptureTarget | undefined;
 
@@ -41,6 +47,7 @@ form.addEventListener('submit', async (event) => {
   button.disabled = true;
   status.textContent = '';
   target = undefined;
+  highlights.clear();
   captureButton.disabled = true;
   clearPreview();
   try {

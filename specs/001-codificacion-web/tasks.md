@@ -6,7 +6,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T001 · Empaquetar MV3 en `vite.config.ts`, `src/manifest.json` y entradas mínimas en `src/`. Probar contenido de dist, carga en Chromium y permiso por gesto, sin acceso previo. Incluir la suite Vitest inicial y el smoke E2E. Cambiar `CODIFICAWEB_CI_PHASE` a `product` en el mismo PR. Q11. Evidencia en `tests/integration/mv3-package.test.ts`, `tests/unit/site-access.test.ts`, `tests/unit/extension-entries.test.ts` y `tests/e2e/mv3.spec.ts`.
 - [ ] T002 [US1] · Capturar Range y selectores, transferir instantánea identificada al panel. `src/content/`, `src/panel/`. Q03. Evidencia en `tests/unit/capture.test.ts`, `tests/unit/read-selection.test.ts`, `tests/unit/extension-entries.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T003 [US1] · Gestionar asociaciones de un proyecto inicial y códigos iniciales, inicialmente en memoria. `src/domain/`, `src/background/`. Q04. Evidencia en `tests/unit/codings.test.ts`, `tests/unit/coding-messages.test.ts`, `tests/unit/coding-controls.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T004 [US1] · Segmentar y pintar rangos con prioridad y filtro. `src/content/`, `src/panel/`. Q05.
+- [ ] T004 [US1] · Segmentar y pintar rangos con prioridad y filtro. `src/content/`, `src/panel/`. Q05. Evidencia en `tests/unit/highlight-segments.test.ts`, `tests/unit/paint.test.ts`, `tests/unit/highlight-filter.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T005 [US2] · Añadir esquema IndexedDB, repositorios y transacciones con ACK durable y reintentos. `src/storage/`, `src/background/`. Q12.
 - [ ] T006 [US2] · Resolver selectores, limpiar y recuperar pintura en recargas, mutaciones, rutas y permisos revocados. `src/content/`, `src/background/`. Q06, Q11.
 - [ ] T007 [US2] · Crear, editar, consultar y borrar nota en texto plano. `src/domain/`, `src/panel/`. Q07, Q13.
@@ -27,7 +27,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T001  | T000                 | M1        | p0        | infra   | extension | [#2](https://github.com/pavt/CodificaWeb/issues/2)   | [#16](https://github.com/pavt/CodificaWeb/pull/16) |
 | T002  | T001                 | M1        | p0        | feature | anchor    | [#3](https://github.com/pavt/CodificaWeb/issues/3)   | [#17](https://github.com/pavt/CodificaWeb/pull/17) |
 | T003  | T002                 | M1        | p0        | feature | data      | [#4](https://github.com/pavt/CodificaWeb/issues/4)   | [#18](https://github.com/pavt/CodificaWeb/pull/18) |
-| T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   |                                                    |
+| T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   | [#19](https://github.com/pavt/CodificaWeb/pull/19) |
 | T005  | T004                 | M2        | p0        | feature | data      | [#6](https://github.com/pavt/CodificaWeb/issues/6)   |                                                    |
 | T006  | T005                 | M2        | p0        | feature | anchor    | [#7](https://github.com/pavt/CodificaWeb/issues/7)   |                                                    |
 | T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   |                                                    |

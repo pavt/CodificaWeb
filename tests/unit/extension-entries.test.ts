@@ -30,6 +30,8 @@ test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium
     ['fragment-codes', { disabled: true }],
     ['coding-options', { replaceChildren: vi.fn() }],
     ['coding-status', { textContent: '' }],
+    ['highlight-filter', new EventTarget()],
+    ['highlight-status', { textContent: '' }],
     ['selection-source', { textContent: '' }],
   ]);
   const request = vi
@@ -78,6 +80,8 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     ['fragment-codes', { disabled: true }],
     ['coding-options', { replaceChildren: vi.fn() }],
     ['coding-status', { textContent: '' }],
+    ['highlight-filter', new EventTarget()],
+    ['highlight-status', { textContent: '' }],
     ['selection-source', source],
   ]);
   const executeScript = vi
@@ -106,7 +110,7 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     permissions: { request: vi.fn().mockResolvedValue(true) },
     scripting: { executeScript },
     runtime: {
-      sendMessage: vi.fn().mockResolvedValue({ kind: 'codings', codes: [] }),
+      sendMessage: vi.fn().mockResolvedValue({ kind: 'error' }),
     },
     tabs: { query: vi.fn().mockResolvedValue([{ id: 7, url }]), sendMessage },
   });
