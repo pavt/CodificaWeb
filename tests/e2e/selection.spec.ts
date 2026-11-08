@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q03: captura texto inline con Unicode y rechaza selección vacía, editable u obsoleta', async () => {
+test('Q03/Q04: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -100,6 +100,21 @@ test('Q03: captura texto inline con Unicode y rechaza selección vacía, editabl
       await capture.click();
       await expect(panel.locator('blockquote')).toHaveText('🙂 hola mundo');
       await expect(panel.locator('#selection-source')).toHaveText(url);
+
+      const tema = panel.getByRole('checkbox', { name: 'Tema' });
+      const contexto = panel.getByRole('checkbox', { name: 'Contexto' });
+      await tema.click();
+      await expect(tema).toBeChecked();
+      await contexto.click();
+      await expect(contexto).toBeChecked();
+      await expect(tema).toBeChecked();
+
+      await capture.click();
+      await expect(tema).toBeChecked();
+      await expect(contexto).toBeChecked();
+      await tema.click();
+      await expect(tema).not.toBeChecked();
+      await expect(contexto).toBeChecked();
 
       await source.evaluate(() =>
         history.replaceState(null, '', '#otra-fuente'),

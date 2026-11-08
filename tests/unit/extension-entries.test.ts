@@ -4,7 +4,10 @@ afterEach(() => vi.unstubAllGlobals());
 
 test('Q11: el botón de la extensión abre el panel lateral', async () => {
   const setPanelBehavior = vi.fn().mockResolvedValue(undefined);
-  vi.stubGlobal('chrome', { sidePanel: { setPanelBehavior } });
+  vi.stubGlobal('chrome', {
+    sidePanel: { setPanelBehavior },
+    runtime: { onMessage: { addListener: vi.fn() } },
+  });
   await import('../../src/background');
   expect(setPanelBehavior).toHaveBeenCalledWith({
     openPanelOnActionClick: true,
@@ -24,6 +27,9 @@ test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium
     ['capture-selection', new EventTarget()],
     ['capture-status', { textContent: '' }],
     ['selection-quote', { textContent: '' }],
+    ['fragment-codes', { disabled: true }],
+    ['coding-options', { replaceChildren: vi.fn() }],
+    ['coding-status', { textContent: '' }],
     ['selection-source', { textContent: '' }],
   ]);
   const request = vi
@@ -69,6 +75,9 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     ['capture-selection', captureButton],
     ['capture-status', status],
     ['selection-quote', quote],
+    ['fragment-codes', { disabled: true }],
+    ['coding-options', { replaceChildren: vi.fn() }],
+    ['coding-status', { textContent: '' }],
     ['selection-source', source],
   ]);
   const executeScript = vi
@@ -96,6 +105,9 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
   vi.stubGlobal('chrome', {
     permissions: { request: vi.fn().mockResolvedValue(true) },
     scripting: { executeScript },
+    runtime: {
+      sendMessage: vi.fn().mockResolvedValue({ kind: 'codings', codes: [] }),
+    },
     tabs: { query: vi.fn().mockResolvedValue([{ id: 7, url }]), sendMessage },
   });
   vi.stubGlobal('document', {
