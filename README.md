@@ -21,4 +21,4 @@ cw_pnpm format:check
 cw_pnpm typecheck
 ```
 
-`format` aplica formato. `audit` consulta el registro npm. Los scripts `test`, `coverage`, `build` y `test:e2e` se activan al incorporar pruebas y puntos de entrada del producto. El plan requiere aprobación explícita antes de ese paso.
+`format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. El panel inicial permite solicitar acceso por sitio y comprobarlo en la pestaña activa.

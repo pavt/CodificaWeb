@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CodificaWeb</title>
+  </head>
+  <body>
+    <main>
+      <h1>CodificaWeb</h1>
+      <p>
+        Para comprobar el acceso, indica la URL de la página abierta en la
+        pestaña activa.
+      </p>
+      <form id="site-access">
+        <label for="site-url">URL del sitio</label>
+        <input id="site-url" type="url" required />
+        <button id="verify-site" type="submit">Comprobar acceso</button>
+      </form>
+      <p id="site-status" role="status"></p>
+    </main>
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

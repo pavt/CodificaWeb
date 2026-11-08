@@ -10,8 +10,7 @@ permissions:
   contents: read
 
 env:
-  # T001 changes this to product in the PR that adds the extension and its tests.
-  CODIFICAWEB_CI_PHASE: planning
+  CODIFICAWEB_CI_PHASE: product
 
 jobs:
   verify:
