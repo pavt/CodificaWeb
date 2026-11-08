@@ -40,3 +40,7 @@ export interface HighlightEntry {
   selectors: Fragment['selectors'];
   color: string;
 }
+
+export function codeNameKey(name: string) {
+  return name.trim().toLowerCase().normalize('NFC');
+}

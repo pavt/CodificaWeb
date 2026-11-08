@@ -21,6 +21,18 @@
         <button id="project-remove" type="button">Borrar proyecto</button>
         <p id="project-status" aria-live="polite"></p>
       </fieldset>
+      <details id="project-transfer">
+        <summary>Importar o exportar proyecto</summary>
+        <button id="project-export" type="button" disabled>
+          Exportar proyecto activo
+        </button>
+        <label for="project-file">Archivo de proyecto JSON</label>
+        <input id="project-file" type="file" accept=".json,application/json" />
+        <button id="project-import" type="button" disabled>
+          Importar como copia
+        </button>
+        <p id="transfer-status" aria-live="polite"></p>
+      </details>
       <fieldset id="catalog" disabled>
         <legend>Catálogo de códigos</legend>
         <label for="catalog-select">Código del catálogo</label>

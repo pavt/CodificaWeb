@@ -14,7 +14,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T009 [US3] · CRUD de códigos y propagación de color. `src/storage/`, `src/background/`, `src/panel/`. Q02. Evidencia en `tests/integration/catalog.test.ts`, `tests/unit/catalog-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q08. Evidencia en `tests/unit/evidence-search.test.ts`, `tests/unit/evidence-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T011 [US3] · Abrir fuente, validar destino y ubicar rango o mostrar causa. `src/background/`, `src/content/`, `src/panel/`. Q09. Evidencia en `tests/unit/open-evidence.test.ts`, `tests/unit/locate-evidence.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T012 [US4] · Exportar snapshot, validar e importar como copia transaccional. `src/domain/`, `src/storage/`, `src/panel/`. Q10, Q13.
+- [ ] T012 [US4] · Exportar snapshot, validar e importar como copia transaccional. `src/domain/`, `src/storage/`, `src/background/`, `src/panel/`. Q10, Q13. Evidencia en `tests/integration/project-transfer.test.ts`, `tests/unit/project-file.test.ts`, `tests/unit/transfer-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T013 · Validar versión en Chrome y Brave, ejecutar auditoría y revisar permisos y tráfico. `tests/`, `docs/quality.md`. Q11, Q14.
 
 ## Orden de implementación

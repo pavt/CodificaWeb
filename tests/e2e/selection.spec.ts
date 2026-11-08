@@ -1,9 +1,10 @@
+import fixture from '../../docs/examples/project-v1.json' with { type: 'json' };
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q09 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
+test('Q01–Q10 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -475,6 +476,54 @@ test('Q01–Q09 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       );
       await expect(destination).toHaveURL(firstSource);
       await expect(destination.locator('#catalog-fixture')).toBeInViewport();
+      // Q10: round-trip the published fixture through the actual file controls.
+      await panel
+        .getByText('Importar o exportar proyecto', { exact: true })
+        .click();
+      const file = panel.getByLabel('Archivo de proyecto JSON');
+      const importProject = panel.getByRole('button', {
+        name: 'Importar como copia',
+      });
+      await file.setInputFiles({
+        name: 'invalido.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify({ ...fixture, schemaVersion: 2 })),
+      });
+      await importProject.click();
+      await expect(panel.locator('#transfer-status')).toContainText(
+        'No se pudo importar',
+      );
+      await file.setInputFiles({
+        name: 'proyecto.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify(fixture)),
+      });
+      await importProject.click();
+      await expect(panel.locator('#transfer-status')).toHaveText(
+        'Copia del proyecto importada.',
+      );
+      await project.selectOption({ label: 'Movilidad' });
+      await expect(project).toBeEnabled();
+      const [download] = await Promise.all([
+        panel.waitForEvent('download'),
+        panel.getByRole('button', { name: 'Exportar proyecto activo' }).click(),
+      ]);
+      const output = await download.path();
+      if (!output) throw new Error('No se descargó el proyecto');
+      const transferred = JSON.parse(await readFile(output, 'utf8'));
+      expect(transferred.project.id).not.toBe(fixture.project.id);
+      expect(transferred.annotations[0]?.note).toBe(
+        fixture.annotations[0]?.note,
+      );
+      expect(transferred.codings).toHaveLength(2);
+      await file.setInputFiles(output);
+      await importProject.click();
+      await expect(panel.locator('#transfer-status')).toHaveText(
+        'Copia del proyecto importada.',
+      );
+      await expect(
+        project.locator('option', { hasText: 'Movilidad' }),
+      ).toHaveCount(2);
     } finally {
       await context.close();
     }
