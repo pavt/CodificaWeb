@@ -60,6 +60,10 @@ if (!world.codificawebCaptureInstalled) {
     if (sender.url !== chrome.runtime.getURL('src/panel/index.html')) return;
     if (message.type === 'capture.prepare') {
       if ('temporary' in message && message.temporary === true) {
+        if (!('url' in message) || message.url !== location.href) {
+          respond(false);
+          return;
+        }
         startCapture();
         temporary = true;
         respond(true);

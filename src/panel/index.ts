@@ -198,7 +198,7 @@ async function attachActiveTab() {
     if (!script?.documentId || request !== accessRequest) return;
     const prepared: unknown = await chrome.tabs.sendMessage(
       tab.id,
-      { type: 'capture.prepare', temporary: true },
+      { type: 'capture.prepare', temporary: true, url: tab.url },
       { documentId: script.documentId },
     );
     if (prepared !== true || request !== accessRequest) return;
@@ -276,7 +276,7 @@ if (chrome.tabs?.onActivated) {
       tabId === activeTabId &&
       (change.url ||
         change.status === 'loading' ||
-        change.status === 'complete')
+        (change.status === 'complete' && !target))
     ) {
       void attachActiveTab();
     }

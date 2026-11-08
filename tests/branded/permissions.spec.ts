@@ -10,6 +10,9 @@ const browsers = [
   ['Brave Browser', process.env.CODIFICAWEB_BRAVE_BIN],
 ] as const;
 const url = 'http://127.0.0.1:32147/fixture';
+const nextUrl = new URL('/siguiente', url).href;
+const slowImage = new URL('/carga-lenta.svg', url).href;
+const otherSite = 'http://localhost:32147/otro';
 const citation = 'Cita sintética T015';
 const origins = ['http://127.0.0.1/*'];
 
@@ -66,10 +69,41 @@ for (const [name, executable] of browsers) {
           body: `<p>${citation}</p><p>Otra cita.</p>`,
         }),
       );
+      let releaseImage: (() => void) | undefined;
+      const imageReady = new Promise<void>((resolve) => {
+        releaseImage = resolve;
+      });
+      await context.route(slowImage, async (route) => {
+        await imageReady;
+        await route.fulfill({
+          contentType: 'image/svg+xml',
+          body: '<svg xmlns="http://www.w3.org/2000/svg"/>',
+        });
+      });
+      await context.route(nextUrl, (route) =>
+        route.fulfill({
+          contentType: 'text/html; charset=utf-8',
+          body: '<p>Página siguiente.</p><img src="/carga-lenta.svg" alt="">',
+        }),
+      );
+      await context.route(otherSite, (route) =>
+        route.fulfill({
+          contentType: 'text/html; charset=utf-8',
+          body: '<p>Otro sitio.</p>',
+        }),
+      );
       context.on('request', (request) => {
         if (
           /^https?:\/\//.test(request.url()) &&
-          !(request.url() === url && request.isNavigationRequest())
+          !(
+            request.url() === slowImage &&
+            request.resourceType() === 'image' &&
+            request.frame().url() === nextUrl
+          ) &&
+          !(
+            [url, nextUrl, otherSite].includes(request.url()) &&
+            request.isNavigationRequest()
+          )
         ) {
           unexpected.push(request.url());
         }
@@ -418,9 +452,71 @@ for (const [name, executable] of browsers) {
         console.log(
           'Proyecto nuevo: verde #7FC97F, lila #BEAED4, naranja #FDC086 verificados en la cita, la etiqueta y el resaltado.',
         );
+        await page.goto(nextUrl, { waitUntil: 'domcontentloaded' });
+        await expect.poll(quote).toBe('');
+        await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Tras navegar';
+        })()`);
+        releaseImage?.();
+        await page.waitForLoadState('load');
+        expect(
+          await readPanel("document.querySelector('#category-name').value"),
+        ).toBe('Tras navegar');
+        await readPanel(
+          "document.querySelector('#category-create').requestSubmit()",
+        );
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');
+        await other.goto(otherSite);
+        await other
+          .locator('p')
+          .evaluate((node) => window.getSelection()?.selectAllChildren(node));
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(true);
+        const { targetInfos: nextTabs } = await cdp.send('Target.getTargets', {
+          filter: [{ type: 'tab' }, { exclude: true }],
+        });
+        const otherTab = nextTabs.find(
+          (candidate) => candidate.url === otherSite,
+        );
+        if (!otherTab) throw new Error('Falta la pestaña del otro sitio');
+        await cdp.send('Extensions.triggerAction', {
+          id,
+          targetId: otherTab.targetId,
+        });
+        await expect.poll(quote).toBe('Otro sitio.');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'En otro sitio';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
       } finally {
         socket.close();
       }
