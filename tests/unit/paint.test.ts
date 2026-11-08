@@ -40,7 +40,7 @@ test('Q05: pinta nodos admitidos, respeta otros resaltados y limpia tras cambios
         },
       },
     ]),
-  ).toBe(true);
+  ).toMatchObject({ painted: true });
   expect([...(registry.get('codificaweb-fdd835') ?? [])].map(String)).toEqual([
     'a',
     'd',
@@ -76,24 +76,24 @@ test('Q05: descarta rangos obsoletos, colores inválidos y páginas fuera del l�
         ...entry,
         selectors: {
           position: { start: -1, end: 4 },
-          quote: entry.selectors.quote,
+          quote: { ...entry.selectors.quote, exact: 'ausente' },
         },
       },
       {
         ...entry,
         selectors: {
           position: { start: 0, end: 4 },
-          quote: { ...entry.selectors.quote, suffix: 'xx' },
+          quote: { ...entry.selectors.quote, exact: 'ausente', suffix: 'xx' },
         },
       },
     ]),
-  ).toBe(true);
+  ).toMatchObject({ painted: true });
   expect(registry.size).toBe(0);
-  expect(painter.paint(null)).toBe(false);
+  expect(painter.paint(null)).toMatchObject({ painted: false });
   document.body.textContent = 'x'.repeat(1_000_001);
-  expect(painter.paint([entry])).toBe(false);
+  expect(painter.paint([entry])).toMatchObject({ painted: false });
   vi.stubGlobal('CSS', undefined);
-  expect(painter.paint([entry])).toBe(false);
+  expect(painter.paint([entry])).toMatchObject({ painted: false });
 });
 
 test('Q05: el content script pinta solo para el panel y la URL autorizados', async () => {
@@ -104,6 +104,9 @@ test('Q05: el content script pinta solo para el panel y la URL autorizados', asy
       id: 'id',
       getURL: () => panel,
       onMessage: { addListener: listener },
+      sendMessage: vi
+        .fn()
+        .mockResolvedValue({ kind: 'highlights', entries: [] }),
     },
   });
   await import('../../src/content/index');
@@ -117,8 +120,10 @@ test('Q05: el content script pinta solo para el panel y la URL autorizados', asy
   );
   handle(null, sender, respond);
   expect(respond).not.toHaveBeenCalled();
-  handle({ type: 'capture.read' }, sender, respond);
-  expect(respond).toHaveBeenLastCalledWith({ kind: 'empty' });
+  await vi.waitFor(() => {
+    handle({ type: 'capture.read' }, sender, respond);
+    expect(respond).toHaveBeenLastCalledWith({ kind: 'empty' });
+  });
   handle(
     { type: 'highlight.paint', url: 'https://otro.test/', entries: [entry] },
     sender,
@@ -132,7 +137,13 @@ test('Q05: el content script pinta solo para el panel y la URL autorizados', asy
     expect.objectContaining({ painted: true }),
   );
   expect(registry.size).toBe(1);
-  window.dispatchEvent(new Event('pagehide'));
+  handle(
+    { type: 'highlight.revoke', origins: [location.origin] },
+    { id: 'id' },
+    respond,
+  );
+  handle({ type: 'capture.read' }, sender, respond);
+  expect(respond).toHaveBeenLastCalledWith({ kind: 'stale' });
   expect(registry.size).toBe(0);
 });
 
@@ -140,7 +151,7 @@ test('Q05: no sobrescribe ni elimina un resaltado ajeno con el mismo nombre', ()
   const original = new Set<Range>();
   registry.set('codificaweb-fdd835', original);
   const painter = createPainter();
-  expect(painter.paint([entry])).toBe(true);
+  expect(painter.paint([entry])).toMatchObject({ painted: true });
   expect(registry.get('codificaweb-fdd835')).toBe(original);
   const replacement = new Set<Range>();
   registry.set('codificaweb-fdd835-cw', replacement);

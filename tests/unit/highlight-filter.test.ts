@@ -37,6 +37,7 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
       7,
       {
         type: 'highlight.paint',
+        filter: null,
         url: target.url,
         entries: [],
       },

@@ -1,13 +1,34 @@
+import { isRecord } from './capture-contract';
 import { handleCodingRequest } from './background/coding-messages';
+import { canRestore, enableSite, reconcileSites } from './background/sites';
 
 void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+const reconcile = () => void reconcileSites().catch(() => undefined);
+chrome.runtime.onStartup.addListener(reconcile);
+chrome.runtime.onInstalled.addListener(reconcile);
+chrome.permissions.onRemoved.addListener(reconcile);
+
+async function handle(
+  message: Record<string, unknown>,
+  sender: chrome.runtime.MessageSender,
+) {
+  if (sender.url === chrome.runtime.getURL('src/panel/index.html')) {
+    if (message.type === 'site.enable')
+      return { enabled: await enableSite(message.url) };
+    return handleCodingRequest(message);
+  }
+  if (
+    message.type === 'highlight.restore' &&
+    (await canRestore(sender, message.url))
+  ) {
+    return handleCodingRequest({ ...message, type: 'highlight.read' });
+  }
+  return { kind: 'error' };
+}
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
-  if (
-    sender.id === chrome.runtime.id &&
-    sender.url === chrome.runtime.getURL('src/panel/index.html')
-  ) {
-    void handleCodingRequest(message).then(respond, () =>
+  if (sender.id === chrome.runtime.id && isRecord(message)) {
+    void handle(message, sender).then(respond, () =>
       respond({ kind: 'error' }),
     );
     return true;

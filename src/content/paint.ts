@@ -1,4 +1,5 @@
 import { segmentHighlights } from '../domain/highlights';
+import { resolveAnchor } from './resolve-anchor';
 import { excluded, maxDocumentLength } from './capture';
 
 export function createPainter() {
@@ -20,7 +21,7 @@ export function createPainter() {
     observer = undefined;
   }
 
-  function paint(entries: unknown): boolean {
+  function paint(entries: unknown) {
     clear();
     if (
       typeof CSS === 'undefined' ||
@@ -29,7 +30,7 @@ export function createPainter() {
       !document.body ||
       !Array.isArray(entries)
     )
-      return false;
+      return { painted: false, unresolved: 0 };
 
     const walker = document.createTreeWalker(
       document.body,
@@ -40,7 +41,8 @@ export function createPainter() {
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
       if (node.parentElement?.closest(excluded)) continue;
       const value = (node as Text).data;
-      if (text.length + value.length > maxDocumentLength) return false;
+      if (text.length + value.length > maxDocumentLength)
+        return { painted: false, unresolved: 0 };
       if (!value) continue;
       const start = text.length;
       text += value;
@@ -49,26 +51,21 @@ export function createPainter() {
 
     const ranges = entries.flatMap((entry) => {
       const { id, color, selectors } = entry ?? {};
-      const { start, end } = selectors?.position ?? {};
       const { exact, prefix, suffix } = selectors?.quote ?? {};
       if (
         typeof id !== 'string' ||
         typeof color !== 'string' ||
         !/^#[0-9a-f]{6}$/i.test(color) ||
-        !Number.isSafeInteger(start) ||
-        !Number.isSafeInteger(end) ||
-        start < 0 ||
-        end <= start ||
-        end > text.length ||
         typeof exact !== 'string' ||
+        exact.length > 16_384 ||
         typeof prefix !== 'string' ||
+        prefix.length > 32 ||
         typeof suffix !== 'string' ||
-        text.slice(start, end) !== exact ||
-        text.slice(start - prefix.length, start) !== prefix ||
-        text.slice(end, end + suffix.length) !== suffix
+        suffix.length > 32
       )
         return [];
-      return [{ id, start, end, color }];
+      const resolved = resolveAnchor(text, exact, prefix, suffix);
+      return resolved ? [{ id, ...resolved, color }] : [];
     });
 
     const colors = new Map<string, Range[]>();
@@ -89,7 +86,11 @@ export function createPainter() {
         colors.set(segment.color, bucket);
       }
     }
-    if (!colors.size) return true;
+    const result = {
+      painted: true,
+      unresolved: entries.length - ranges.length,
+    };
+    if (!colors.size) return result;
 
     sheet = new CSSStyleSheet();
     const rules: string[] = [];
@@ -112,7 +113,7 @@ export function createPainter() {
       attributes: true,
       attributeFilter: ['hidden', 'contenteditable'],
     });
-    return true;
+    return result;
   }
 
   window.addEventListener('hashchange', clear);

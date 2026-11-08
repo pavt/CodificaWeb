@@ -54,6 +54,13 @@ form.addEventListener('submit', async (event) => {
     status.textContent = await verifySiteAccess(
       input.value,
       async (nextTarget) => {
+        const registration = await chrome.runtime.sendMessage({
+          type: 'site.enable',
+          url: nextTarget.url,
+        });
+        if (registration?.enabled !== true)
+          throw new Error('No se pudo registrar el sitio.');
+
         await chrome.scripting.executeScript({
           target: {
             tabId: nextTarget.tabId,
@@ -61,6 +68,13 @@ form.addEventListener('submit', async (event) => {
           },
           files: ['content.js'],
         });
+        const prepared = await chrome.tabs.sendMessage(
+          nextTarget.tabId,
+          { type: 'capture.prepare' },
+          { documentId: nextTarget.documentId },
+        );
+        if (prepared !== true)
+          throw new Error('El documento ya no está disponible.');
         target = nextTarget;
         captureButton.disabled = false;
       },

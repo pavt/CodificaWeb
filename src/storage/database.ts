@@ -53,6 +53,7 @@ export class CodingDatabase extends Dexie {
   declare codes: Table<StoredCode, string>;
   declare annotations: Table<Annotation, string>;
   declare codings: Table<Coding, string>;
+  declare sites: Table<{ origin: string }, string>;
   declare operations: Table<Operation, string>;
 
   constructor(name = 'codificaweb') {
@@ -66,6 +67,7 @@ export class CodingDatabase extends Dexie {
         'id, &[annotationId+codeId], [projectId+codeId], [projectId+annotationId], annotationId',
       operations: 'id',
     });
+    this.version(2).stores({ sites: 'origin' });
     this.on('populate', async () => {
       const time = new Date().toISOString();
       await this.projects.add({

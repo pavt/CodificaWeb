@@ -8,7 +8,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T003 [US1] · Gestionar asociaciones de un proyecto inicial y códigos iniciales, inicialmente en memoria. `src/domain/`, `src/background/`. Q04. Evidencia en `tests/integration/coding-storage.test.ts`, `tests/unit/coding-messages.test.ts`, `tests/unit/coding-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T004 [US1] · Segmentar y pintar rangos con prioridad y filtro. `src/content/`, `src/panel/`. Q05. Evidencia en `tests/unit/highlight-segments.test.ts`, `tests/unit/paint.test.ts`, `tests/unit/highlight-filter.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T005 [US2] · Añadir esquema IndexedDB, repositorios y transacciones con ACK durable y reintentos. `src/storage/`, `src/background/`. Q12. Evidencia en `tests/integration/coding-storage.test.ts`, `tests/unit/coding-controls.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T006 [US2] · Resolver selectores, limpiar y recuperar pintura en recargas, mutaciones, rutas y permisos revocados. `src/content/`, `src/background/`. Q06, Q11.
+- [ ] T006 [US2] · Resolver selectores, limpiar y recuperar pintura en recargas, mutaciones, rutas y permisos revocados. `src/content/`, `src/background/`. Q06, Q11. Evidencia en `tests/unit/resolve-anchor.test.ts`, `tests/unit/paint.test.ts`, `tests/unit/sites.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T007 [US2] · Crear, editar, consultar y borrar nota en texto plano. `src/domain/`, `src/panel/`. Q07, Q13.
 - [ ] T008 [US3] · CRUD de proyectos y cambio de proyecto activo. `src/domain/`, `src/storage/`, `src/panel/`. Q01.
 - [ ] T009 [US3] · CRUD de códigos y propagación de color. `src/domain/`, `src/storage/`, `src/panel/`. Q02.

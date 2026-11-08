@@ -38,11 +38,23 @@ export function createHighlightFilter(
       }
       const painted: unknown = await chrome.tabs.sendMessage(
         current.tabId,
-        { type: 'highlight.paint', url: current.url, entries: result.entries },
+        {
+          type: 'highlight.paint',
+          filter: filter.value || null,
+          url: current.url,
+          entries: result.entries,
+        },
         { documentId: current.documentId },
       );
       if (id === request && (!isRecord(painted) || painted.painted !== true))
         status.textContent = 'No se pudo aplicar el resaltado en esta página.';
+      else if (
+        id === request &&
+        isRecord(painted) &&
+        typeof painted.unresolved === 'number' &&
+        painted.unresolved > 0
+      )
+        status.textContent = `${painted.unresolved} fragmento(s) sin ubicar.`;
     } catch {
       if (id === request)
         status.textContent = 'No se pudo aplicar el resaltado en esta página.';

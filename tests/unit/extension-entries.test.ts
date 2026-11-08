@@ -6,7 +6,12 @@ test('Q11: el botón de la extensión abre el panel lateral', async () => {
   const setPanelBehavior = vi.fn().mockResolvedValue(undefined);
   vi.stubGlobal('chrome', {
     sidePanel: { setPanelBehavior },
-    runtime: { onMessage: { addListener: vi.fn() } },
+    runtime: {
+      onMessage: { addListener: vi.fn() },
+      onStartup: { addListener: vi.fn() },
+      onInstalled: { addListener: vi.fn() },
+    },
+    permissions: { onRemoved: { addListener: vi.fn() } },
   });
   await import('../../src/background');
   expect(setPanelBehavior).toHaveBeenCalledWith({
@@ -90,6 +95,7 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     .mockResolvedValueOnce([]);
   const sendMessage = vi
     .fn()
+    .mockResolvedValueOnce(true)
     .mockResolvedValueOnce({
       kind: 'selection',
       url,
@@ -110,7 +116,10 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     permissions: { request: vi.fn().mockResolvedValue(true) },
     scripting: { executeScript },
     runtime: {
-      sendMessage: vi.fn().mockResolvedValue({ kind: 'error' }),
+      sendMessage: vi
+        .fn()
+        .mockResolvedValueOnce({ enabled: true })
+        .mockResolvedValue({ kind: 'error' }),
     },
     tabs: { query: vi.fn().mockResolvedValue([{ id: 7, url }]), sendMessage },
   });
