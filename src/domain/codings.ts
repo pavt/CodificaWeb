@@ -20,6 +20,7 @@ export interface Code {
 }
 
 export interface CodeAssignment extends Code {
+  description?: string;
   assigned: boolean;
 }
 

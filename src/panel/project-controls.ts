@@ -53,6 +53,9 @@ export function mountProjects(
       description.value = current?.description ?? '';
       save.disabled = remove.disabled = !current;
       active = current?.id ?? null;
+      const subtitle = document.getElementById('active-project-label');
+      if (subtitle)
+        subtitle.textContent = current ? `Proyecto · ${current.name}` : '';
       onActive(active);
       if (message.type !== 'project.list')
         status.textContent = 'Proyecto actualizado.';

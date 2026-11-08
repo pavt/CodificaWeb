@@ -208,3 +208,68 @@ test('Q07: guarda y edita una nota de texto plano y borra solo la nota', async (
   expect(await db.annotations.count()).toBe(1);
   expect(await db.codings.count()).toBe(1);
 });
+
+test('T016: revierte la categoría y la cita al fallar el recibo y permite reintentar sin duplicar', async () => {
+  const fields = {
+    name: ' Hallazgo ',
+    color: '#126abc',
+    description: 'Definición',
+  };
+  const operation = crypto.randomUUID();
+  const save = () =>
+    repository.createAndApply(initialProjectId, fragment, fields, operation);
+  const fail = () => {
+    throw new Error('Recibo no escrito');
+  };
+  db.operations.hook('creating', fail);
+  await expect(save()).rejects.toThrow('Recibo no escrito');
+  expect(await db.codes.count()).toBe(2);
+  for (const table of [db.sources, db.annotations, db.codings, db.operations]) {
+    expect(await table.count()).toBe(0);
+  }
+  db.operations.hook('creating').unsubscribe(fail);
+  const saved = expect.objectContaining({
+    name: 'Hallazgo',
+    color: '#126ABC',
+    description: 'Definición',
+    assigned: true,
+  });
+  await expect(save()).resolves.toEqual(expect.arrayContaining([saved]));
+  await expect(save()).resolves.toEqual(expect.arrayContaining([saved]));
+  expect(await db.codes.count()).toBe(3);
+  expect(await db.codings.count()).toBe(1);
+  await expect(
+    repository.highlights(initialProjectId, fragment.url, null),
+  ).resolves.toMatchObject([
+    { color: '#126ABC', selectors: fragment.selectors },
+  ]);
+  await expect(
+    repository.createAndApply(
+      initialProjectId,
+      fragment,
+      { ...fields, color: '#ffffff' },
+      operation,
+    ),
+  ).rejects.toThrow('Operación reutilizada');
+});
+
+test('T016: rechaza una cita pendiente de otro proyecto sin modificar el catálogo', async () => {
+  const original = await db.projects.get(initialProjectId);
+  if (!original) throw new Error('Proyecto inicial ausente');
+  await db.projects.add({ ...original, id: 'otro-proyecto' });
+  await db.preferences.put({ key: 'activeProject', value: 'otro-proyecto' });
+  await expect(
+    repository.createAndApply(
+      initialProjectId,
+      fragment,
+      {
+        name: 'Hallazgo',
+        color: '#126ABC',
+        description: '',
+      },
+      crypto.randomUUID(),
+    ),
+  ).rejects.toThrow('Proyecto inactivo');
+  expect(await db.codes.count()).toBe(2);
+  expect(await db.codings.count()).toBe(0);
+});

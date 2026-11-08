@@ -1,6 +1,11 @@
 import 'fake-indexeddb/auto';
-import { expect, test } from 'vitest';
-import { handleCodingRequest } from '../../src/background/coding-messages';
+import { expect, test, vi } from 'vitest';
+import {
+  database,
+  handleCodingRequest,
+  projects,
+} from '../../src/background/coding-messages';
+import { initialProjectId } from '../../src/storage/database';
 
 const fragment = {
   url: 'https://example.test/articulo',
@@ -122,4 +127,34 @@ test('Q07–Q13: conserva texto literal y rechaza notas vacías, enormes o de ti
       operationId: crypto.randomUUID(),
     }),
   ).toEqual({ kind: 'note', note: null });
+});
+
+test('T016: descarta una aplicación si el proyecto cambia antes de la escritura', async () => {
+  const initial = await handleCodingRequest(request);
+  if (initial.kind !== 'codings' || !initial.codes[0])
+    throw new Error('Catálogo inicial ausente');
+  const otherId = await projects.create('Otro proyecto', '');
+  const activeId = vi
+    .spyOn(projects, 'activeId')
+    .mockImplementationOnce(async () => {
+      await projects.select(otherId);
+      return initialProjectId;
+    });
+  try {
+    expect(
+      await handleCodingRequest({
+        ...request,
+        type: 'coding.set',
+        projectId: initialProjectId,
+        codeId: initial.codes[0].id,
+        assigned: true,
+        operationId: crypto.randomUUID(),
+      }),
+    ).toEqual({ kind: 'error' });
+    expect(await database.codings.count()).toBe(0);
+  } finally {
+    activeId.mockRestore();
+    await projects.select(initialProjectId);
+    await projects.remove(otherId);
+  }
 });

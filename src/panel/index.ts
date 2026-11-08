@@ -30,7 +30,22 @@ const coding = createCodingControls(
   document.getElementById('fragment-codes') as HTMLFieldSetElement,
   document.getElementById('coding-options') as HTMLElement,
   document.getElementById('coding-status') as HTMLElement,
-  highlights.update,
+  (target, codes) => {
+    highlights.update(target, codes);
+    const applied = codes.find(({ assigned }) => assigned);
+    const card = document.getElementById('quote-card');
+    const title = document.getElementById('selection-title');
+    if (card && title) {
+      card.toggleAttribute('data-saved', Boolean(applied));
+      if (applied) card.style.setProperty('--category-color', applied.color);
+      title.textContent = applied ? 'Cita guardada' : 'Texto seleccionado';
+    }
+  },
+  ({ projectId }) => {
+    if (!projectId) return;
+    setCatalogProject?.(projectId);
+    refreshEvidence?.(projectId);
+  },
 );
 const notes = createNoteControls(
   document.getElementById('fragment-note') as HTMLFieldSetElement,
@@ -60,6 +75,9 @@ function clearPreview() {
   captureRequest++;
   selected = undefined;
   quote.textContent = '';
+  document.getElementById('quote-card')?.removeAttribute('data-saved');
+  const title = document.getElementById('selection-title');
+  if (title) title.textContent = 'Texto seleccionado';
   source.textContent = '';
   captureStatus.textContent = '';
   coding.clear();
@@ -71,12 +89,17 @@ form.addEventListener('submit', async (event) => {
   const request = ++accessRequest;
   button.disabled = true;
   status.textContent = '';
-  target = undefined;
-  highlights.clear();
-  captureButton.disabled = true;
-  clearPreview();
+  // The optional permission must not discard the activeTab capture.
+  const url = input.value;
+  if (!direct) {
+    target = undefined;
+    highlights.clear();
+    captureButton.disabled = true;
+    clearPreview();
+  }
+  let preparedTarget: CaptureTarget | undefined;
   try {
-    const result = await verifySiteAccess(input.value, async (nextTarget) => {
+    const result = await verifySiteAccess(url, async (nextTarget) => {
       if (request !== accessRequest) return;
       const registration = await chrome.runtime.sendMessage({
         type: 'site.enable',
@@ -100,12 +123,15 @@ form.addEventListener('submit', async (event) => {
       if (prepared !== true)
         throw new Error('El documento ya no está disponible.');
       if (request !== accessRequest) return;
-      target = projectId ? { ...nextTarget, projectId } : nextTarget;
-      captureButton.disabled = Boolean(projects && !projectId);
+      preparedTarget = nextTarget;
     });
     if (request === accessRequest) {
       status.textContent = result;
-      if (direct && target) void captureCurrent();
+      if (preparedTarget) {
+        target = projectId ? { ...preparedTarget, projectId } : preparedTarget;
+        captureButton.disabled = Boolean(projects && !projectId);
+        if (direct) void captureCurrent();
+      }
     }
   } catch {
     if (request === accessRequest)
@@ -214,6 +240,7 @@ const projects = document.getElementById(
 if (projects) {
   mountProjects(projects, (id) => {
     if (projectId === id) return;
+    const loadingInitialProject = projectId === undefined;
     projectId = id;
     setCatalogProject?.(id);
     setTransferProject?.(id);
@@ -224,7 +251,7 @@ if (projects) {
       const { tabId, documentId, url } = target;
       target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
       captureButton.disabled = id === null;
-      if (direct && id) void captureCurrent();
+      if (direct && id && loadingInitialProject) void captureCurrent();
     }
   });
 }
@@ -236,6 +263,7 @@ if (chrome.tabs?.onActivated) {
     .then((tab) => {
       if (tab) return;
       direct = true;
+      document.getElementById('panel-tools')?.removeAttribute('open');
       if (accessRequest === 0) void attachActiveTab();
     })
     .catch(() => undefined);

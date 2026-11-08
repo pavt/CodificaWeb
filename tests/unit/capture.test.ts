@@ -105,6 +105,40 @@ test('Q03: invalida la instantánea tras una mutación o cambio de URL', () => {
   }
 });
 
+test('Q03: una página que consume pointerup aún entrega la selección al panel', () => {
+  const onCommit = vi.fn();
+  const capture = observeSelection(onCommit);
+  try {
+    const selected = document.querySelector('strong');
+    selected?.addEventListener('pointerup', (event) => event.stopPropagation());
+    select('strong');
+    selected?.dispatchEvent(new Event('pointerup', { bubbles: true }));
+    expect(onCommit).toHaveBeenCalledOnce();
+  } finally {
+    capture.stop();
+  }
+});
+
+test('Q03: conserva la cita cuando una actualización ajena deja el anclaje intacto', () => {
+  const capture = observeSelection();
+  try {
+    select('strong');
+    const selected = capture.read();
+    const activity = document.createElement('span');
+    activity.hidden = true;
+    activity.textContent = 'Actividad de fondo';
+    document.body.append(activity);
+    expect(capture.read()).toEqual(selected);
+    document.dispatchEvent(new Event('selectionchange'));
+    expect(capture.read()).toEqual(selected);
+
+    document.querySelector('strong')?.append(' modificado');
+    expect(capture.read()).toEqual({ kind: 'stale' });
+  } finally {
+    capture.stop();
+  }
+});
+
 test('Q03: el contexto de 32 unidades no parte pares sustitutos', () => {
   document.body.innerHTML = `<span>🙂${'a'.repeat(31)}</span><strong>cita</strong><em>${'b'.repeat(31)}🙂</em>`;
   const capture = observeSelection();

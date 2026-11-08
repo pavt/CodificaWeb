@@ -119,6 +119,72 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         '🙂 hola mundo',
       );
       await expect(panel.locator('#selection-source')).toHaveText(url);
+      await expect(panel.locator('#category-create')).toBeHidden();
+      await panel.getByRole('button', { name: 'Crear categoría' }).click();
+      await expect(panel.locator('#selection-quote')).toHaveText(
+        '🙂 hola mundo',
+      );
+      await panel.getByLabel('Nombre de la categoría').fill('Patrón rápido');
+      await panel
+        .getByLabel('Definición de la categoría')
+        .fill('Una definición sintética');
+      await panel.getByLabel('Color de la categoría').fill('#126abc');
+      await panel.getByRole('button', { name: 'Guardar y aplicar' }).click();
+      await expect(panel.locator('#coding-status')).toHaveText(
+        'Categoría guardada y aplicada.',
+      );
+      await expect(panel.locator('#category-create')).toBeHidden();
+      await expect(
+        panel.getByText('Cita guardada', { exact: true }),
+      ).toBeVisible();
+      await expect(
+        panel.getByRole('heading', { name: 'Categoría aplicada' }),
+      ).toBeVisible();
+      await expect(
+        panel.getByText('Selecciona otro fragmento para seguir.'),
+      ).toBeVisible();
+      const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
+      await expect(finding).toBeChecked();
+      await expect(panel.getByText('Una definición sintética')).toBeVisible();
+      await panel
+        .getByRole('button', { name: 'Editar definición de Patrón rápido' })
+        .click();
+      const definition = panel.getByLabel(
+        'Definición guardada de la categoría',
+      );
+      await expect(definition).toHaveValue('Una definición sintética');
+      await definition.fill('Definición revisada');
+      await panel.getByRole('button', { name: 'Guardar definición' }).click();
+      await expect(panel.locator('#coding-status')).toHaveText(
+        'Definición guardada.',
+      );
+      await capture.click();
+      await expect(
+        panel.getByText('Definición revisada', { exact: true }),
+      ).toBeVisible();
+      await expect(finding).toBeChecked();
+
+      await expect
+        .poll(() =>
+          source.evaluate(() =>
+            Array.from(
+              CSS.highlights.get('codificaweb-126abc') ?? [],
+              (range) => range.toString(),
+            ).join(''),
+          ),
+        )
+        .toBe('🙂 hola mundo');
+      await panel.getByLabel('Buscar categorías').fill('patrón');
+      await expect(panel.getByRole('checkbox', { name: 'Tema' })).toHaveCount(
+        0,
+      );
+      await panel.getByLabel('Buscar categorías').clear();
+      await finding.click();
+      await expect(finding).not.toBeChecked();
+      await expect(
+        panel.getByText('Selecciona otro fragmento para seguir.'),
+      ).toBeHidden();
+
       const note = panel.getByLabel('Nota en texto plano');
       const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
       const removeNote = panel.getByRole('button', { name: 'Borrar nota' });

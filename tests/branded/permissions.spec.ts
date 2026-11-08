@@ -132,10 +132,29 @@ for (const [name, executable] of browsers) {
       expect(blocked).toMatch(/cannot access/i);
       await panel.close();
       await page.bringToFront();
-      await page
-        .locator('p')
-        .first()
-        .evaluate((node) => window.getSelection()?.selectAllChildren(node));
+      async function dragQuote(index: number, expected: string) {
+        const box = await page
+          .locator('p')
+          .nth(index)
+          .evaluate((paragraph) => {
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            const rect = range.getBoundingClientRect();
+            return {
+              x: rect.left,
+              right: rect.right,
+              y: rect.top + rect.height / 2,
+            };
+          });
+        await page.mouse.move(box.x, box.y);
+        await page.mouse.down();
+        await page.mouse.move(box.right + 2, box.y, { steps: 10 });
+        await page.mouse.up();
+        await expect
+          .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+          .toBe(expected);
+      }
+      await dragQuote(0, citation);
       const { targetInfos } = await cdp.send('Target.getTargets', {
         filter: [{ type: 'tab' }, { exclude: true }],
       });
@@ -201,14 +220,141 @@ for (const [name, executable] of browsers) {
         expect(
           await readPanel("document.querySelector('#site-url-field').hidden"),
         ).toBe(true);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        // Simulate declining at the browser API boundary, without granting access.
+        await readPanel(`(() => {
+          chrome.permissions.request = async () => false;
+          document.querySelector('#site-access').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#site-status').textContent"),
+          )
+          .toContain('Permiso denegado');
+        expect(await quote()).toBe(citation);
+        expect(
+          await readPanel("document.querySelector('#fragment-codes').disabled"),
+        ).toBe(false);
+        expect(
+          await readPanel("document.querySelector('#verify-site').disabled"),
+        ).toBe(false);
+        expect(
+          await worker.evaluate(
+            (origins) => chrome.permissions.contains({ origins }),
+            origins,
+          ),
+        ).toBe(false);
+        // A live page can update unrelated UI while the category is being edited.
+        await page.evaluate(() => {
+          const activity = document.createElement('span');
+          activity.hidden = true;
+          activity.textContent = 'Actualización de fondo';
+          document.body.append(activity);
+        });
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Categoría sintética';
+          document.querySelector('#category-color').value = '#126abc';
+          document.querySelector('#category-definition').value = 'Definición sintética';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
+        expect(
+          await readPanel(
+            "document.querySelector('#selection-title').textContent",
+          ),
+        ).toBe('Cita guardada');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-category')).display",
+          ),
+        ).not.toBe('none');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-next-step')).display",
+          ),
+        ).not.toBe('none');
+
+        await readPanel(`(() => {
+          document.querySelector('.definition-edit').click();
+          document.querySelector('#category-saved-definition').value = 'Definición revisada';
+          document.querySelector('#category-edit-definition').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Definición guardada.');
+
         await page
           .locator('p')
           .last()
           .evaluate((node) => {
-            window.getSelection()?.selectAllChildren(node);
-            node.dispatchEvent(new Event('pointerup', { bubbles: true }));
+            node.addEventListener('pointerup', (event) =>
+              event.stopPropagation(),
+            );
           });
+        await dragQuote(1, 'Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-next-step')).display",
+          ),
+        ).toBe('none');
+
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-options').textContent"),
+          )
+          .toContain('Definición revisada');
+        await readPanel(`Array.from(document.querySelectorAll('#coding-options label'))
+          .find(label => label.textContent === 'Categoría sintética').querySelector('input').click()`);
+        await expect
+          .poll(() =>
+            readPanel(`Array.from(document.querySelectorAll('#coding-options label'))
+          .find(label => label.textContent === 'Categoría sintética')?.querySelector('input').checked`),
+          )
+          .toBe(true);
+        await expect
+          .poll(() =>
+            page.evaluate(() =>
+              Array.from(
+                CSS.highlights.get('codificaweb-126abc') ?? [],
+                (range) => range.toString(),
+              ),
+            ),
+          )
+          .toEqual([citation, 'Otra cita.']);
+        await readPanel(`(() => {
+          document.querySelector('#project-name').value = 'Otro proyecto';
+          document.querySelector('#project-create').click();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel(`Array.from(document.querySelector('#project-select').options)
+          .some(option => option.text === 'Otro proyecto')`),
+          )
+          .toBe(true);
+        await readPanel(`(() => {
+          const projects = document.querySelector('#project-select');
+          projects.value = Array.from(projects.options).find(option => option.text === 'Otro proyecto').value;
+          projects.dispatchEvent(new Event('change'));
+        })()`);
+        await expect.poll(quote).toBe('');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(true);
+
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');
