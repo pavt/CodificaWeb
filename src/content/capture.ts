@@ -1,7 +1,8 @@
 import type { CaptureResult } from '../capture-contract';
 
-export const excluded =
-  'script,style,template,noscript,[hidden],[contenteditable]:not([contenteditable="false" i]),input,textarea,select';
+const editable =
+  '[contenteditable]:not([contenteditable="false" i]),input,textarea,select';
+export const excluded = `script,style,template,noscript,[hidden],${editable}`;
 export const maxDocumentLength = 1_000_000;
 const maxQuoteLength = 16_384;
 const contextLength = 32;
@@ -45,12 +46,16 @@ function captureRange(
   let end = 0;
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const value = (node as Text).data;
-    const skip = node.parentElement?.closest(excluded);
+    const parent = node.parentElement;
+    const skip = parent?.closest(excluded);
     if (range.intersectsNode(node)) {
       const from = range.startContainer === node ? range.startOffset : 0;
       const to = range.endContainer === node ? range.endOffset : value.length;
       if (to > from) {
-        if (skip) return { kind: 'excluded' };
+        if (skip) {
+          if (parent?.closest(editable)) return { kind: 'excluded' };
+          continue;
+        }
         start ??= text.length + from;
         end = text.length + to;
       }
@@ -123,9 +128,12 @@ export function observeSelection(onCommit?: () => void) {
       selection?.rangeCount === 1 ? selection.getRangeAt(0) : undefined;
     validatedRevision = currentRevision();
     visible = selection?.toString().replace(/\s/g, '') ?? '';
-    const latest: CaptureResult = document.activeElement?.closest(excluded)
-      ? { kind: 'excluded' }
-      : captureRange(selected, validatedRevision, visible);
+    const latest: CaptureResult =
+      !selected || selected.collapsed
+        ? document.activeElement?.closest(editable)
+          ? { kind: 'excluded' }
+          : { kind: 'empty' }
+        : captureRange(selected, validatedRevision, visible);
     if (!sameAnchor(snapshot, latest)) snapshot = latest;
     range = snapshot.kind === 'selection' ? selected?.cloneRange() : undefined;
   };

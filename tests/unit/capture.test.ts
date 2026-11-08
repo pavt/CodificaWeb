@@ -200,3 +200,29 @@ test.each([
     }
   },
 );
+
+test('Q03: ignora metadatos ocultos y usa el rango, aunque un campo conserve el foco', () => {
+  document.body.innerHTML =
+    '<input value="Consulta"><p><strong>Texto </strong><span hidden>Metadatos</span><em>visible</em></p>';
+  const selection = window.getSelection();
+  if (!selection) throw new Error('Selección ausente');
+  const rendered = vi
+    .spyOn(selection, 'toString')
+    .mockReturnValue('Texto visible');
+  document.querySelector('input')?.focus();
+  const capture = observeSelection();
+  try {
+    expect(capture.read()).toEqual({ kind: 'excluded' });
+    select('strong', 0, 'em');
+    expect(capture.read()).toMatchObject({
+      kind: 'selection',
+      selectors: {
+        quote: { exact: 'Texto visible' },
+        position: { start: 0, end: 13 },
+      },
+    });
+  } finally {
+    capture.stop();
+    rendered.mockRestore();
+  }
+});
