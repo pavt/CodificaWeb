@@ -1,0 +1,4 @@
+[mcp_servers.playwright]
+command = "node"
+args = ["node_modules/@playwright/mcp/cli.js", "--isolated", "--headless", "--browser", "chrome"]
+startup_timeout_sec = 30

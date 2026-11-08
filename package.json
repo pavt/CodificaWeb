@@ -1,0 +1,46 @@
+{
+  "name": "codificaweb",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": "24.22.2",
+    "pnpm": "12.18.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "build": "vite build",
+    "test:e2e": "playwright test",
+    "audit": "pnpm audit",
+    "mcp:playwright": "playwright-mcp --isolated --headless --browser chrome"
+  },
+  "dependencies": {
+    "dexie": "4.4.7",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/mcp": "0.0.84",
+    "@playwright/test": "1.65.0",
+    "@types/chrome": "0.3.7",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "fake-indexeddb": "6.2.7",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.6",
+    "vitest": "5.1.0"
+  }
+}

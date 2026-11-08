@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # T001 changes this to product in the PR that adds the extension and its tests.
+  CODIFICAWEB_CI_PHASE: planning
+
+jobs:
+  verify:
+    name: Verificación
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+
+      - name: Validar etapa del proyecto
+        shell: bash
+        run: |
+          case "$CODIFICAWEB_CI_PHASE" in
+            planning)
+              if [[ -e src || -e tests ]]; then
+                echo '::error::T001 debe activar CI de producto al añadir src/ o tests/.'
+                exit 1
+              fi
+              ;;
+            product) ;;
+            *)
+              echo '::error::Etapa de CI inválida.'
+              exit 1
+              ;;
+          esac
+
+      - name: Configurar Corepack
+        shell: bash
+        run: |
+          corepack_bin="$RUNNER_TEMP/corepack-bin"
+          mkdir -p "$corepack_bin"
+          npm exec --yes --package=corepack@0.36.0 -- corepack enable --install-directory "$corepack_bin" pnpm
+          echo "$corepack_bin" >> "$GITHUB_PATH"
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
+
+      - name: Verificar formato
+        run: pnpm format:check
+
+      - name: Ejecutar lint
+        run: pnpm lint
+
+      - name: Comprobar tipos
+        run: pnpm typecheck
+
+      - name: Ejecutar pruebas unitarias e integración con cobertura
+        if: env.CODIFICAWEB_CI_PHASE == 'product'
+        run: pnpm coverage
+
+      - name: Compilar extensión
+        if: env.CODIFICAWEB_CI_PHASE == 'product'
+        run: pnpm build
+
+      - name: Instalar Chromium para E2E
+        if: env.CODIFICAWEB_CI_PHASE == 'product'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Ejecutar E2E de la extensión
+        if: env.CODIFICAWEB_CI_PHASE == 'product'
+        run: pnpm test:e2e
