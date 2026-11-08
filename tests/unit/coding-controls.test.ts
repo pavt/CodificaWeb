@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import 'fake-indexeddb/auto';
+
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { handleCodingRequest } from '../../src/background/coding-messages';
 import type { SelectionSnapshot } from '../../src/capture-contract';
@@ -104,4 +106,25 @@ test('Q04: muestra error si falla la actualización o el catálogo no es válido
   await view.show(target, snapshot);
   expect(view.status.textContent).toContain('No se pudieron consultar');
   expect(view.fieldset.disabled).toBe(true);
+});
+
+test('Q12: un fallo de transporte reintenta la misma mutación con el mismo identificador', async () => {
+  const view = panel();
+  await view.show(target, snapshot);
+  sendMessage.mockImplementationOnce(async (message) => {
+    const result = await handleCodingRequest(message);
+    expect(result.kind).toBe('codings');
+    throw new Error('Se perdió el ACK después del commit');
+  });
+  view.code('Tema').click();
+  await vi.waitFor(() => expect(view.code('Tema').checked).toBe(true));
+  const first = sendMessage.mock.calls[1]?.[0];
+  const retry = sendMessage.mock.calls[2]?.[0];
+  expect(first).toMatchObject({
+    type: 'coding.set',
+    operationId: expect.any(String),
+  });
+  expect(retry).toEqual(first);
+  view.code('Tema').click();
+  await vi.waitFor(() => expect(view.code('Tema').checked).toBe(false));
 });

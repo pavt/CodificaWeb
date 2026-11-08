@@ -12,6 +12,12 @@ Todas las entidades tienen `id` UUID, `createdAt` y `updatedAt` ISO 8601 UTC. Lo
 
 Project tiene muchas Source y Code. Source tiene muchas Annotation. Annotation y Code son muchos a muchos mediante Coding. Crear la misma asociación es idempotente. Borrar un código retira sus Coding. Borrar una anotación retira sus Coding. Borrar una fuente retira sus anotaciones y asociaciones. Borrar un proyecto retira todo su corpus. Las cascadas son atómicas y actualizar un código no duplica su color en la evidencia. Borrar una nota elimina solo el campo.
 
+## Persistencia local de T005
+
+La base IndexedDB v1 se crea bajo el origen de la extensión con el proyecto inicial y los códigos Tema y Contexto. Las fuentes se crean al asignar el primer código y usan la URL como título inicial. Retirar el último código conserva la anotación y su fuente. Las asociaciones de las versiones anteriores vivían en memoria.
+
+El panel asigna un UUID a cada intento lógico y reutiliza el mismo UUID si se pierde la respuesta de Chrome. El worker escribe el recibo interno y los cambios en la misma transacción Dexie con durabilidad estricta. Repetir el UUID con los mismos datos devuelve el estado actual sin volver a aplicar la mutación. Reutilizarlo con otros datos se rechaza. Los recibos son internos a IndexedDB y quedan fuera del formato de exportación.
+
 ## Selectores v1
 
 `selectors` tiene un `TextQuoteSelector` con exact/prefix/suffix y un `TextPositionSelector` con start/end. Ambos usan el mismo flujo `dom-text-v1`. Intervalos semiabiertos UTF-16 con enteros seguros y longitud de la cita igual a end − start. Guardar hasta 32 unidades UTF-16 de contexto a cada lado sin cortar pares sustitutos. Se conserva la cita histórica aunque falle el anclaje. El estado de resolución es efímero y depende del documento.
