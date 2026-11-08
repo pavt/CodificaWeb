@@ -9,7 +9,7 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 - [ ] T004 [US1] · Segmentar y pintar rangos con prioridad y filtro. `src/content/`, `src/panel/`. Q05. Evidencia en `tests/unit/highlight-segments.test.ts`, `tests/unit/paint.test.ts`, `tests/unit/highlight-filter.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T005 [US2] · Añadir esquema IndexedDB, repositorios y transacciones con ACK durable y reintentos. `src/storage/`, `src/background/`. Q12. Evidencia en `tests/integration/coding-storage.test.ts`, `tests/unit/coding-controls.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T006 [US2] · Resolver selectores, limpiar y recuperar pintura en recargas, mutaciones, rutas y permisos revocados. `src/content/`, `src/background/`. Q06, Q11. Evidencia en `tests/unit/resolve-anchor.test.ts`, `tests/unit/paint.test.ts`, `tests/unit/sites.test.ts` y `tests/e2e/selection.spec.ts`.
-- [ ] T007 [US2] · Crear, editar, consultar y borrar nota en texto plano. `src/domain/`, `src/panel/`. Q07, Q13.
+- [ ] T007 [US2] · Crear, editar, consultar y borrar nota en texto plano. `src/storage/`, `src/background/`, `src/panel/`. Q07, Q13. Evidencia en `tests/integration/coding-storage.test.ts`, `tests/unit/note-controls.test.ts`, `tests/unit/coding-messages.test.ts` y `tests/e2e/selection.spec.ts`.
 - [ ] T008 [US3] · CRUD de proyectos y cambio de proyecto activo. `src/domain/`, `src/storage/`, `src/panel/`. Q01.
 - [ ] T009 [US3] · CRUD de códigos y propagación de color. `src/domain/`, `src/storage/`, `src/panel/`. Q02.
 - [ ] T010 [US3] · Buscar y combinar filtros de resultados. `src/domain/`, `src/panel/`. Q08.
@@ -30,7 +30,7 @@ Los IDs T son claves de planificación. Una celda vacía de issue o PR indica qu
 | T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   | [#19](https://github.com/pavt/CodificaWeb/pull/19) |
 | T005  | T004                 | M2        | p0        | feature | data      | [#6](https://github.com/pavt/CodificaWeb/issues/6)   | [#20](https://github.com/pavt/CodificaWeb/pull/20) |
 | T006  | T005                 | M2        | p0        | feature | anchor    | [#7](https://github.com/pavt/CodificaWeb/issues/7)   | [#21](https://github.com/pavt/CodificaWeb/pull/21) |
-| T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   |                                                    |
+| T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   | [#22](https://github.com/pavt/CodificaWeb/pull/22) |
 | T008  | T006, T007           | M3        | p1        | feature | data      | [#9](https://github.com/pavt/CodificaWeb/issues/9)   |                                                    |
 | T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) |                                                    |
 | T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) |                                                    |

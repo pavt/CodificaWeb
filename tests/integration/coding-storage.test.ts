@@ -162,3 +162,49 @@ test('Q12: retirar un código de una fuente nueva no crea una anotación', async
   expect(await db.annotations.count()).toBe(0);
   expect(await db.codings.count()).toBe(0);
 });
+
+test('Q07: guarda y edita una nota de texto plano y borra solo la nota', async () => {
+  expect(await repository.readNote(initialProjectId, fragment)).toBeNull();
+  const operation = crypto.randomUUID();
+  expect(
+    await repository.setNote(
+      initialProjectId,
+      fragment,
+      '<b>cita</b>\nNota',
+      operation,
+    ),
+  ).toBe('<b>cita</b>\nNota');
+  expect(await db.codings.count()).toBe(0);
+  await set(theme, true);
+  await repository.setNote(
+    initialProjectId,
+    fragment,
+    'Editada',
+    crypto.randomUUID(),
+  );
+  expect(
+    await repository.setNote(
+      initialProjectId,
+      fragment,
+      '<b>cita</b>\nNota',
+      operation,
+    ),
+  ).toBe('Editada');
+  const reopened = new CodingDatabase(db.name);
+  try {
+    expect(
+      await new IndexedCodings(reopened).readNote(initialProjectId, fragment),
+    ).toBe('Editada');
+  } finally {
+    reopened.close();
+  }
+  await repository.setNote(
+    initialProjectId,
+    fragment,
+    null,
+    crypto.randomUUID(),
+  );
+  expect(await repository.readNote(initialProjectId, fragment)).toBeNull();
+  expect(await db.annotations.count()).toBe(1);
+  expect(await db.codings.count()).toBe(1);
+});

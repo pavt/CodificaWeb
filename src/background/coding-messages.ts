@@ -36,6 +36,7 @@ export async function handleCodingRequest(
 ): Promise<
   | { kind: 'codings'; codes: CodeAssignment[] }
   | { kind: 'highlights'; entries: HighlightEntry[] }
+  | { kind: 'note'; note: string | null }
   | { kind: 'error' }
 > {
   const error = { kind: 'error' } as const;
@@ -54,6 +55,35 @@ export async function handleCodingRequest(
   }
   const fragment = decodeFragment(message.fragment);
   if (!fragment) return error;
+  if (message.type === 'note.read') {
+    return {
+      kind: 'note',
+      note: await codings.readNote(initialProjectId, fragment),
+    };
+  }
+  if (message.type === 'note.set') {
+    const { note, operationId } = message;
+    if (
+      (note !== null &&
+        (typeof note !== 'string' || note.length > 16_384 || !note.trim())) ||
+      typeof operationId !== 'string' ||
+      !operationIdPattern.test(operationId)
+    )
+      return error;
+    try {
+      return {
+        kind: 'note',
+        note: await codings.setNote(
+          initialProjectId,
+          fragment,
+          note,
+          operationId,
+        ),
+      };
+    } catch {
+      return error;
+    }
+  }
   if (message.type === 'coding.read')
     return {
       kind: 'codings',

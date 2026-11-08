@@ -1,6 +1,7 @@
 import type { CaptureTarget } from '../capture-contract';
 import { createCodingControls } from './coding-controls';
 import { createHighlightFilter } from './highlight-filter';
+import { createNoteControls } from './note-controls';
 import { readSelection } from './read-selection';
 import { verifySiteAccess } from './site-access';
 
@@ -25,6 +26,13 @@ const coding = createCodingControls(
   document.getElementById('coding-status') as HTMLElement,
   highlights.update,
 );
+const notes = createNoteControls(
+  document.getElementById('fragment-note') as HTMLFieldSetElement,
+  document.getElementById('note-text') as HTMLTextAreaElement,
+  document.getElementById('note-save') as HTMLButtonElement,
+  document.getElementById('note-remove') as HTMLButtonElement,
+  document.getElementById('note-status') as HTMLElement,
+);
 let target: CaptureTarget | undefined;
 
 const captureMessages = {
@@ -40,6 +48,7 @@ function clearPreview() {
   source.textContent = '';
   captureStatus.textContent = '';
   coding.clear();
+  notes.clear();
 }
 
 form.addEventListener('submit', async (event) => {
@@ -100,6 +109,7 @@ captureButton.addEventListener('click', async () => {
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
     void coding.show(current, result);
+    void notes.show(current, result);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
   }
