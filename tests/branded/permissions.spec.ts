@@ -10,6 +10,9 @@ const browsers = [
   ['Brave Browser', process.env.CODIFICAWEB_BRAVE_BIN],
 ] as const;
 const url = 'http://127.0.0.1:32147/fixture';
+const nextUrl = new URL('/siguiente', url).href;
+const slowImage = new URL('/carga-lenta.svg', url).href;
+const otherSite = 'http://localhost:32147/otro';
 const citation = 'Cita sintética T015';
 const origins = ['http://127.0.0.1/*'];
 
@@ -53,7 +56,7 @@ for (const [name, executable] of browsers) {
       const cdp = await browser.newBrowserCDPSession();
       const { product } = await cdp.send('Browser.getVersion');
       const { id } = await cdp.send('Extensions.loadUnpacked', {
-        path: resolve('dist'),
+        path: resolve(process.env.CODIFICAWEB_DIST ?? 'dist'),
       });
       const [context] = browser.contexts();
       if (!context) throw new Error('No se encontró el perfil temporal');
@@ -63,13 +66,44 @@ for (const [name, executable] of browsers) {
       await context.route(url, (route) =>
         route.fulfill({
           contentType: 'text/html; charset=utf-8',
-          body: `<p>${citation}</p><p>Otra cita.</p>`,
+          body: `<p>${citation}</p><aside style="user-select:none">Firma que no se selecciona</aside><p>Otra cita.</p>`,
+        }),
+      );
+      let releaseImage: (() => void) | undefined;
+      const imageReady = new Promise<void>((resolve) => {
+        releaseImage = resolve;
+      });
+      await context.route(slowImage, async (route) => {
+        await imageReady;
+        await route.fulfill({
+          contentType: 'image/svg+xml',
+          body: '<svg xmlns="http://www.w3.org/2000/svg"/>',
+        });
+      });
+      await context.route(nextUrl, (route) =>
+        route.fulfill({
+          contentType: 'text/html; charset=utf-8',
+          body: '<p>Página siguiente.</p><img src="/carga-lenta.svg" alt="">',
+        }),
+      );
+      await context.route(otherSite, (route) =>
+        route.fulfill({
+          contentType: 'text/html; charset=utf-8',
+          body: '<p>Otro sitio.</p>',
         }),
       );
       context.on('request', (request) => {
         if (
           /^https?:\/\//.test(request.url()) &&
-          !(request.url() === url && request.isNavigationRequest())
+          !(
+            request.url() === slowImage &&
+            request.resourceType() === 'image' &&
+            request.frame().url() === nextUrl
+          ) &&
+          !(
+            [url, nextUrl, otherSite].includes(request.url()) &&
+            request.isNavigationRequest()
+          )
         ) {
           unexpected.push(request.url());
         }
@@ -133,6 +167,7 @@ for (const [name, executable] of browsers) {
       await panel.close();
       await page.bringToFront();
       async function dragQuote(index: number, expected: string) {
+        await page.evaluate(() => window.getSelection()?.removeAllRanges());
         const box = await page
           .locator('p')
           .nth(index)
@@ -155,6 +190,16 @@ for (const [name, executable] of browsers) {
           .toBe(expected);
       }
       await dragQuote(0, citation);
+      // The browser can leave a range endpoint past text excluded by CSS.
+      const visible = await page.evaluate(() => {
+        const end = document.querySelectorAll('p')[1]?.firstChild;
+        const selection = window.getSelection();
+        if (!end || !selection) throw new Error('Falta el rango de prueba');
+        selection.extend(end, 0);
+        return selection.toString().trim();
+      });
+      expect(visible).toBe(citation);
+
       const { targetInfos } = await cdp.send('Target.getTargets', {
         filter: [{ type: 'tab' }, { exclude: true }],
       });
@@ -256,8 +301,15 @@ for (const [name, executable] of browsers) {
           document.body.append(activity);
         });
         await readPanel(`(() => {
+          const search = document.querySelector('#category-search');
+          search.value = 'Categoría sintética';
+          search.dispatchEvent(new Event('input'));
           document.querySelector('#category-open').click();
-          document.querySelector('#category-name').value = 'Categoría sintética';
+        })()`);
+        expect(
+          await readPanel("document.querySelector('#category-name').value"),
+        ).toBe('Categoría sintética');
+        await readPanel(`(() => {
           document.querySelector('#category-definition').value = 'Definición sintética';
           document.querySelector('#category-create').requestSubmit();
         })()`);
@@ -293,15 +345,13 @@ for (const [name, executable] of browsers) {
           )
           .toBe('Definición guardada.');
 
+        // A native selection change can arrive without a pointerup or keyup.
         await page
           .locator('p')
           .last()
-          .evaluate((node) => {
-            node.addEventListener('pointerup', (event) =>
-              event.stopPropagation(),
-            );
+          .evaluate((paragraph) => {
+            window.getSelection()?.selectAllChildren(paragraph);
           });
-        await dragQuote(1, 'Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
         expect(
           await readPanel(
@@ -354,9 +404,128 @@ for (const [name, executable] of browsers) {
           )
           .toBe(true);
 
+        await page.evaluate(() => {
+          const third = document.createElement('p');
+          third.textContent = 'Tercera cita.';
+          document.body.append(third);
+        });
+        const newProjectColors = [
+          [citation, '#7FC97F'],
+          ['Otra cita.', '#BEAED4'],
+          ['Tercera cita.', '#FDC086'],
+        ] as const;
+        for (const [index, [text, color]] of newProjectColors.entries()) {
+          await dragQuote(index, text);
+          await expect.poll(quote).toBe(text);
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#fragment-codes').disabled"),
+            )
+            .toBe(false);
+          await readPanel(`(() => {
+            document.querySelector('#category-open').click();
+            document.querySelector('#category-name').value = 'Categoría ${index + 1}';
+            document.querySelector('#category-definition').value = 'Definición de prueba';
+            document.querySelector('#category-create').requestSubmit();
+          })()`);
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#coding-status').textContent"),
+            )
+            .toBe('Categoría guardada y aplicada.');
+          expect(
+            await readPanel(
+              "document.querySelector('#quote-card').style.getPropertyValue('--category-color')",
+            ),
+          ).toBe(color);
+          expect(
+            await readPanel(
+              `Array.from(document.querySelectorAll('#coding-options label')).find(label => label.textContent === 'Categoría ${index + 1}').style.getPropertyValue('--category-color')`,
+            ),
+          ).toBe(color);
+          await expect
+            .poll(() =>
+              page.evaluate(
+                (color) =>
+                  Array.from(
+                    CSS.highlights.get(
+                      'codificaweb-' + color.slice(1).toLowerCase(),
+                    ) ?? [],
+                    (range) => range.toString(),
+                  ).join(''),
+                color,
+              ),
+            )
+            .toBe(text);
+        }
+        console.log(
+          'Proyecto nuevo: verde #7FC97F, lila #BEAED4, naranja #FDC086 verificados en la cita, la etiqueta y el resaltado.',
+        );
+        await page.goto(nextUrl, { waitUntil: 'domcontentloaded' });
+        await expect.poll(quote).toBe('');
+        await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Tras navegar';
+        })()`);
+        releaseImage?.();
+        await page.waitForLoadState('load');
+        expect(
+          await readPanel("document.querySelector('#category-name').value"),
+        ).toBe('Tras navegar');
+        await readPanel(
+          "document.querySelector('#category-create').requestSubmit()",
+        );
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');
+        await other.goto(otherSite);
+        await other
+          .locator('p')
+          .evaluate((node) => window.getSelection()?.selectAllChildren(node));
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(true);
+        const { targetInfos: nextTabs } = await cdp.send('Target.getTargets', {
+          filter: [{ type: 'tab' }, { exclude: true }],
+        });
+        const otherTab = nextTabs.find(
+          (candidate) => candidate.url === otherSite,
+        );
+        if (!otherTab) throw new Error('Falta la pestaña del otro sitio');
+        await cdp.send('Extensions.triggerAction', {
+          id,
+          targetId: otherTab.targetId,
+        });
+        await expect.poll(quote).toBe('Otro sitio.');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'En otro sitio';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
       } finally {
         socket.close();
       }

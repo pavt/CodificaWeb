@@ -6,9 +6,33 @@ export const maxDocumentLength = 1_000_000;
 const maxQuoteLength = 16_384;
 const contextLength = 32;
 
+// The native selection can omit text excluded by CSS. Keep the existing DOM
+// offsets by matching its visible text inside the raw range, ignoring spacing
+// added or collapsed by the browser. A discontinuous match is unsafe to save.
+function visibleBounds(raw: string, visible: string) {
+  const compact = raw.replace(/\s/g, '').toUpperCase();
+  const expected = visible.toUpperCase();
+  if (compact === expected) return { start: 0, end: raw.length };
+  const first = compact.indexOf(expected);
+  if (first < 0 || compact.indexOf(expected, first + 1) !== -1)
+    return undefined;
+
+  let offset = 0;
+  let start: number | undefined;
+  for (const match of raw.matchAll(/\S/gu)) {
+    const character = match[0];
+    if (offset === first) start = match.index;
+    offset += character.toUpperCase().length;
+    if (offset === first + expected.length && start !== undefined)
+      return { start, end: match.index + character.length };
+    if (offset > first + expected.length) return undefined;
+  }
+}
+
 function captureRange(
   range: Range | undefined,
   revision: number,
+  visible: string,
 ): CaptureResult {
   if (!range || range.collapsed) return { kind: 'empty' };
   const body = document.body;
@@ -37,8 +61,11 @@ function captureRange(
       text += value;
     }
   }
-  if (start === undefined || !text.slice(start, end).trim())
-    return { kind: 'empty' };
+  if (start === undefined || !visible) return { kind: 'empty' };
+  const bounds = visibleBounds(text.slice(start, end), visible);
+  if (!bounds) return { kind: 'excluded' };
+  end = start + bounds.end;
+  start += bounds.start;
   if (end - start > maxQuoteLength) return { kind: 'too-large' };
 
   return {
@@ -89,27 +116,47 @@ export function observeSelection(onCommit?: () => void) {
   let snapshot: CaptureResult = { kind: 'empty' };
   let range: Range | undefined;
   let validatedRevision = 0;
+  let visible = '';
   const update = () => {
     const selection = window.getSelection();
     const selected =
       selection?.rangeCount === 1 ? selection.getRangeAt(0) : undefined;
     validatedRevision = currentRevision();
+    visible = selection?.toString().replace(/\s/g, '') ?? '';
     const latest: CaptureResult = document.activeElement?.closest(excluded)
       ? { kind: 'excluded' }
-      : captureRange(selected, validatedRevision);
+      : captureRange(selected, validatedRevision, visible);
     if (!sameAnchor(snapshot, latest)) snapshot = latest;
     range = snapshot.kind === 'selection' ? selected?.cloneRange() : undefined;
   };
   update();
+  let published: CaptureResult = snapshot;
+  let pending: ReturnType<typeof setTimeout> | undefined;
+  const publish = () => {
+    clearTimeout(pending);
+    if (
+      published === snapshot ||
+      (published.kind !== 'selection' && published.kind === snapshot.kind)
+    )
+      return;
+    published = snapshot;
+    onCommit?.();
+  };
   const onSelectionChange = () => {
     // Chrome may collapse the DOM selection as focus moves to the side panel.
     const selection = window.getSelection();
-    if (document.hasFocus() || (selection && !selection.isCollapsed)) update();
+    if (!document.hasFocus() && (!selection || selection.isCollapsed)) return;
+    update();
+    // Selection can settle after pointerup or change without a key or pointer.
+    if (onCommit) {
+      clearTimeout(pending);
+      pending = setTimeout(publish, 80);
+    }
   };
 
   const commit = () => {
     update();
-    onCommit?.();
+    publish();
   };
   document.addEventListener('selectionchange', onSelectionChange);
   document.addEventListener('pointerup', commit, true);
@@ -122,13 +169,14 @@ export function observeSelection(onCommit?: () => void) {
       if (validatedRevision !== revision) {
         // Reproject the original range. Background UI changes are safe only
         // if the text, context and position still describe the same fragment.
-        const latest = captureRange(range, revision);
+        const latest = captureRange(range, revision, visible);
         if (!sameAnchor(snapshot, latest)) return { kind: 'stale' };
         validatedRevision = revision;
       }
       return snapshot;
     },
     stop() {
+      clearTimeout(pending);
       observer.disconnect();
       document.removeEventListener('selectionchange', onSelectionChange);
       document.removeEventListener('pointerup', commit, true);

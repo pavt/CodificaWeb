@@ -30,3 +30,13 @@ Después de aprobar el alcance, crear un issue por tarea con criterios y depende
 **Evidencia de T019.** [Issue #38](https://github.com/pavt/CodificaWeb/issues/38) · [PR #39](https://github.com/pavt/CodificaWeb/pull/39). Red en `tests/integration/catalog.test.ts`: crear sin color devolvía «Código no válido». Green verifica los tres primeros colores Accent, 25 categorías sin duplicados con altas concurrentes, aislamiento y estabilidad al renombrar o eliminar. `tests/integration/project-transfer.test.ts` verifica que un color importado se conserva y se reserva al asignar el siguiente. Chromium, Chrome y Brave verifican el color persistido y el resaltado tras crear y aplicar desde el panel. La extensión incluye la licencia y atribución de ColorBrewer.
 
 **Visibilidad del color asignado.** La cita guardada muestra una muestra explícita de **Color asignado**. Chromium verifica que usa el mismo color automático que la etiqueta y el resaltado y que desaparece cuando se retira la categoría.
+
+**Evidencia de T018.** [Issue #33](https://github.com/pavt/CodificaWeb/issues/33) · [PR #40](https://github.com/pavt/CodificaWeb/pull/40). El [registro de validación](../../docs/release-validation.md) documenta la instalación del ZIP extraído, Chromium, Chrome y Brave, los tres colores Accent en un proyecto nuevo y la auditoría. Queda pendiente la observación de primer uso con una persona.
+
+**Ajuste de primer uso en T018.** `tests/e2e/selection.spec.ts` reprodujo el nombre vacío al abrir la creación desde la búsqueda. La corrección conserva el texto y las pruebas de navegador guardan la categoría sin introducir el nombre otra vez.
+
+**Continuidad al navegar en T018.** Red y Green en `tests/branded/permissions.spec.ts`. La prueba conserva la cita y el formulario cuando una página del mismo sitio termina de cargar, y guarda una categoría en el documento nuevo. La prueba de otra pestaña verifica el acceso temporal tras invocar la extensión.
+
+**Precisión de captura en T018.** `tests/branded/permissions.spec.ts` reproduce la inclusión de una firma no seleccionable después del titular. `tests/unit/capture.test.ts` cubre el ajuste de los límites y el rechazo de rangos ambiguos o discontinuos.
+
+**Selección automática en T018 (UX-01 y UX-02).** En la prueba de navegador, un cambio de selección sin `pointerup` ni `keyup` dejaba la cita anterior en el panel. Con la corrección, `tests/branded/permissions.spec.ts` verifica en Chrome y Brave que la nueva cita aparece y acepta una categoría sin pulsar Capturar selección.

@@ -38,3 +38,29 @@ El paquete de T013 se verificó con Chrome 157.0.8103.38 y Brave 157.1.99.55 en 
 Se observaron solicitudes HTTP(S) y WebSocket mediante CDP en los destinos de página y service worker durante el recorrido. En cada navegador se registró solo la navegación al fixture de loopback. La observación corresponde al intervalo y los destinos instrumentados. Los perfiles comenzaron separados y el resultado de Chrome no apareció en Brave.
 
 CI cubre el flujo funcional ampliado en Chromium, incluidos solapamientos, notas, búsqueda, navegación y transferencia JSON. La prueba nativa verificó el comportamiento del navegador y la conservación de la evidencia tras revocar el permiso.
+
+## T018 · Validación del paquete del panel renovado
+
+Se compiló el código de producto de `67bb9e3` y se empaquetó `dist/` en un ZIP. Se comprobó la integridad del archivo, se extrajo a un directorio temporal y se cargó la copia extraída con `Extensions.loadUnpacked` en perfiles nuevos. El ZIP contiene el manifiesto, las entradas y los recursos de la extensión, incluida la licencia de ColorBrewer. [Issue #33](https://github.com/pavt/CodificaWeb/issues/33) · [CI de la base integrada](https://github.com/pavt/CodificaWeb/actions/runs/42520403621)
+
+| Entorno                    | Evidencia                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Chrome 156.0.8078.80       | Carga del ZIP extraído, arrastre de texto, apertura del panel mediante CDP, guardado y reutilización.                          |
+| Brave, motor 156.0.8078.48 | Mismo recorrido con su propio perfil temporal.                                                                                 |
+| Chromium en CI             | Captura, filtros, resaltados, teclado, anchos estrechos, proyectos, notas, búsqueda, apertura de fuentes y transferencia JSON. |
+
+En Chrome y Brave, un proyecto nuevo recibió `#7FC97F`, `#BEAED4` y `#FDC086`. Cada valor coincidió en la cita guardada, la etiqueta y el resaltado. El rechazo del permiso opcional se simuló en la API del navegador. El recorrido conservó la captura y no observó solicitudes HTTP(S) o WebSocket inesperadas. La auditoría volvió a dar cero avisos de producción y mantuvo el aviso moderado de desarrollo de minimatch registrado arriba.
+
+Para repetir la comprobación, ejecuta `pnpm build` y `pnpm test:e2e:branded`. Para usar un ZIP ya extraído, indica su carpeta `dist` con `CODIFICAWEB_DIST`. Para instalarlo, abre `chrome://extensions` o `brave://extensions`, activa **Modo desarrollador**, pulsa **Cargar descomprimida** y selecciona la carpeta extraída que contiene `manifest.json`. [Prueba reproducible](../tests/branded/permissions.spec.ts)
+
+### Observación de primer uso
+
+Sirve la [página sintética](examples/primera-codificacion.html) con `python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/examples` y abre `http://127.0.0.1:8765/primera-codificacion.html` en el perfil de prueba. La persona recibe solo el objetivo: «Guarda un pasaje con una categoría nueva y usa esa misma categoría en otro pasaje». Registra si completó la tarea sin ayuda, dónde dudó y si reconoció el color asignado.
+
+La comprobación automatizada está completa. Queda pendiente observar a una persona completar el recorrido sin indicaciones sobre qué pulsar.
+
+Durante T018 se reprodujo que, al buscar un nombre y pulsar **Crear categoría**, el formulario volvía a pedirlo. El formulario ahora reutiliza el texto de búsqueda y permite editarlo antes de guardar. Las pruebas de Chromium, Chrome y Brave cubren el guardado sin volver a escribir el nombre. El ZIP se recompiló y se comprobó nuevamente tras la corrección.
+
+También se reprodujo una interrupción al navegar dentro del mismo sitio. Si se empezaba a crear una categoría mientras la nueva página terminaba de cargar, el panel descartaba la cita y el formulario. La prueba mantiene una imagen sintética pendiente, selecciona texto, escribe el nombre, deja terminar la carga y guarda la categoría. También comprueba que una pestaña de otro origen requiere invocar CodificaWeb para poder capturar allí.
+
+Una prueba de regresión reproduce una selección visible que termina en el titular, aunque el rango del navegador incluye una firma marcada como no seleccionable. El panel guarda y resalta el titular sin la firma. La corrección se aplica a las capturas nuevas; no modifica las citas ya guardadas.
