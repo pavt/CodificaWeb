@@ -25,8 +25,16 @@ Para repetir la prueba en macOS, ejecutar `pnpm build` y `pnpm test:e2e:branded`
 
 ## Comprobaciones de la interfaz nativa
 
-CI ejecuta el recorrido funcional con `pnpm test:e2e` tras compilar el paquete. Incluye codificación, solapamientos, persistencia, búsqueda con filtros, navegación, transferencia JSON y observación automatizada de red en Chromium. El smoke en Chrome y Brave se ejecutó con perfiles separados.
+El paquete de T013 se verificó con Chrome 157.0.8103.38 y Brave 157.1.99.55 en Ubuntu 24.04 arm64, en un escritorio X11 dentro de Docker. Cada binario usó un directorio de perfil nuevo y el fixture sintético de loopback. El panel se abrió mediante un clic real en el icono de la barra de cada navegador.
 
-En Chrome, la prueba manual mostró el panel abierto, la captura deshabilitada antes del permiso y la captura habilitada después de verificar el acceso. También mostró una búsqueda por nota que devolvió la evidencia con ambos códigos. El resultado del diálogo nativo queda pendiente de confirmar.
+| Comprobación                                      | Chrome                                         | Brave                                          |
+| ------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| Captura previa al permiso                         | Deshabilitada                                  | Deshabilitada                                  |
+| Rechazo en el diálogo nativo                      | «Permiso denegado»                             | «Permiso denegado»                             |
+| Concesión y captura                               | Cita capturada                                 | Cita capturada                                 |
+| Recarga con permiso                               | Resaltado restaurado                           | Resaltado restaurado                           |
+| Revocación desde el menú de extensiones y recarga | Captura bloqueada y evidencia guardada visible | Captura bloqueada y evidencia guardada visible |
 
-Queda por comprobar en la interfaz de cada navegador el rechazo y la concesión mediante el diálogo nativo, la revocación desde el administrador de extensiones y su efecto sobre la captura y los datos guardados. En Brave queda también la apertura desde el icono. La prueba por navegador recoge el tráfico observado durante la carga y el intento previo al permiso. La E2E de Chromium observa además el recorrido funcional con acceso. Sigue pendiente la evidencia durante un recorrido con permiso concedido en Chrome y Brave.
+Se observaron solicitudes HTTP(S) y WebSocket mediante CDP en los destinos de página y service worker durante el recorrido. En cada navegador se registró solo la navegación al fixture de loopback. La observación corresponde al intervalo y los destinos instrumentados. Los perfiles comenzaron separados y el resultado de Chrome no apareció en Brave.
+
+CI cubre el flujo funcional ampliado en Chromium, incluidos solapamientos, notas, búsqueda, navegación y transferencia JSON. La prueba nativa verificó el comportamiento del navegador y la conservación de la evidencia tras revocar el permiso.
