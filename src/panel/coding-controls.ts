@@ -19,7 +19,14 @@ function isAssignment(value: unknown): value is CodeAssignment {
 async function requestCodes(
   message: Record<string, unknown>,
 ): Promise<CodeAssignment[]> {
-  const response: unknown = await chrome.runtime.sendMessage(message);
+  let response: unknown;
+  try {
+    response = await chrome.runtime.sendMessage(message);
+  } catch (error) {
+    if (message.type !== 'coding.set') throw error;
+    // A closed message channel does not reveal whether the worker committed.
+    response = await chrome.runtime.sendMessage(message);
+  }
   if (
     !isRecord(response) ||
     response.kind !== 'codings' ||
@@ -96,11 +103,12 @@ export function createCodingControls(
         fragment: latest,
         codeId,
         assigned,
+        operationId: crypto.randomUUID(),
       });
       if (active === current) {
         render(codes);
         onCodes?.(current.target, codes);
-        status.textContent = 'Códigos actualizados en memoria.';
+        status.textContent = 'Códigos guardados en este navegador.';
       }
     } catch {
       if (active === current) {

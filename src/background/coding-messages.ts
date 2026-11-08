@@ -1,26 +1,15 @@
 import { decodeSelectors, isRecord } from '../capture-contract';
-import { MemoryCodings } from '../domain/codings';
+import { CodingDatabase, initialProjectId } from '../storage/database';
+import { IndexedCodings } from '../storage/indexed-codings';
 import type {
   CodeAssignment,
   Fragment,
   HighlightEntry,
 } from '../domain/codings';
 
-const projectId = '00000000-0000-4000-8000-000000000001';
-const codings = new MemoryCodings([
-  {
-    id: '00000000-0000-4000-8000-000000000003',
-    projectId,
-    name: 'Tema',
-    color: '#FDD835',
-  },
-  {
-    id: '00000000-0000-4000-8000-000000000004',
-    projectId,
-    name: 'Contexto',
-    color: '#81D4FA',
-  },
-]);
+const codings = new IndexedCodings(new CodingDatabase());
+const operationIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 function decodeFragment(value: unknown): Fragment | undefined {
   if (
@@ -41,12 +30,13 @@ function decodeFragment(value: unknown): Fragment | undefined {
   return selectors ? { url: url.href, selectors } : undefined;
 }
 
-export function handleCodingRequest(
+export async function handleCodingRequest(
   message: unknown,
-):
+): Promise<
   | { kind: 'codings'; codes: CodeAssignment[] }
   | { kind: 'highlights'; entries: HighlightEntry[] }
-  | { kind: 'error' } {
+  | { kind: 'error' }
+> {
   const error = { kind: 'error' } as const;
   if (!isRecord(message)) return error;
   if (message.type === 'highlight.read') {
@@ -58,23 +48,34 @@ export function handleCodingRequest(
       return error;
     return {
       kind: 'highlights',
-      entries: codings.highlights(projectId, url, filter),
+      entries: await codings.highlights(initialProjectId, url, filter),
     };
   }
   const fragment = decodeFragment(message.fragment);
   if (!fragment) return error;
   if (message.type === 'coding.read')
-    return { kind: 'codings', codes: codings.read(projectId, fragment) };
+    return {
+      kind: 'codings',
+      codes: await codings.read(initialProjectId, fragment),
+    };
   if (
     message.type !== 'coding.set' ||
     typeof message.codeId !== 'string' ||
-    typeof message.assigned !== 'boolean'
+    typeof message.assigned !== 'boolean' ||
+    typeof message.operationId !== 'string' ||
+    !operationIdPattern.test(message.operationId)
   )
     return error;
   try {
     return {
       kind: 'codings',
-      codes: codings.set(projectId, fragment, message.codeId, message.assigned),
+      codes: await codings.set(
+        initialProjectId,
+        fragment,
+        message.codeId,
+        message.assigned,
+        message.operationId,
+      ),
     };
   } catch {
     return error;

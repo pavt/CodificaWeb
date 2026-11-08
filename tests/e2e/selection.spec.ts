@@ -3,7 +3,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q03–Q05: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
+test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza selecciones inválidas', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -109,9 +109,28 @@ test('Q03–Q05: captura texto inline, asigna varios códigos y rechaza seleccio
       await expect(contexto).toBeChecked();
       await expect(tema).toBeChecked();
 
+      // Q12 explicitly stop the MV3 worker while retaining the browser profile.
+      const cdp = await context.newCDPSession(panel);
+      await cdp.send('ServiceWorker.enable');
+      const workerTargets = async () =>
+        (await cdp.send('Target.getTargets')).targetInfos.filter(
+          (target) =>
+            target.type === 'service_worker' && target.url === worker.url(),
+        );
+      const [originalWorker] = await workerTargets();
+      expect(originalWorker).toBeDefined();
+      await cdp.send('ServiceWorker.stopAllWorkers');
+      await expect
+        .poll(async () =>
+          (await workerTargets()).map(({ targetId }) => targetId),
+        )
+        .not.toContain(originalWorker?.targetId);
+
       await capture.click();
       await expect(tema).toBeChecked();
       await expect(contexto).toBeChecked();
+      await expect.poll(async () => (await workerTargets()).length).toBe(1);
+      await cdp.detach();
       await tema.click();
       await expect(tema).not.toBeChecked();
       await expect(contexto).toBeChecked();

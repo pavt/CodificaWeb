@@ -7,6 +7,9 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     sender.id === chrome.runtime.id &&
     sender.url === chrome.runtime.getURL('src/panel/index.html')
   ) {
-    respond(handleCodingRequest(message));
+    void handleCodingRequest(message).then(respond, () =>
+      respond({ kind: 'error' }),
+    );
+    return true;
   }
 });
