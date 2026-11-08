@@ -107,6 +107,108 @@ export class IndexedCodings {
     );
   }
 
+  private async findOrCreateAnnotation(
+    projectId: string,
+    fragment: Fragment,
+    create: boolean,
+    time: string,
+  ) {
+    let source = await this.findSource(projectId, fragment.url);
+    if (!source && create) {
+      source = {
+        id: crypto.randomUUID(),
+        projectId,
+        url: fragment.url,
+        title: fragment.url,
+        capturedAt: time,
+        createdAt: time,
+        updatedAt: time,
+      };
+      await this.db.sources.add(source);
+    }
+    if (source) {
+      let annotation = await this.findAnnotation(source.id, fragment);
+      if (!annotation && create) {
+        const { start, end } = fragment.selectors.position;
+        annotation = {
+          id: crypto.randomUUID(),
+          projectId,
+          sourceId: source.id,
+          start,
+          end,
+          selectors: fragment.selectors,
+          createdAt: time,
+          updatedAt: time,
+        };
+        await this.db.annotations.add(annotation);
+      }
+      return annotation;
+    }
+  }
+
+  private async currentNote(projectId: string, fragment: Fragment) {
+    const source = await this.findSource(projectId, fragment.url);
+    return source
+      ? ((await this.findAnnotation(source.id, fragment))?.note ?? null)
+      : null;
+  }
+
+  readNote(projectId: string, fragment: Fragment) {
+    return this.db.transaction(
+      'r',
+      [this.db.sources, this.db.annotations],
+      () => this.currentNote(projectId, fragment),
+    );
+  }
+
+  setNote(
+    projectId: string,
+    fragment: Fragment,
+    note: string | null,
+    operationId: string,
+  ) {
+    const fingerprint = JSON.stringify([
+      'note',
+      projectId,
+      fragmentKey(fragment),
+      note,
+    ]);
+    return this.db.transaction(
+      'rw',
+      [
+        this.db.projects,
+        this.db.sources,
+        this.db.annotations,
+        this.db.operations,
+      ],
+      async () => {
+        const receipt = await this.db.operations.get(operationId);
+        if (receipt) {
+          if (receipt.fingerprint !== fingerprint)
+            throw new Error('Operación reutilizada con otros datos.');
+          return this.currentNote(projectId, fragment);
+        }
+        if (!(await this.db.projects.get(projectId)))
+          throw new Error('Proyecto inexistente.');
+        const time = new Date().toISOString();
+        const annotation = await this.findOrCreateAnnotation(
+          projectId,
+          fragment,
+          note !== null,
+          time,
+        );
+        if (annotation && (annotation.note ?? null) !== note) {
+          if (note === null) delete annotation.note;
+          else annotation.note = note;
+          annotation.updatedAt = time;
+          await this.db.annotations.put(annotation);
+        }
+        await this.db.operations.add({ id: operationId, fingerprint });
+        return note;
+      },
+    );
+  }
+
   set(
     projectId: string,
     fragment: Fragment,
@@ -133,51 +235,27 @@ export class IndexedCodings {
         throw new Error('Código fuera del proyecto.');
 
       const time = new Date().toISOString();
-      let source = await this.findSource(projectId, fragment.url);
-      if (!source && assigned) {
-        source = {
-          id: crypto.randomUUID(),
-          projectId,
-          url: fragment.url,
-          title: fragment.url,
-          capturedAt: time,
-          createdAt: time,
-          updatedAt: time,
-        };
-        await this.db.sources.add(source);
-      }
-      if (source) {
-        let annotation = await this.findAnnotation(source.id, fragment);
-        if (!annotation && assigned) {
-          const { start, end } = fragment.selectors.position;
-          annotation = {
+      const annotation = await this.findOrCreateAnnotation(
+        projectId,
+        fragment,
+        assigned,
+        time,
+      );
+      if (annotation) {
+        const existing = await this.db.codings.get({
+          '[annotationId+codeId]': [annotation.id, codeId],
+        });
+        if (assigned && !existing) {
+          await this.db.codings.add({
             id: crypto.randomUUID(),
             projectId,
-            sourceId: source.id,
-            start,
-            end,
-            selectors: fragment.selectors,
+            annotationId: annotation.id,
+            codeId,
             createdAt: time,
             updatedAt: time,
-          };
-          await this.db.annotations.add(annotation);
-        }
-        if (annotation) {
-          const existing = await this.db.codings.get({
-            '[annotationId+codeId]': [annotation.id, codeId],
           });
-          if (assigned && !existing) {
-            await this.db.codings.add({
-              id: crypto.randomUUID(),
-              projectId,
-              annotationId: annotation.id,
-              codeId,
-              createdAt: time,
-              updatedAt: time,
-            });
-          } else if (!assigned && existing) {
-            await this.db.codings.delete(existing.id);
-          }
+        } else if (!assigned && existing) {
+          await this.db.codings.delete(existing.id);
         }
       }
       await this.db.operations.add({ id: operationId, fingerprint });

@@ -100,6 +100,12 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
       await capture.click();
       await expect(panel.locator('blockquote')).toHaveText('🙂 hola mundo');
       await expect(panel.locator('#selection-source')).toHaveText(url);
+      const note = panel.getByLabel('Nota en texto plano');
+      const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
+      const removeNote = panel.getByRole('button', { name: 'Borrar nota' });
+      await note.fill('<b>Observación literal</b>');
+      await saveNote.click();
+      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
 
       const tema = panel.getByRole('checkbox', { name: 'Tema' });
       const contexto = panel.getByRole('checkbox', { name: 'Contexto' });
@@ -131,6 +137,19 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
       await expect(contexto).toBeChecked();
       await expect.poll(async () => (await workerTargets()).length).toBe(1);
       await cdp.detach();
+      await expect(note).toHaveValue('<b>Observación literal</b>');
+      await note.fill('Nota editada');
+      await saveNote.click();
+      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
+      await capture.click();
+      await expect(note).toHaveValue('Nota editada');
+      await removeNote.click();
+      await expect(panel.locator('#note-status')).toHaveText('Nota borrada.');
+      await expect(note).toHaveValue('');
+      await expect(tema).toBeChecked();
+      await expect(contexto).toBeChecked();
+      await expect(panel.locator('blockquote')).toHaveText('🙂 hola mundo');
+
       await tema.click();
       await expect(tema).not.toBeChecked();
       await expect(contexto).toBeChecked();

@@ -91,3 +91,35 @@ test('Q05: el worker entrega únicamente los fragmentos del filtro solicitado', 
     }),
   ).toEqual({ kind: 'error' });
 });
+
+test('Q07–Q13: conserva texto literal y rechaza notas vacías, enormes o de tipo inesperado', async () => {
+  const message = {
+    ...request,
+    type: 'note.set',
+    operationId: crypto.randomUUID(),
+  };
+  for (const note of ['', '   ', 'x'.repeat(16_385), { html: '<img>' }]) {
+    expect(await handleCodingRequest({ ...message, note })).toEqual({
+      kind: 'error',
+    });
+  }
+  const literal = '<script>alert(1)</script>';
+  expect(await handleCodingRequest({ ...message, note: literal })).toEqual({
+    kind: 'note',
+    note: literal,
+  });
+  expect(await handleCodingRequest({ ...request, type: 'note.read' })).toEqual({
+    kind: 'note',
+    note: literal,
+  });
+  expect(await handleCodingRequest({ ...message, note: null })).toEqual({
+    kind: 'error',
+  });
+  expect(
+    await handleCodingRequest({
+      ...message,
+      note: null,
+      operationId: crypto.randomUUID(),
+    }),
+  ).toEqual({ kind: 'note', note: null });
+});

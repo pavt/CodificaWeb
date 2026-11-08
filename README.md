@@ -26,3 +26,5 @@ cw_pnpm typecheck
 Tras capturar un fragmento, marca o desmarca **Tema** y **Contexto**. Las asociaciones del proyecto inicial se guardan en IndexedDB en el perfil local y se conservan al reiniciar el service worker. Para volver a consultarlas, comprueba el acceso y captura de nuevo el mismo fragmento.
 
 Los fragmentos codificados se resaltan en la página. Usa **Filtrar resaltados por código** para inspeccionar un color cuando se solapan. En los sitios autorizados, el resaltado se restaura al volver a la fuente. Si cambia el texto, solo se pintan las citas que se pueden ubicar de forma inequívoca.
+
+Tras capturar un fragmento, escribe una **Nota en texto plano** y pulsa **Guardar nota**. Al volver a capturarlo puedes editarla o borrarla. Borrar la nota conserva el fragmento y sus códigos.
