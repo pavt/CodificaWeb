@@ -15,3 +15,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Evidencia de T023.** [PR #51](https://github.com/pavt/CodificaWeb/pull/51). Red por ausencia del repositorio en `tests/integration/relations.test.ts`. Green con migración v3 a v4, catálogo vacío, normalización, duplicados, edición y limpieza. Pasaron 106 pruebas, cobertura de ramas del 80,63 % y ambos E2E de Chromium.
 
 **Evidencia de T024.** [PR #52](https://github.com/pavt/CodificaWeb/pull/52). Red por ausencia de la operación conjunta. Green en `tests/integration/relations.test.ts` y `tests/unit/relation-messages.test.ts` con rollback, reintento, agrupación, dirección y rechazo de remitentes o proyectos ajenos. Pasaron 110 pruebas, cobertura de ramas del 81,56 % y los E2E de Chromium.
+
+**Evidencia de T025.** [PR #53](https://github.com/pavt/CodificaWeb/pull/53). Red al comprobar el formato v2 de la exportación. Green en `tests/integration/project-transfer.test.ts` con remapeo de tipos y extremos, validación de duplicados y reversión de escrituras. Chromium verificó los controles de importación y exportación. Pasaron 111 pruebas y la cobertura de ramas quedó en 81,79 %.
