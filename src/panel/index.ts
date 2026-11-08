@@ -1,4 +1,5 @@
-import type { CaptureTarget } from '../capture-contract';
+import type { CaptureTarget, SelectionSnapshot } from '../capture-contract';
+import { mountCatalog } from './catalog-controls';
 import { createCodingControls } from './coding-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
@@ -34,6 +35,7 @@ const notes = createNoteControls(
   document.getElementById('note-remove') as HTMLButtonElement,
   document.getElementById('note-status') as HTMLElement,
 );
+let selected: SelectionSnapshot | undefined;
 let target: CaptureTarget | undefined;
 let projectId: string | null | undefined;
 
@@ -46,6 +48,7 @@ const captureMessages = {
 };
 
 function clearPreview() {
+  selected = undefined;
   quote.textContent = '';
   source.textContent = '';
   captureStatus.textContent = '';
@@ -107,6 +110,7 @@ captureButton.addEventListener('click', async () => {
   captureButton.disabled = false;
 
   if (result.kind === 'selection') {
+    selected = result;
     quote.textContent = result.selectors.quote.exact;
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
@@ -117,6 +121,15 @@ captureButton.addEventListener('click', async () => {
   }
 });
 
+const catalog = document.getElementById(
+  'catalog',
+) as HTMLFieldSetElement | null;
+const setCatalogProject =
+  catalog &&
+  mountCatalog(catalog, () => {
+    highlights.clear();
+    if (target && selected) void coding.show(target, selected);
+  });
 const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
@@ -124,6 +137,7 @@ if (projects) {
   mountProjects(projects, (id) => {
     if (projectId === id) return;
     projectId = id;
+    setCatalogProject?.(id);
     highlights.clear();
     clearPreview();
     if (target) {

@@ -22,23 +22,27 @@ export async function handleProjectRequest(message: Record<string, unknown>) {
     if (typeof id !== 'string') return { kind: 'error' };
     if (type === 'project.select') await projects.select(id);
     else await projects.remove(id);
-    const tabs = await chrome.tabs.query({});
-    await Promise.allSettled(
-      tabs.flatMap(({ id: tabId }) =>
-        tabId === undefined
-          ? []
-          : [
-              chrome.tabs.sendMessage(
-                tabId,
-                { type: 'highlight.project' },
-                { frameId: 0 },
-              ),
-            ],
-      ),
-    );
+    await refreshProjectHighlights();
   } else return { kind: 'error' };
   void chrome.runtime
     .sendMessage({ type: 'project.changed' })
     .catch(() => undefined);
   return { kind: 'projects', ...(await projects.list()) };
+}
+
+export async function refreshProjectHighlights() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(
+    tabs.flatMap(({ id: tabId }) =>
+      tabId === undefined
+        ? []
+        : [
+            chrome.tabs.sendMessage(
+              tabId,
+              { type: 'highlight.project' },
+              { frameId: 0 },
+            ),
+          ],
+    ),
+  );
 }

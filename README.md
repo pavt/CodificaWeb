@@ -29,4 +29,4 @@ Los fragmentos codificados se resaltan en la página. Usa **Filtrar resaltados p
 
 Tras capturar un fragmento, escribe una **Nota en texto plano** y pulsa **Guardar nota**. Al volver a capturarlo puedes editarla o borrarla. Borrar la nota conserva el fragmento y sus códigos.
 
-En **Proyectos** puedes crear, seleccionar, renombrar y borrar proyectos. Cada uno conserva sus propias fuentes, citas y notas. Los códigos de ejemplo pertenecen al proyecto inicial.
+En **Proyectos** puedes crear, seleccionar, renombrar y borrar proyectos. Cada uno conserva sus propias fuentes, citas y notas. El **Catálogo de códigos** permite crear, editar y borrar los códigos del proyecto activo. Puedes reutilizar un código en distintas fuentes.
