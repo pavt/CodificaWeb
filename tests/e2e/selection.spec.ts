@@ -3,7 +3,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
+test('Q01–Q08 y Q12: flujo de proyectos, fragmentos, códigos, notas y resaltados', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -98,7 +98,9 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
         .toBe('🙂 hola mundo');
       await panel.bringToFront();
       await capture.click();
-      await expect(panel.locator('blockquote')).toHaveText('🙂 hola mundo');
+      await expect(panel.locator('#selection-quote')).toHaveText(
+        '🙂 hola mundo',
+      );
       await expect(panel.locator('#selection-source')).toHaveText(url);
       const note = panel.getByLabel('Nota en texto plano');
       const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
@@ -148,7 +150,9 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       await expect(note).toHaveValue('');
       await expect(tema).toBeChecked();
       await expect(contexto).toBeChecked();
-      await expect(panel.locator('blockquote')).toHaveText('🙂 hola mundo');
+      await expect(panel.locator('#selection-quote')).toHaveText(
+        '🙂 hola mundo',
+      );
 
       await tema.click();
       await expect(tema).not.toBeChecked();
@@ -167,7 +171,7 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
         .toBe('🙂 hola');
       await panel.bringToFront();
       await capture.click();
-      await expect(panel.locator('blockquote')).toHaveText('🙂 hola');
+      await expect(panel.locator('#selection-quote')).toHaveText('🙂 hola');
       const original = await source.locator('#text').innerHTML();
       await tema.click();
       await expect(tema).toBeChecked();
@@ -238,7 +242,7 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       await expect(panel.locator('#capture-status')).toContainText(
         'documento cambió',
       );
-      await expect(panel.locator('blockquote')).toBeEmpty();
+      await expect(panel.locator('#selection-quote')).toBeEmpty();
 
       await panel.getByRole('button', { name: 'Comprobar acceso' }).click();
       await expect(panel.getByRole('status')).toHaveText(
@@ -253,7 +257,7 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       await expect(panel.locator('#capture-status')).toContainText(
         'contenido editable',
       );
-      await expect(panel.locator('blockquote')).toBeEmpty();
+      await expect(panel.locator('#selection-quote')).toBeEmpty();
 
       // R2 measures rebuilding the registry with 200 overlaps, excluding message transport.
       const benchmarkText = Array.from(
@@ -365,7 +369,7 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
           .evaluate((node) => window.getSelection()?.selectAllChildren(node));
         await panel.bringToFront();
         await capture.click();
-        await expect(panel.locator('blockquote')).toHaveText(
+        await expect(panel.locator('#selection-quote')).toHaveText(
           'Evidencia del catálogo',
         );
       }
@@ -414,6 +418,36 @@ test('Q01–Q07 y Q12: flujo de proyectos, fragmentos, códigos, notas y resalta
       ).toHaveCount(0);
       await expect.poll(() => paintedText('codificaweb-123456')).toBe('');
       await expect(note).toHaveValue('Nota conservada');
+      // Q08: search stored evidence after the current page loses its text.
+      await tema.click();
+      await expect(tema).toBeChecked();
+      await source.evaluate(() => {
+        document.body.textContent = 'Sin cita en esta página';
+      });
+      await panel.getByText('Buscar evidencias', { exact: true }).click();
+      const search = panel.getByRole('button', { name: 'Buscar', exact: true });
+      await search.click();
+      const evidence = panel.locator('#evidence-results');
+      await expect(evidence).toContainText('Evidencia del catálogo');
+      await panel
+        .getByLabel('Texto de la cita o nota')
+        .fill('EVIDENCIA DEL CATA\u0301LOGO');
+      await panel
+        .getByLabel('Código de la evidencia')
+        .selectOption({ label: 'Tema' });
+      await panel
+        .getByLabel('Fuente de la evidencia')
+        .selectOption({ label: sources[0] ?? '' });
+      await search.click();
+      await expect(evidence.locator('li')).toHaveCount(1);
+      await expect(evidence).toContainText('Nota conservada');
+      await panel
+        .getByLabel('Fuente de la evidencia')
+        .selectOption({ label: sources[1] ?? '' });
+      await search.click();
+      await expect(panel.locator('#evidence-status')).toHaveText(
+        'Sin resultados.',
+      );
     } finally {
       await context.close();
     }
