@@ -23,15 +23,10 @@ Para repetir el smoke, ejecutar `pnpm build` e iniciar cada binario con un `--us
 
 `pnpm audit --prod` informó cero vulnerabilidades conocidas. `pnpm audit` detectó un aviso moderado de `minimatch@10.2.6` en las herramientas de lint. La corrección empieza en 11.0.1, fuera del major del árbol actual. Se registra como hallazgo de desarrollo: el paquete de la extensión carece de esa dependencia y el lint usa patrones del repositorio. [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)
 
-## Recorrido manual pendiente en ambos navegadores
+## Comprobaciones de la interfaz nativa
 
-1. Crear un perfil temporal separado para cada navegador y cargar `dist` desde su administrador de extensiones con «Cargar descomprimida». Abrir el panel desde el icono.
-2. Abrir un fixture HTML servido en loopback. Comprobar ausencia de captura previa al permiso. Rechazar y después conceder el permiso mediante el diálogo nativo. Al final, revocarlo desde la interfaz del navegador y comprobar que deja de capturar y que conserva el registro local.
-3. Crear fragmentos solapados, aplicar varios códigos, escribir una nota y recargar. Comprobar la persistencia, buscar con filtros, abrir la fuente y comprobar la ubicación. Exportar JSON e importarlo como copia. Verificar que un perfil limpio comienza sin ese corpus.
-4. Observar la red durante el recorrido en las herramientas de desarrollo del panel, la página y el worker. Registrar por navegador el resultado, las solicitudes observadas y cualquier fallo, usando solo datos sintéticos.
+CI ejecuta el recorrido funcional con `pnpm test:e2e` tras compilar el paquete. Incluye codificación, solapamientos, persistencia, búsqueda con filtros, navegación, transferencia JSON y observación automatizada de red en Chromium. El smoke en Chrome y Brave se ejecutó con perfiles separados.
 
-El smoke automatizado cargó el panel como página de extensión. La apertura desde el icono, los diálogos nativos y la evidencia manual de tráfico siguen pendientes de registro.
+En Chrome, la prueba manual mostró el panel abierto, la captura deshabilitada antes del permiso y la captura habilitada después de verificar el acceso. También mostró una búsqueda por nota que devolvió la evidencia con ambos códigos. El resultado del diálogo nativo queda pendiente de confirmar.
 
-### Intento con interfaz nativa
-
-En macOS se iniciaron instancias con ventana visible y un directorio de usuario temporal por navegador. Ambas cargaron `dist` por CDP y abrieron el fixture de loopback. El control de escritorio seleccionó las instancias habituales por identificador de aplicación, sin acceso a las ventanas de los procesos temporales. El intento quedó detenido antes de accionar el icono o los diálogos; se mantienen pendientes los cuatro pasos anteriores.
+Queda por comprobar en la interfaz de cada navegador el rechazo y la concesión mediante el diálogo nativo, la revocación desde el administrador de extensiones y su efecto sobre la captura y los datos guardados. En Brave queda también la apertura desde el icono. Para la evidencia de red por navegador solicitada en el issue, basta observar el panel, la página y el worker durante ese recorrido breve, usando el fixture de loopback.

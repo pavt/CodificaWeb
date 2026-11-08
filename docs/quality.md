@@ -35,5 +35,5 @@ El [registro de validación de T013](release-validation.md) reúne la evidencia 
 
 - Cada CA cubierto tiene evidencia reproducible y traza hasta archivos de prueba y código.
 - Lint, formato, tipos, compilación, unitarias, integración, E2E y cobertura pasan. La auditoría se revisa y se resuelven hallazgos aplicables.
-- La prueba manual registra versiones de Chrome y Brave, sistema, flujo de permisos, solapamientos, notas y recarga, búsqueda, navegación y transferencia JSON. Registrar resultados y fallos.
+- La E2E cubre solapamientos, notas y recarga, búsqueda, navegación y transferencia JSON. Registrar versiones de Chrome y Brave, sistema, resultados y fallos de las comprobaciones que requieren la interfaz nativa, incluidos el icono, el diálogo de permisos y la revocación.
 - La revisión comprueba que el corpus queda en el perfil y que la extensión solo accede a sitios autorizados. No hay riesgos críticos abiertos ni criterios pendientes del incremento.
