@@ -2,6 +2,7 @@ import { accentColors } from '../domain/category-colors';
 import { Dexie } from 'dexie';
 import type { Table } from 'dexie';
 import type { Code, Fragment } from '../domain/codings';
+import type { QuotationLink, RelationType } from '../domain/relations';
 
 interface Entity {
   id: string;
@@ -57,6 +58,8 @@ export class CodingDatabase extends Dexie {
   declare codings: Table<Coding, string>;
   declare preferences: Table<{ key: string; value: string }, string>;
   declare sites: Table<{ origin: string }, string>;
+  declare relationTypes: Table<RelationType, string>;
+  declare quotationLinks: Table<QuotationLink, string>;
   declare operations: Table<Operation, string>;
 
   constructor(name = 'codificaweb') {
@@ -87,6 +90,11 @@ export class CodingDatabase extends Dexie {
             }
           }),
       );
+    this.version(4).stores({
+      relationTypes: 'id, &[projectId+nameKey], projectId',
+      quotationLinks:
+        'id, projectId, &[projectId+fromAnnotationId+toAnnotationId+relationTypeId], [projectId+fromAnnotationId], [projectId+toAnnotationId], [projectId+relationTypeId]',
+    });
     this.on('populate', async () => {
       const time = new Date().toISOString();
       await this.projects.add({
