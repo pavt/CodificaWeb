@@ -2,7 +2,10 @@
 import 'fake-indexeddb/auto';
 import { afterEach, expect, test, vi } from 'vitest';
 import { database, projects } from '../../src/background/coding-messages';
-import { handleEvidenceSearch } from '../../src/background/evidence-messages';
+import {
+  handleEvidenceOpen,
+  handleEvidenceSearch,
+} from '../../src/background/evidence-messages';
 import { initialProjectId } from '../../src/storage/database';
 import { IndexedCodings } from '../../src/storage/indexed-codings';
 import { mountEvidence } from '../../src/panel/evidence-controls';
@@ -53,6 +56,29 @@ test('Q08: busca en IndexedDB, combina filtros y limpia resultados al cambiar de
     crypto.randomUUID(),
   );
 
+  const saved = await database.annotations
+    .where('projectId')
+    .equals(initialProjectId)
+    .first();
+  if (!saved) throw new Error('Anotación ausente');
+  const create = vi.fn().mockResolvedValue({ id: 7 });
+  vi.stubGlobal('chrome', {
+    tabs: { query: vi.fn().mockResolvedValue([]), create },
+  });
+  expect(
+    await handleEvidenceOpen({ projectId: 'ajeno', id: saved.id }),
+  ).toEqual({ kind: 'unavailable' });
+  expect(await handleEvidenceOpen({ projectId: initialProjectId })).toEqual({
+    kind: 'unavailable',
+  });
+  expect(
+    await handleEvidenceOpen({ projectId: initialProjectId, id: 'ausente' }),
+  ).toEqual({ kind: 'unavailable' });
+  expect(
+    await handleEvidenceOpen({ projectId: initialProjectId, id: saved.id }),
+  ).toEqual({ kind: 'permission' });
+  expect(create).toHaveBeenCalledOnce();
+
   const sendMessage = vi.fn(handleEvidenceSearch);
   vi.stubGlobal('chrome', { runtime: { sendMessage } });
   document.body.innerHTML = `<form><fieldset><input id="evidence-text">
@@ -80,6 +106,18 @@ test('Q08: busca en IndexedDB, combina filtros y limpia resultados al cambiar de
   root.dispatchEvent(new Event('submit', { cancelable: true }));
   await vi.waitFor(() => expect(list.children).toHaveLength(1));
   expect(list.textContent).toContain('/a');
+
+  sendMessage.mockResolvedValueOnce({ kind: 'permission' });
+  list.querySelector('button')?.click();
+  await vi.waitFor(() =>
+    expect(list.textContent).toContain('Autoriza el sitio'),
+  );
+  expect(sendMessage).toHaveBeenLastCalledWith({
+    type: 'evidence.open',
+    projectId: initialProjectId,
+    id: expect.any(String),
+  });
+  expect(list.textContent).toContain('Café');
 
   query.value = 'no encontrado';
   root.dispatchEvent(new Event('submit', { cancelable: true }));

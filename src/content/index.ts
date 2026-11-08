@@ -1,3 +1,4 @@
+import { locateEvidence } from './locate-evidence';
 import { createPainter } from './paint';
 import { observeSelection } from './capture';
 import { startRestoration } from './restoration';
@@ -33,6 +34,21 @@ if (!world.codificawebCaptureInstalled) {
     if (message.type === 'highlight.project' && !sender.tab) {
       void restoration.restore(true).then(respond);
       return true;
+    }
+    if (
+      message.type === 'evidence.locate' &&
+      !sender.tab &&
+      'url' in message &&
+      'projectId' in message &&
+      'selectors' in message
+    ) {
+      if (message.url !== location.href) respond({ kind: 'redirected' });
+      else if (capture && restoration.matchesProject(message.projectId)) {
+        respond({
+          kind: locateEvidence(message.selectors) ? 'located' : 'unlocated',
+        });
+      }
+      return;
     }
     if (sender.url !== chrome.runtime.getURL('src/panel/index.html')) return;
     if (message.type === 'capture.prepare') {
