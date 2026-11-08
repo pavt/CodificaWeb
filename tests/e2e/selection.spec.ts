@@ -135,6 +135,48 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
       await expect(tema).not.toBeChecked();
       await expect(contexto).toBeChecked();
 
+      await source.bringToFront();
+      await source.evaluate(() => {
+        const text = document.querySelector('strong')?.firstChild;
+        if (!text) throw new Error('Fixture sin texto');
+        window.getSelection()?.collapse(text, 0);
+      });
+      for (let i = 0; i < 6; i++)
+        await source.keyboard.press('Shift+ArrowRight');
+      await expect
+        .poll(() => source.evaluate(() => window.getSelection()?.toString()))
+        .toBe('🙂 hola');
+      await panel.bringToFront();
+      await capture.click();
+      await expect(panel.locator('blockquote')).toHaveText('🙂 hola');
+      const original = await source.locator('#text').innerHTML();
+      await tema.click();
+      await expect(tema).toBeChecked();
+      const paintedText = (name: string) =>
+        source.evaluate(
+          (name) => [...(CSS.highlights.get(name) ?? [])].map(String).join(''),
+          name,
+        );
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe(' mundo');
+      const filter = panel.getByLabel('Filtrar resaltados por código');
+      await filter.selectOption({ label: 'Contexto' });
+      await expect
+        .poll(() => paintedText('codificaweb-81d4fa'))
+        .toBe('🙂 hola mundo');
+      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await filter.selectOption({ label: 'Tema' });
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe('');
+      await expect(source.locator('#text')).toHaveJSProperty(
+        'innerHTML',
+        original,
+      );
+
       await source.evaluate(() =>
         history.replaceState(null, '', '#otra-fuente'),
       );
@@ -160,10 +202,14 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
       await expect(panel.locator('blockquote')).toBeEmpty();
 
       // R2 measures rebuilding the registry with 200 overlaps, excluding message transport.
-      await source.evaluate(() => {
-        document.body.textContent = 'a'.repeat(100_000);
-      });
-      const p95 = await panel.evaluate(async () => {
+      const benchmarkText = Array.from(
+        { length: 250 },
+        (_, i) => String(i).padStart(3, '0') + 'a'.repeat(397),
+      ).join('');
+      await source.evaluate((text) => {
+        document.body.textContent = text;
+      }, benchmarkText);
+      const p95 = await panel.evaluate(async (text) => {
         const [tab] = await chrome.tabs.query({
           active: true,
           lastFocusedWindow: true,
@@ -175,7 +221,11 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
           color: id % 2 ? '#FDD835' : '#81D4FA',
           selectors: {
             position: { start: id * 400, end: id * 400 + 800 },
-            quote: { exact: 'a'.repeat(800), prefix: '', suffix: '' },
+            quote: {
+              exact: text.slice(id * 400, id * 400 + 800),
+              prefix: '',
+              suffix: '',
+            },
           },
         }));
         const samples: number[] = [];
@@ -196,7 +246,7 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
         return samples.sort((a, b) => a - b)[
           Math.ceil(samples.length * 0.95) - 1
         ];
-      });
+      }, benchmarkText);
       console.log(`R2 p95=${p95} ms · ${platform()} · ${cpus()[0]?.model}`);
       expect(p95).toBeLessThanOrEqual(150);
 
@@ -205,6 +255,36 @@ test('Q03–Q05, Q12: captura texto inline, asigna varios códigos y rechaza sel
       await expect(panel.locator('#capture-status')).toContainText(
         'documento cambió',
       );
+
+      // Q06 restores without reopening or reauthorizing the panel.
+      await source.goto(url);
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await source.reload();
+      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe(' mundo');
+      await source.evaluate(() => {
+        const paragraph = document.querySelector('#text');
+        if (paragraph)
+          paragraph.innerHTML =
+            'Nuevo <span>🙂</span><span> hola</span><em> mundo</em>';
+      });
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await source.evaluate(() => {
+        document.body.textContent = '🙂 hola mundo. 🙂 hola mundo';
+      });
+      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe('');
+      await source.evaluate(() => {
+        document.body.textContent = '🙂 hola mundo';
+      });
+      await expect
+        .poll(() => paintedText('codificaweb-fdd835'))
+        .toBe('🙂 hola');
+      await source.evaluate(() => history.pushState(null, '', '/otra-ruta'));
+      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
     } finally {
       await context.close();
     }

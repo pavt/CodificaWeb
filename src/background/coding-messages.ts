@@ -7,7 +7,8 @@ import type {
   HighlightEntry,
 } from '../domain/codings';
 
-const codings = new IndexedCodings(new CodingDatabase());
+export const database = new CodingDatabase();
+const codings = new IndexedCodings(database);
 const operationIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
