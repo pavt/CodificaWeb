@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-08T16:00:00Z",
+  "project": {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "name": "Movilidad",
+    "description": "Lectura de prensa local",
+    "createdAt": "2026-11-08T15:00:00Z",
+    "updatedAt": "2026-11-08T15:00:00Z"
+  },
+  "sources": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "url": "https://example.org/movilidad",
+      "title": "Movilidad en la ciudad",
+      "capturedAt": "2026-11-08T15:10:00Z",
+      "createdAt": "2026-11-08T15:10:00Z",
+      "updatedAt": "2026-11-08T15:10:00Z"
+    }
+  ],
+  "codes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "name": "Accesibilidad",
+      "description": "Barreras de acceso",
+      "color": "#FDD835",
+      "createdAt": "2026-11-08T15:02:00Z",
+      "updatedAt": "2026-11-08T15:02:00Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "name": "Transporte público",
+      "description": "Infraestructura de transporte",
+      "color": "#81D4FA",
+      "createdAt": "2026-11-08T15:03:00Z",
+      "updatedAt": "2026-11-08T15:03:00Z"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "sourceId": "00000000-0000-4000-8000-000000000002",
+      "selectors": {
+        "profile": "dom-text-v1",
+        "quote": {
+          "type": "TextQuoteSelector",
+          "exact": "Faltan rampas",
+          "prefix": "",
+          "suffix": " en la estación."
+        },
+        "position": { "type": "TextPositionSelector", "start": 0, "end": 13 }
+      },
+      "note": "La cita describe una barrera de acceso.",
+      "createdAt": "2026-11-08T15:10:00Z",
+      "updatedAt": "2026-11-08T15:11:00Z"
+    }
+  ],
+  "codings": [
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "annotationId": "00000000-0000-4000-8000-000000000005",
+      "codeId": "00000000-0000-4000-8000-000000000003",
+      "createdAt": "2026-11-08T15:10:00Z",
+      "updatedAt": "2026-11-08T15:10:00Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "projectId": "00000000-0000-4000-8000-000000000001",
+      "annotationId": "00000000-0000-4000-8000-000000000005",
+      "codeId": "00000000-0000-4000-8000-000000000004",
+      "createdAt": "2026-11-08T15:11:00Z",
+      "updatedAt": "2026-11-08T15:11:00Z"
+    }
+  ]
+}
