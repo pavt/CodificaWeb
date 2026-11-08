@@ -151,3 +151,52 @@ test('Q03: el contexto de 32 unidades no parte pares sustitutos', () => {
     capture.stop();
   }
 });
+
+test.each([
+  [
+    'FirmaTitularCréditos',
+    'Titular',
+    {
+      kind: 'selection',
+      selectors: {
+        quote: { exact: 'Titular' },
+        position: { start: 5, end: 12 },
+      },
+    },
+  ],
+  [
+    'FirmaStraßeCréditos',
+    'STRASSE',
+    {
+      kind: 'selection',
+      selectors: {
+        quote: { exact: 'Straße' },
+        position: { start: 5, end: 11 },
+      },
+    },
+  ],
+  ['TitularFirmaBajada', 'Titular\nBajada', { kind: 'excluded' }],
+  ['TitularFirmaTitular', 'Titular', { kind: 'excluded' }],
+  ['Firma', '', { kind: 'empty' }],
+])(
+  'Q03: limita la cita al texto que selecciona el navegador (%s)',
+  (raw, visible, expected) => {
+    document.body.innerHTML = '<p></p>';
+    const paragraph = document.querySelector('p');
+    if (!paragraph) throw new Error('Fixture ausente');
+    paragraph.textContent = raw;
+    const selection = window.getSelection();
+    if (!selection) throw new Error('Selección ausente');
+    const stringifier = vi
+      .spyOn(selection, 'toString')
+      .mockReturnValue(visible);
+    const capture = observeSelection();
+    try {
+      select('p');
+      expect(capture.read()).toMatchObject(expected);
+    } finally {
+      capture.stop();
+      stringifier.mockRestore();
+    }
+  },
+);

@@ -62,3 +62,5 @@ La comprobación automatizada está completa. Queda pendiente observar a una per
 Durante T018 se reprodujo que, al buscar un nombre y pulsar **Crear categoría**, el formulario volvía a pedirlo. El formulario ahora reutiliza el texto de búsqueda y permite editarlo antes de guardar. Las pruebas de Chromium, Chrome y Brave cubren el guardado sin volver a escribir el nombre. El ZIP se recompiló y se comprobó nuevamente tras la corrección.
 
 También se reprodujo una interrupción al navegar dentro del mismo sitio. Si se empezaba a crear una categoría mientras la nueva página terminaba de cargar, el panel descartaba la cita y el formulario. La prueba mantiene una imagen sintética pendiente, selecciona texto, escribe el nombre, deja terminar la carga y guarda la categoría. También comprueba que una pestaña de otro origen requiere invocar CodificaWeb para poder capturar allí.
+
+Una prueba de regresión reproduce una selección visible que termina en el titular, aunque el rango del navegador incluye una firma marcada como no seleccionable. El panel guarda y resalta el titular sin la firma. La corrección se aplica a las capturas nuevas; no modifica las citas ya guardadas.

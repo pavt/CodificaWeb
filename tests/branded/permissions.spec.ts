@@ -66,7 +66,7 @@ for (const [name, executable] of browsers) {
       await context.route(url, (route) =>
         route.fulfill({
           contentType: 'text/html; charset=utf-8',
-          body: `<p>${citation}</p><p>Otra cita.</p>`,
+          body: `<p>${citation}</p><aside style="user-select:none">Firma que no se selecciona</aside><p>Otra cita.</p>`,
         }),
       );
       let releaseImage: (() => void) | undefined;
@@ -167,6 +167,7 @@ for (const [name, executable] of browsers) {
       await panel.close();
       await page.bringToFront();
       async function dragQuote(index: number, expected: string) {
+        await page.evaluate(() => window.getSelection()?.removeAllRanges());
         const box = await page
           .locator('p')
           .nth(index)
@@ -189,6 +190,16 @@ for (const [name, executable] of browsers) {
           .toBe(expected);
       }
       await dragQuote(0, citation);
+      // The browser can leave a range endpoint past text excluded by CSS.
+      const visible = await page.evaluate(() => {
+        const end = document.querySelectorAll('p')[1]?.firstChild;
+        const selection = window.getSelection();
+        if (!end || !selection) throw new Error('Falta el rango de prueba');
+        selection.extend(end, 0);
+        return selection.toString().trim();
+      });
+      expect(visible).toBe(citation);
+
       const { targetInfos } = await cdp.send('Target.getTargets', {
         filter: [{ type: 'tab' }, { exclude: true }],
       });

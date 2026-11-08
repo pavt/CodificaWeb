@@ -36,3 +36,5 @@ Después de aprobar el alcance, crear un issue por tarea con criterios y depende
 **Ajuste de primer uso en T018.** `tests/e2e/selection.spec.ts` reprodujo el nombre vacío al abrir la creación desde la búsqueda. La corrección conserva el texto y las pruebas de navegador guardan la categoría sin introducir el nombre otra vez.
 
 **Continuidad al navegar en T018.** Red y Green en `tests/branded/permissions.spec.ts`. La prueba conserva la cita y el formulario cuando una página del mismo sitio termina de cargar, y guarda una categoría en el documento nuevo. La prueba de otra pestaña verifica el acceso temporal tras invocar la extensión.
+
+**Precisión de captura en T018.** `tests/branded/permissions.spec.ts` reproduce la inclusión de una firma no seleccionable después del titular. `tests/unit/capture.test.ts` cubre el ajuste de los límites y el rechazo de rangos ambiguos o discontinuos.
