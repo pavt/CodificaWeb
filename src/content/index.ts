@@ -9,9 +9,15 @@ const world = globalThis as typeof globalThis & {
 if (!world.codificawebCaptureInstalled) {
   world.codificawebCaptureInstalled = true;
   let capture: ReturnType<typeof observeSelection> | undefined;
-  const restoration = startRestoration(createPainter(), () => {
-    capture ??= observeSelection();
-  });
+  let temporary = false;
+  const startCapture = () => {
+    capture ??= observeSelection(() => {
+      void chrome.runtime
+        .sendMessage({ type: 'capture.changed' })
+        .catch(() => undefined);
+    });
+  };
+  const restoration = startRestoration(createPainter(), startCapture);
   chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     if (
       sender.id !== chrome.runtime.id ||
@@ -28,6 +34,7 @@ if (!world.codificawebCaptureInstalled) {
       message.origins.includes(location.origin)
     ) {
       restoration.clear();
+      temporary = false;
       capture?.stop();
       capture = undefined;
     }
@@ -52,6 +59,12 @@ if (!world.codificawebCaptureInstalled) {
     }
     if (sender.url !== chrome.runtime.getURL('src/panel/index.html')) return;
     if (message.type === 'capture.prepare') {
+      if ('temporary' in message && message.temporary === true) {
+        startCapture();
+        temporary = true;
+        respond(true);
+        return;
+      }
       void restoration.restore().then(respond);
       return true;
     }
@@ -65,9 +78,10 @@ if (!world.codificawebCaptureInstalled) {
       const start = performance.now();
       const result =
         capture &&
-        restoration.matchesProject(
-          'projectId' in message ? message.projectId : undefined,
-        ) &&
+        (temporary ||
+          restoration.matchesProject(
+            'projectId' in message ? message.projectId : undefined,
+          )) &&
         message.url === location.href &&
         Array.isArray(message.entries)
           ? restoration.paint(

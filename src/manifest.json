@@ -6,6 +6,6 @@
   "action": { "default_title": "Abrir CodificaWeb" },
   "background": { "service_worker": "background.js", "type": "module" },
   "side_panel": { "default_path": "src/panel/index.html" },
-  "permissions": ["sidePanel", "scripting"],
+  "permissions": ["sidePanel", "scripting", "activeTab"],
   "optional_host_permissions": ["http://*/*", "https://*/*"]
 }

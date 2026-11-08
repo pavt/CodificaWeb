@@ -9,7 +9,14 @@ import { handleTransferRequest } from './background/transfer-messages';
 import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
-void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+chrome.action.onClicked.addListener(({ id }) => {
+  if (id === undefined) return;
+  void chrome.sidePanel
+    .open({ tabId: id })
+    .then(() => chrome.runtime.sendMessage({ type: 'capture.invoked' }))
+    .catch(() => undefined);
+});
 const reconcile = () => void reconcileSites().catch(() => undefined);
 chrome.runtime.onStartup.addListener(reconcile);
 chrome.runtime.onInstalled.addListener(reconcile);

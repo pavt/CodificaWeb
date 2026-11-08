@@ -66,7 +66,7 @@ function captureSelection(
   };
 }
 
-export function observeSelection() {
+export function observeSelection(onCommit?: () => void) {
   let revision = 0;
   const observer = new MutationObserver(() => revision++);
   observer.observe(document, {
@@ -91,9 +91,13 @@ export function observeSelection() {
     if (document.hasFocus() || (selection && !selection.isCollapsed)) update();
   };
 
+  const commit = () => {
+    update();
+    onCommit?.();
+  };
   document.addEventListener('selectionchange', onSelectionChange);
-  document.addEventListener('pointerup', update);
-  document.addEventListener('keyup', update);
+  document.addEventListener('pointerup', commit);
+  document.addEventListener('keyup', commit);
   return {
     read(): CaptureResult {
       const revision = currentRevision();
@@ -108,8 +112,8 @@ export function observeSelection() {
     stop() {
       observer.disconnect();
       document.removeEventListener('selectionchange', onSelectionChange);
-      document.removeEventListener('pointerup', update);
-      document.removeEventListener('keyup', update);
+      document.removeEventListener('pointerup', commit);
+      document.removeEventListener('keyup', commit);
     },
   };
 }

@@ -20,7 +20,7 @@ test('Q11: el build genera una extensión MV3 con entradas locales y permisos op
     expect(manifest).toMatchObject({
       manifest_version: 3,
       minimum_chrome_version: '123',
-      permissions: ['sidePanel', 'scripting'],
+      permissions: ['sidePanel', 'scripting', 'activeTab'],
       optional_host_permissions: ['http://*/*', 'https://*/*'],
       background: { type: 'module' },
     });
