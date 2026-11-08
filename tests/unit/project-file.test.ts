@@ -4,9 +4,13 @@ import { decodeProjectFile } from '../../src/domain/project-file';
 import { maxProjectBytes } from '../../src/domain/project-file-limits';
 
 test('Q10: el ejemplo v1 es válido y conserva los selectores y fechas', () => {
-  expect(decodeProjectFile(JSON.stringify(fixture))).toEqual(fixture);
+  expect(decodeProjectFile(JSON.stringify(fixture))).toEqual({
+    ...fixture,
+    relationTypes: [],
+    quotationLinks: [],
+  });
   expect(() =>
-    decodeProjectFile(JSON.stringify({ ...fixture, schemaVersion: 2 })),
+    decodeProjectFile(JSON.stringify({ ...fixture, schemaVersion: 3 })),
   ).toThrow('Versión');
   expect(() => decodeProjectFile('{')).toThrow();
 });
@@ -28,6 +32,19 @@ test('Q13: limita el tamaño en bytes y rechaza estructuras y valores inesperado
     null,
     [],
     { ...fixture, extra: true },
+    { ...fixture, relationTypes: [], quotationLinks: [] },
+    {
+      ...fixture,
+      schemaVersion: 2,
+      relationTypes: Array.from({ length: 50_001 }, () => null),
+      quotationLinks: [],
+    },
+    {
+      ...fixture,
+      schemaVersion: 2,
+      relationTypes: [],
+      quotationLinks: Array.from({ length: 50_001 }, () => null),
+    },
     { ...fixture, exportedAt: '2026-02-30T00:00:00Z' },
     { ...fixture, project: { ...fixture.project, id: 'inválido' } },
     {

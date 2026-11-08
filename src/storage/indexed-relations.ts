@@ -1,4 +1,5 @@
 import { codeNameKey } from '../domain/codings';
+import { orderLinkEndpoints } from '../domain/relations';
 import type {
   LinkFields,
   LinkedCitation,
@@ -314,7 +315,7 @@ export class IndexedRelations {
   }
 
   private async validateLink(projectId: string, input: LinkInput) {
-    let { fromAnnotationId, toAnnotationId } = input;
+    const { fromAnnotationId, toAnnotationId } = input;
     const { relationTypeId, note = '' } = input;
     if (note.length > 16_384) throw new Error('Nota demasiado larga.');
     const type = await this.requireType(projectId, relationTypeId);
@@ -339,8 +340,10 @@ export class IndexedRelations {
       toSource?.projectId !== projectId
     )
       throw new Error('Fuentes fuera del proyecto.');
-    if (type.direction === 'symmetric' && fromAnnotationId > toAnnotationId)
-      [fromAnnotationId, toAnnotationId] = [toAnnotationId, fromAnnotationId];
-    return { fromAnnotationId, toAnnotationId, relationTypeId, note };
+    return {
+      ...orderLinkEndpoints(type.direction, fromAnnotationId, toAnnotationId),
+      relationTypeId,
+      note,
+    };
   }
 }

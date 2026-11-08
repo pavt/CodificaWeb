@@ -22,10 +22,10 @@ El panel asigna un UUID a cada intento lógico y reutiliza el mismo UUID si se p
 
 `selectors` tiene un `TextQuoteSelector` con exact/prefix/suffix y un `TextPositionSelector` con start/end. Ambos usan el mismo flujo `dom-text-v1`. Intervalos semiabiertos UTF-16 con enteros seguros y longitud de la cita igual a end − start. Guardar hasta 32 unidades UTF-16 de contexto a cada lado sin cortar pares sustitutos. Se conserva la cita histórica aunque falle el anclaje. El estado de resolución es efímero y depende del documento.
 
-## Exportación v1
+## Transferencia de proyectos JSON
 
-El sobre contiene `schemaVersion: 1`, `exportedAt`, `project`, `sources`, `codes`, `annotations` y `codings`. Las claves derivadas se reconstruyen. Las migraciones IndexedDB y del archivo tienen numeración independiente. Cada versión anterior admitida se valida y transforma en memoria antes de validar la versión destino. Rechazar versiones futuras.
+El archivo exportado usa `schemaVersion: 2` y añade `relationTypes` y `quotationLinks` al sobre de v1. Cada vínculo referencia dos citas de fuentes distintas y un tipo del mismo proyecto. El importador también admite archivos v1 y crea la copia con un catálogo de tipos y vínculos vacío. Al copiar un v2, remapea los tipos y ambos extremos. Ordena de nuevo los extremos simétricos según sus nuevos IDs y conserva el orden de los dirigidos. Las claves derivadas se reconstruyen. La versión de IndexedDB y la del archivo se gestionan por separado.
 
 Validar forma y campos permitidos, tipos, UUID únicos por entidad, fechas coherentes, relaciones, claves únicas, protocolos y límites antes de iniciar la escritura. Límites iniciales de importación propuestos: 10 MiB UTF-8, 50 000 registros en total, 16 384 unidades UTF-16 por cita o nota, 256 por nombre y 2048 por URL. Rechazar claves inesperadas en objetos y construir registros desde campos explícitos. Nunca interpretar notas ni títulos como HTML. Importar como copia con IDs nuevos en una transacción, remapeando claves y conservando fechas de procedencia. Exportar desde una sola transacción de lectura consistente.
 
-[Ejemplo de exportación](examples/project-v1.json)
+[Archivo de ejemplo v1 compatible con la importación](examples/project-v1.json)

@@ -655,7 +655,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await file.setInputFiles({
         name: 'invalido.json',
         mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify({ ...fixture, schemaVersion: 2 })),
+        buffer: Buffer.from(JSON.stringify({ ...fixture, schemaVersion: 3 })),
       });
       await importProject.click();
       await expect(panel.locator('#transfer-status')).toContainText(
@@ -679,6 +679,12 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       const output = await download.path();
       if (!output) throw new Error('No se descargó el proyecto');
       const transferred = JSON.parse(await readFile(output, 'utf8'));
+      expect(download.suggestedFilename()).toBe('codificaweb-proyecto-v2.json');
+      expect(transferred).toMatchObject({
+        schemaVersion: 2,
+        relationTypes: [],
+        quotationLinks: [],
+      });
       expect(transferred.project.id).not.toBe(fixture.project.id);
       expect(transferred.annotations[0]?.note).toBe(
         fixture.annotations[0]?.note,
