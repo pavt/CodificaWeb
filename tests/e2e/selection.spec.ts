@@ -145,6 +145,14 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(
         panel.getByText('Selecciona otro fragmento para seguir.'),
       ).toBeVisible();
+      const assignedColor = panel
+        .locator('#quote-card')
+        .getByText('Color asignado', { exact: true });
+      await expect(assignedColor).toBeVisible({ timeout: 2500 });
+      await expect(panel.locator('#saved-color-swatch')).toHaveCSS(
+        'background-color',
+        'rgb(253, 192, 134)',
+      );
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(finding.locator('..')).toHaveCSS(
@@ -188,6 +196,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await finding.focus();
       await panel.keyboard.press('Space');
       await expect(finding).not.toBeChecked();
+      await expect(assignedColor).toBeHidden();
       await expect(finding).toBeFocused();
       await expect(finding).toHaveCSS('outline-style', 'solid');
       await panel.keyboard.press('Space');

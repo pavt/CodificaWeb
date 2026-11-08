@@ -227,3 +227,22 @@ section:has(#category-assign[hidden]) .saved-next-step {
 #evidence-results li + li {
   margin-block-start: 12px;
 }
+
+#saved-color {
+  display: none;
+}
+#quote-card[data-saved] #saved-color {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: #192f2a;
+  font-size: 12px;
+}
+#saved-color-swatch {
+  inline-size: 1rem;
+  block-size: 1rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background-color: var(--category-color);
+}
