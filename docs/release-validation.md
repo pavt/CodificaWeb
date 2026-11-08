@@ -31,3 +31,7 @@ Para repetir el smoke, ejecutar `pnpm build` e iniciar cada binario con un `--us
 4. Observar la red durante el recorrido en las herramientas de desarrollo del panel, la página y el worker. Registrar por navegador el resultado, las solicitudes observadas y cualquier fallo, usando solo datos sintéticos.
 
 El smoke automatizado cargó el panel como página de extensión. La apertura desde el icono, los diálogos nativos y la evidencia manual de tráfico siguen pendientes de registro.
+
+### Intento con interfaz nativa
+
+En macOS se iniciaron instancias con ventana visible y un directorio de usuario temporal por navegador. Ambas cargaron `dist` por CDP y abrieron el fixture de loopback. El control de escritorio seleccionó las instancias habituales por identificador de aplicación, sin acceso a las ventanas de los procesos temporales. El intento quedó detenido antes de accionar el icono o los diálogos; se mantienen pendientes los cuatro pasos anteriores.
