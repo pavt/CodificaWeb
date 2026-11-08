@@ -21,22 +21,22 @@ Las tareas de producto comienzan con una prueba roja del comportamiento indicado
 
 Los IDs T son claves de planificación. Una celda vacía de issue o PR indica que todavía no existe enlace. Registrar URL o número real después de crearlo y añadir las rutas Q a la tarea correspondiente. Los bloqueantes son precondiciones de inicio y deben estar en `main` con CI en verde.
 
-| Tarea | Bloqueantes directos | Milestone | Prioridad | Tipo    | Área      | Issue                                                | PR  |
-| ----- | -------------------- | --------- | --------- | ------- | --------- | ---------------------------------------------------- | --- |
-| T000  | —                    | M0        | p0        | infra   | quality   | [#1](https://github.com/pavt/CodificaWeb/issues/1)   |     |
-| T001  | T000                 | M1        | p0        | infra   | extension | [#2](https://github.com/pavt/CodificaWeb/issues/2)   |     |
-| T002  | T001                 | M1        | p0        | feature | anchor    | [#3](https://github.com/pavt/CodificaWeb/issues/3)   |     |
-| T003  | T002                 | M1        | p0        | feature | data      | [#4](https://github.com/pavt/CodificaWeb/issues/4)   |     |
-| T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   |     |
-| T005  | T004                 | M2        | p0        | feature | data      | [#6](https://github.com/pavt/CodificaWeb/issues/6)   |     |
-| T006  | T005                 | M2        | p0        | feature | anchor    | [#7](https://github.com/pavt/CodificaWeb/issues/7)   |     |
-| T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   |     |
-| T008  | T006, T007           | M3        | p1        | feature | data      | [#9](https://github.com/pavt/CodificaWeb/issues/9)   |     |
-| T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) |     |
-| T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) |     |
-| T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) |     |
-| T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) |     |
-| T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) |     |
+| Tarea | Bloqueantes directos | Milestone | Prioridad | Tipo    | Área      | Issue                                                | PR                                                 |
+| ----- | -------------------- | --------- | --------- | ------- | --------- | ---------------------------------------------------- | -------------------------------------------------- |
+| T000  | —                    | M0        | p0        | infra   | quality   | [#1](https://github.com/pavt/CodificaWeb/issues/1)   | [#15](https://github.com/pavt/CodificaWeb/pull/15) |
+| T001  | T000                 | M1        | p0        | infra   | extension | [#2](https://github.com/pavt/CodificaWeb/issues/2)   |                                                    |
+| T002  | T001                 | M1        | p0        | feature | anchor    | [#3](https://github.com/pavt/CodificaWeb/issues/3)   |                                                    |
+| T003  | T002                 | M1        | p0        | feature | data      | [#4](https://github.com/pavt/CodificaWeb/issues/4)   |                                                    |
+| T004  | T003                 | M1        | p0        | feature | anchor    | [#5](https://github.com/pavt/CodificaWeb/issues/5)   |                                                    |
+| T005  | T004                 | M2        | p0        | feature | data      | [#6](https://github.com/pavt/CodificaWeb/issues/6)   |                                                    |
+| T006  | T005                 | M2        | p0        | feature | anchor    | [#7](https://github.com/pavt/CodificaWeb/issues/7)   |                                                    |
+| T007  | T005                 | M2        | p1        | feature | panel     | [#8](https://github.com/pavt/CodificaWeb/issues/8)   |                                                    |
+| T008  | T006, T007           | M3        | p1        | feature | data      | [#9](https://github.com/pavt/CodificaWeb/issues/9)   |                                                    |
+| T009  | T008                 | M3        | p1        | feature | data      | [#10](https://github.com/pavt/CodificaWeb/issues/10) |                                                    |
+| T010  | T009                 | M3        | p1        | feature | panel     | [#11](https://github.com/pavt/CodificaWeb/issues/11) |                                                    |
+| T011  | T010                 | M3        | p1        | feature | extension | [#12](https://github.com/pavt/CodificaWeb/issues/12) |                                                    |
+| T012  | T011                 | M4        | p1        | feature | data      | [#13](https://github.com/pavt/CodificaWeb/issues/13) |                                                    |
+| T013  | T012                 | M4        | p0        | infra   | quality   | [#14](https://github.com/pavt/CodificaWeb/issues/14) |                                                    |
 
 T006 y T007 quedan disponibles tras T005. Priorizar T006 y coordinar los cambios compartidos. T008 espera ambos resultados. T013 cierra la validación del conjunto.
 
