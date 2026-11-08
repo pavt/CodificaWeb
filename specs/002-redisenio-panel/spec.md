@@ -15,3 +15,15 @@ Una persona selecciona texto en la página, aplica una categoría existente o cr
 La nota de la cita sigue disponible como acción secundaria. La definición pertenece a la categoría. Las funciones de búsqueda y administración se conservan según la [especificación vigente](../001-codificacion-web/spec.md).
 
 T019 amplía la paleta cualitativa según el número de categorías del proyecto. Los colores ya asignados se conservan al añadir, eliminar o renombrar categorías, así como al importar proyectos.
+
+## Citas subrayadas y categorías al margen
+
+**Historia · Lectura de citas guardadas.** Al volver a una página codificada, quiero ver qué fragmentos están guardados, reconocer sus categorías por nombre y consultar su definición sin perder mi lugar.
+
+| Criterio | Resultado observable                                                                                                                                                                                                                                                                                                                   |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX-06    | Cada cita guardada queda delimitada por una línea fina bajo el texto. La línea sigue los saltos de línea y distingue la cita de la selección temporal del navegador. En fragmentos con varias categorías se usa una sola línea. En citas solapadas se conserva el desempate de pintura existente y cada cita sigue siendo consultable. |
+| UX-07    | El margen muestra una etiqueta por categoría aplicada, con su nombre y color. Las etiquetas se alinean con el comienzo de la cita. Cuando falta espacio o varias citas se agrupan, los nombres siguen disponibles en el panel, en orden de aparición, sin tapar el texto ni generar desplazamiento horizontal.                         |
+| UX-08    | Pulsar una etiqueta con el ratón o activarla con el teclado abre la ficha de esa categoría y su cita. La ficha muestra nombre, color y definición vigente, o «Sin definición» si está vacía. Se puede activar otra etiqueta sin cambiar la selección de texto ni mover la página.                                                      |
+
+Aplican FR-02/CA-02, FR-04/CA-04, FR-05/CA-05 y FR-06/CA-06 de la [especificación base](../001-codificacion-web/spec.md). Se mantienen la selección automática, la asignación desde el panel, los filtros, la privacidad local y la recuperación con los permisos vigentes.

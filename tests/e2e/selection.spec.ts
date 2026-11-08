@@ -192,6 +192,27 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           ),
         )
         .toBe('🙂 hola mundo');
+      await expect
+        .poll(() =>
+          source.locator('#text strong').evaluate((element) => {
+            const style = getComputedStyle(
+              element,
+              '::highlight(codificaweb-fdc086)',
+            );
+            return [
+              style.textDecorationLine,
+              style.textDecorationThickness,
+              style.textDecorationColor,
+              style.backgroundColor,
+            ];
+          }),
+        )
+        .toEqual([
+          'underline',
+          '3px',
+          'rgb(253, 192, 134)',
+          'rgba(0, 0, 0, 0)',
+        ]);
       await panel.getByLabel('Buscar categorías').fill('patrón');
       await expect(panel.getByRole('checkbox', { name: 'Tema' })).toHaveCount(
         0,
