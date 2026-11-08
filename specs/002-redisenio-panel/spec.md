@@ -1,0 +1,15 @@
+# CodificaWeb · Seleccionar y categorizar
+
+**Estado** · Borrador para aprobación. [Maqueta 02](https://www.figma.com/design/HtpYQ4Cfy5lKDcs61xO16l?node-id=4-2)
+
+Una persona selecciona texto en la página, aplica una categoría existente o crea una con nombre, color y definición opcional. Al guardar, la cita queda asociada y resaltada. La categoría se reutiliza dentro del proyecto con su color y definición.
+
+| ID    | Criterio de aceptación                                                                                                                                                                                                                                                                                                                                  |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX-01 | Al invocar CodificaWeb sobre una página compatible, la selección existente aparece en el panel. Si aún no hay selección, el panel indica que seleccione texto. Si hay un impedimento de acceso, el panel ofrece la acción necesaria en el punto de uso. El recorrido habitual no presenta una pantalla previa de autorización ni exige escribir la URL. |
+| UX-02 | Desde la cita, se puede buscar y aplicar una categoría existente o crear una con nombre, color y definición opcional mediante **Guardar y aplicar**. Se muestra la confirmación tras guardar.                                                                                                                                                           |
+| UX-03 | El color de la categoría identifica el fragmento y su etiqueta con nombre. El usuario puede aplicar más de una categoría sin duplicarlas y distinguirlas mediante el panel y sus filtros.                                                                                                                                                               |
+| UX-04 | Cambiar de pestaña, documento o proyecto invalida una selección pendiente. Un error de guardado conserva el formulario para reintentar y evita crear una categoría o asociación parcial.                                                                                                                                                                |
+| UX-05 | Los proyectos anteriores siguen disponibles. Las citas, categorías, notas y archivos JSON conservan compatibilidad. El trabajo queda en el perfil local.                                                                                                                                                                                                |
+
+La nota de la cita sigue disponible como acción secundaria. La definición pertenece a la categoría. Las funciones de búsqueda y administración se conservan según la [especificación vigente](../001-codificacion-web/spec.md).
