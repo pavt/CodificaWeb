@@ -1,6 +1,9 @@
 import { codeNameKey } from '../domain/codings';
 import type {
   LinkFields,
+  LinkedCitation,
+  LinkedSource,
+  RelationEvidence,
   LinkInput,
   QuotationLink,
   RelationType,
@@ -97,6 +100,154 @@ export class IndexedRelations {
       };
       await this.db.quotationLinks.add(link);
       return link;
+    });
+  }
+
+  createWithType(
+    projectId: string,
+    endpoints: Omit<LinkInput, 'relationTypeId'>,
+    fields: RelationTypeFields,
+  ) {
+    const values = normalizeType(fields);
+    return this.db.transaction(
+      'rw',
+      [...this.linkTables(), this.db.projects],
+      async () => {
+        const previous = await this.db.relationTypes.get({
+          '[projectId+nameKey]': [projectId, values.nameKey],
+        });
+        if (previous) {
+          if (
+            previous.name === values.name &&
+            previous.description === values.description &&
+            previous.direction === values.direction
+          ) {
+            const input = await this.validateLink(projectId, {
+              ...endpoints,
+              relationTypeId: previous.id,
+            });
+            const link = await this.findLink(projectId, input);
+            if (link && link.note === input.note) return link;
+          }
+          throw new Error('Ya existe un tipo con ese nombre.');
+        }
+        const type = await this.createType(projectId, fields);
+        return this.createLink(projectId, {
+          ...endpoints,
+          relationTypeId: type.id,
+        });
+      },
+    );
+  }
+
+  listByCitation(projectId: string, annotationId: string) {
+    return this.db.transaction('r', this.linkTables(), async () => {
+      const annotation = await this.db.annotations.get(annotationId);
+      if (annotation?.projectId !== projectId)
+        throw new Error('Cita fuera del proyecto.');
+      return this.evidenceFor(projectId, [annotationId]);
+    });
+  }
+
+  listBySource(projectId: string, sourceId: string) {
+    return this.db.transaction('r', this.linkTables(), async () => {
+      if ((await this.db.sources.get(sourceId))?.projectId !== projectId)
+        throw new Error('Fuente fuera del proyecto.');
+      const ids = await this.db.annotations
+        .where('[projectId+sourceId]')
+        .equals([projectId, sourceId])
+        .primaryKeys();
+      const evidence = await this.evidenceFor(projectId, ids);
+      const groups = new Map<
+        string,
+        { source: LinkedSource; links: RelationEvidence[] }
+      >();
+      for (const link of evidence) {
+        const source =
+          link.from.source.id === sourceId ? link.to.source : link.from.source;
+        let group = groups.get(source.id);
+        if (!group) {
+          group = { source, links: [] };
+          groups.set(source.id, group);
+        }
+        group.links.push(link);
+      }
+      return [...groups.values()].sort((a, b) =>
+        a.source.url.localeCompare(b.source.url),
+      );
+    });
+  }
+
+  private async evidenceFor(
+    projectId: string,
+    ids: string[],
+  ): Promise<RelationEvidence[]> {
+    const { quotationLinks, annotations, sources, relationTypes } = this.db;
+    const keys = ids.map((id) => [projectId, id]);
+    const [outgoing, incoming] = await Promise.all([
+      quotationLinks
+        .where('[projectId+fromAnnotationId]')
+        .anyOf(keys)
+        .toArray(),
+      quotationLinks.where('[projectId+toAnnotationId]').anyOf(keys).toArray(),
+    ]);
+    const links = [
+      ...new Map(
+        [...outgoing, ...incoming].map((link) => [link.id, link]),
+      ).values(),
+    ];
+    const [quotes, types] = await Promise.all([
+      annotations.bulkGet([
+        ...new Set(
+          links.flatMap((link) => [link.fromAnnotationId, link.toAnnotationId]),
+        ),
+      ]),
+      relationTypes.bulkGet([
+        ...new Set(links.map((link) => link.relationTypeId)),
+      ]),
+    ]);
+    const sourceRows = await sources.bulkGet([
+      ...new Set(
+        quotes.flatMap((quote) =>
+          quote?.projectId === projectId ? [quote.sourceId] : [],
+        ),
+      ),
+    ]);
+    const sourceById = new Map(
+      sourceRows.flatMap((source) =>
+        source?.projectId === projectId ? [[source.id, source] as const] : [],
+      ),
+    );
+    const quoteById = new Map<string, LinkedCitation>();
+    for (const quote of quotes) {
+      if (quote?.projectId !== projectId) continue;
+      const source = sourceById.get(quote.sourceId);
+      if (!source) continue;
+      const { id, url, title } = source;
+      quoteById.set(quote.id, {
+        id: quote.id,
+        source: { id, url, title },
+        quote: quote.selectors.quote.exact,
+      });
+    }
+    const typeById = new Map(
+      types.flatMap((type) =>
+        type?.projectId === projectId ? [[type.id, type] as const] : [],
+      ),
+    );
+    const starts = new Set(ids);
+    return links.flatMap((link) => {
+      const from = quoteById.get(link.fromAnnotationId);
+      const to = quoteById.get(link.toAnnotationId);
+      const type = typeById.get(link.relationTypeId);
+      if (!from || !to || !type) return [];
+      const direction =
+        type.direction === 'symmetric'
+          ? 'symmetric'
+          : starts.has(from.id)
+            ? 'outgoing'
+            : 'incoming';
+      return [{ ...link, type, from, to, direction }];
     });
   }
 

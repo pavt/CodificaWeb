@@ -26,3 +26,22 @@ export interface LinkInput extends LinkFields {
 }
 
 export type QuotationLink = ProjectRecord & LinkInput;
+
+export interface LinkedSource {
+  id: string;
+  title: string;
+  url: string;
+}
+
+export interface LinkedCitation {
+  id: string;
+  source: LinkedSource;
+  quote: string;
+}
+
+export interface RelationEvidence extends QuotationLink {
+  type: RelationType;
+  from: LinkedCitation;
+  to: LinkedCitation;
+  direction: 'outgoing' | 'incoming' | 'symmetric';
+}

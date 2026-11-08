@@ -6,6 +6,7 @@ import {
   handleEvidenceSearch,
 } from './background/evidence-messages';
 import { handleTransferRequest } from './background/transfer-messages';
+import { handleRelationRequest } from './background/relation-messages';
 import { handleProjectRequest } from './background/project-messages';
 import { canRestore, enableSite, reconcileSites } from './background/sites';
 
@@ -33,6 +34,12 @@ async function handle(
       return handleProjectRequest(message);
     if (typeof message.type === 'string' && message.type.startsWith('code.'))
       return handleCodeRequest(message);
+    if (
+      typeof message.type === 'string' &&
+      (message.type.startsWith('relations.') ||
+        message.type.startsWith('relationTypes.'))
+    )
+      return handleRelationRequest(message, sender);
     if (message.type === 'evidence.search')
       return handleEvidenceSearch(message);
     if (message.type === 'evidence.open') return handleEvidenceOpen(message);
