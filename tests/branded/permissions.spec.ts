@@ -24,6 +24,7 @@ for (const [name, executable] of browsers) {
       [
         `--user-data-dir=${profile}`,
         '--headless',
+        '--window-size=1200,800',
         '--remote-debugging-port=0',
         '--enable-unsafe-extension-debugging',
         '--no-first-run',
@@ -66,7 +67,7 @@ for (const [name, executable] of browsers) {
       await context.route(url, (route) =>
         route.fulfill({
           contentType: 'text/html; charset=utf-8',
-          body: `<p>${citation}</p><aside style="user-select:none">Firma que no se selecciona</aside><p>Otra <span hidden>Metadato oculto</span>cita.</p>`,
+          body: `<p style="max-width:300px">${citation}</p><aside style="user-select:none;max-width:300px">Firma que no se selecciona</aside><p>Otra <span hidden>Metadato oculto</span>cita.</p>`,
         }),
       );
       let releaseImage: (() => void) | undefined;
@@ -385,6 +386,86 @@ for (const [name, executable] of browsers) {
             ),
           )
           .toEqual([citation, 'Otra ', 'cita.']);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Borrador intacto';
+        })()`);
+        const inspect = () =>
+          readPanel(
+            "document.querySelector('#citation-inspection-quote')?.textContent ?? ''",
+          );
+        await page
+          .locator('p')
+          .first()
+          .hover({ position: { x: 12, y: 8 } });
+        await expect.poll(inspect).toBe(citation);
+        await expect.poll(quote).toBe('Otra cita.');
+        await page
+          .locator('p')
+          .last()
+          .hover({ position: { x: 12, y: 8 } });
+        await expect.poll(inspect).toBe('Otra cita.');
+        await readPanel(
+          "document.querySelector('#citation-inspection button[data-category]').click()",
+        );
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#citation-inspection-definition').textContent",
+            ),
+          )
+          .toBe('Definición revisada');
+        expect(
+          await readPanel("document.querySelector('#category-name').value"),
+        ).toBe('Borrador intacto');
+        await readPanel(
+          "document.querySelector('#citation-inspection-close').click()",
+        );
+        const marginSession = await context.newCDPSession(page);
+        const marginButton = async () => {
+          const { root } = await marginSession.send('DOM.getDocument', {
+            depth: -1,
+            pierce: true,
+          });
+          function find(node: typeof root): number {
+            if (
+              node.nodeName === 'BUTTON' &&
+              node.attributes?.includes('citation-category')
+            )
+              return node.nodeId;
+            for (const child of [
+              ...(node.children ?? []),
+              ...(node.shadowRoots ?? []),
+            ]) {
+              const id = find(child);
+              if (id) return id;
+            }
+            return 0;
+          }
+          return find(root);
+        };
+        await expect.poll(marginButton).toBeGreaterThan(0);
+        const { model } = await marginSession.send('DOM.getBoxModel', {
+          nodeId: await marginButton(),
+        });
+        const [left = 0, top = 0, , , right = 0, bottom = 0] = model.border;
+        await page.mouse.click((left + right) / 2, (top + bottom) / 2);
+        await expect.poll(inspect).toBe(citation);
+        await readPanel(
+          "document.querySelector('#citation-inspection-close').click()",
+        );
+        await marginSession.send('DOM.focus', { nodeId: await marginButton() });
+        await page.keyboard.press('Enter');
+        await marginSession.detach();
+        await expect.poll(inspect).toBe(citation);
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#citation-inspection-definition').textContent",
+            ),
+          )
+          .toBe('Definición revisada');
+
         await readPanel(`(() => {
           document.querySelector('#project-name').value = 'Otro proyecto';
           document.querySelector('#project-create').click();

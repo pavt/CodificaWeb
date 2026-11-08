@@ -114,7 +114,7 @@ export function createPainter() {
     margin.show(
       [...ranges]
         .sort((a, b) => a.start - b.start)
-        .flatMap(({ start, end, categories }) => {
+        .flatMap(({ id, start, end, categories }) => {
           if (!categories.length) return [];
           while ((nodes[anchorIndex]?.end ?? Infinity) <= start) anchorIndex++;
           const span = nodes[anchorIndex];
@@ -122,7 +122,17 @@ export function createPainter() {
           const anchor = document.createRange();
           anchor.setStart(span.node, start - span.start);
           anchor.setEnd(span.node, Math.min(span.end, end) - span.start);
-          return [{ anchor, categories }];
+          const range = anchor.cloneRange();
+          let low = anchorIndex;
+          let high = nodes.length - 1;
+          while (low < high) {
+            const middle = (low + high) >>> 1;
+            if ((nodes[middle]?.end ?? Infinity) < end) low = middle + 1;
+            else high = middle;
+          }
+          const last = nodes[low];
+          if (last) range.setEnd(last.node, end - last.start);
+          return [{ id, anchor, range, length: end - start, categories }];
         }),
     );
     observer = new MutationObserver((records) => {

@@ -68,18 +68,21 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
 
 test('Q05: conserva el orden de las citas y limpia el panel al cambiar de documento', async () => {
   document.body.innerHTML =
-    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details>';
+    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details><section id="citation-inspection" hidden><p id="citation-inspection-quote"></p><div id="citation-inspection-categories"></div><div id="citation-inspection-detail" hidden><strong id="citation-inspection-name"></strong><p id="citation-inspection-definition"></p></div><button id="citation-inspection-close">Cerrar</button></section>';
   const filter = document.querySelector('select') as HTMLSelectElement;
   const status = document.querySelector('#status') as HTMLElement;
   const citations = document.querySelector('#page-citations') as HTMLElement;
   const target = { tabId: 1, documentId: 'doc', url: 'https://example.test/' };
   const category = { id: 'x', name: '<Contexto>', color: '#BEAED4' };
   const entry = (start: number, exact: string, categories: unknown) => ({
+    id: String(start),
     selectors: { position: { start }, quote: { exact } },
     categories,
   });
   const entries = [
-    entry(9, 'B'.repeat(200), [category]),
+    entry(9, 'B'.repeat(200), [
+      { ...category, description: 'Una definición vigente' },
+    ]),
     null,
     {},
     { selectors: {} },
@@ -113,6 +116,28 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
     '<Contexto>',
   );
   expect(status.textContent).toContain('sin ubicar');
+  expect(controller.inspect('inexistente')).toBe(false);
+  expect(controller.inspect('0', 'ajena')).toBe(false);
+  expect(controller.inspect('0')).toBe(true);
+  const inspection = document.querySelector('#citation-inspection');
+  expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  inspection
+    ?.querySelector('button[data-category]')
+    ?.dispatchEvent(new Event('click'));
+  expect(
+    inspection?.querySelector('#citation-inspection-definition')?.textContent,
+  ).toBe('Sin definición');
+  controller.inspect('9');
+  expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  inspection?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+  expect(controller.inspect('9')).toBe(true);
+  expect(inspection?.querySelector('p')?.textContent).toBe('B'.repeat(200));
+  expect(controller.inspect('9', 'x')).toBe(true);
+  expect(
+    inspection?.querySelector('#citation-inspection-definition')?.textContent,
+  ).toBe('Una definición vigente');
+  (citations.querySelector('button') as HTMLButtonElement).click();
+  expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
   controller.update(target, [
     { ...category, description: '', projectId: 'p', assigned: true },
   ]);

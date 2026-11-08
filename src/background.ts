@@ -54,6 +54,8 @@ async function handle(
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
   if (sender.id === chrome.runtime.id && isRecord(message)) {
+    if (message.type === 'citation.preview' || message.type === 'citation.open')
+      return;
     void handle(message, sender).then(respond, () =>
       respond({ kind: 'error' }),
     );

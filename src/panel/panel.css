@@ -274,3 +274,28 @@ section:has(#category-assign[hidden]) .saved-next-step {
   border-radius: 2px;
   flex: none;
 }
+
+#citation-inspection {
+  border: 1px solid currentColor;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+#citation-inspection header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+#citation-inspection button[aria-pressed='true'] {
+  outline: 2px solid currentColor;
+}
+
+#citation-inspection-quote,
+#citation-inspection-definition {
+  white-space: pre-wrap;
+  max-height: 10rem;
+  overflow: auto;
+}

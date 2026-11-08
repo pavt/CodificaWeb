@@ -7,6 +7,7 @@ const url = location.href;
 const entry = {
   id: 'a',
   color: '#FDD835',
+  categories: [{ id: 'tema', name: 'Tema', color: '#FDD835' }],
   selectors: {
     position: { start: 0, end: 4 },
     quote: { exact: 'abcd', prefix: '', suffix: 'ef' },

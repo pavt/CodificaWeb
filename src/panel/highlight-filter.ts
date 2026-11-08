@@ -4,7 +4,7 @@ import {
 } from '../highlight-categories';
 import { isRecord } from '../capture-contract';
 import type { CaptureTarget } from '../capture-contract';
-import type { CodeAssignment } from '../domain/codings';
+import type { CodeAssignment, HighlightCategory } from '../domain/codings';
 
 export function createHighlightFilter(
   filter: HTMLSelectElement,
@@ -13,11 +13,92 @@ export function createHighlightFilter(
   const citations = document.getElementById('page-citations');
   const list = document.getElementById('page-citation-list');
 
+  const inspection = document.getElementById('citation-inspection');
+  const inspectedQuote = document.getElementById('citation-inspection-quote');
+  const inspectedCategories = document.getElementById(
+    'citation-inspection-categories',
+  );
+  const detail = document.getElementById('citation-inspection-detail');
+  const name = document.getElementById('citation-inspection-name');
+  const definition = document.getElementById('citation-inspection-definition');
+  const close = document.getElementById('citation-inspection-close');
+  const entriesById = new Map<
+    string,
+    { quote: string; categories: HighlightCategory[] }
+  >();
+  let shown: { id: string; categoryId: string | undefined } | undefined;
+  let opener: HTMLElement | undefined;
+
+  function clearInspection() {
+    shown = undefined;
+    if (inspection) inspection.hidden = true;
+    if (inspectedQuote) inspectedQuote.textContent = '';
+    opener = undefined;
+  }
+
+  close?.addEventListener('click', () => {
+    const previous = opener;
+    clearInspection();
+    previous?.focus({ preventScroll: true });
+  });
+  inspection?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') close?.click();
+  });
+
+  function inspect(id: string, categoryId?: string): boolean {
+    const entry = entriesById.get(id);
+    if (
+      !entry ||
+      !inspection ||
+      !inspectedQuote ||
+      !inspectedCategories ||
+      !detail ||
+      !name ||
+      !definition
+    )
+      return false;
+    const selected = entry.categories.find(
+      (category) => category.id === categoryId,
+    );
+    if (categoryId && !selected) return false;
+    if (!categoryId && shown?.categoryId) return true;
+    shown = { id, categoryId };
+    inspectedQuote.textContent = entry.quote;
+    if (inspectedCategories.dataset.citation !== id) {
+      inspectedCategories.dataset.citation = id;
+      inspectedCategories.replaceChildren(
+        ...entry.categories.map((category) =>
+          categoryLabel(category, () => inspect(id, category.id)),
+        ),
+      );
+    }
+    for (const button of inspectedCategories.querySelectorAll('button'))
+      button.setAttribute(
+        'aria-pressed',
+        String(button.dataset.category === categoryId),
+      );
+    detail.hidden = !selected;
+    name.textContent = selected?.name ?? '';
+    definition.textContent = selected
+      ? selected.description?.trim() || 'Sin definición'
+      : '';
+    inspection.hidden = false;
+    return true;
+  }
+
   function showCitations(entries: unknown[]) {
     if (!citations || !list) return;
+    entriesById.clear();
+    if (inspectedCategories) delete inspectedCategories.dataset.citation;
     const rows = entries
       .flatMap((entry) => {
-        if (!isRecord(entry) || !isRecord(entry.selectors)) return [];
+        if (
+          !isRecord(entry) ||
+          typeof entry.id !== 'string' ||
+          !isRecord(entry.selectors)
+        )
+          return [];
+        const { id } = entry;
         const { quote, position } = entry.selectors;
         if (
           !isRecord(quote) ||
@@ -28,18 +109,29 @@ export function createHighlightFilter(
           return [];
         const categories = readHighlightCategories(entry.categories);
         if (!categories.length) return [];
+        entriesById.set(id, { quote: quote.exact, categories });
         const row = document.createElement('li');
         const excerpt = document.createElement('p');
         excerpt.textContent =
           quote.exact.length > 180
             ? quote.exact.slice(0, 180) + '…'
             : quote.exact;
-        row.append(excerpt, ...categories.map(categoryLabel));
+        row.append(
+          excerpt,
+          ...categories.map((category) => {
+            const button = categoryLabel(category, () => {
+              opener = button;
+              inspect(id, category.id);
+            });
+            return button;
+          }),
+        );
         return [{ start: position.start, row }];
       })
       .sort((a, b) => a.start - b.start);
     list.replaceChildren(...rows.map(({ row }) => row));
     citations.hidden = !rows.length;
+    if (shown && !inspect(shown.id, shown.categoryId)) clearInspection();
   }
 
   let target: CaptureTarget | undefined;
@@ -103,11 +195,13 @@ export function createHighlightFilter(
 
   filter.addEventListener('change', () => void refresh());
   return {
+    inspect,
     clear() {
       target = undefined;
       request++;
       filter.disabled = true;
       status.textContent = '';
+      clearInspection();
       showCitations([]);
     },
     track(next: CaptureTarget) {

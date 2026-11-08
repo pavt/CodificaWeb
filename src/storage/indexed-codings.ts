@@ -87,7 +87,10 @@ export class IndexedCodings {
         const catalog = new Map(
           (
             await this.db.codes.where('projectId').equals(projectId).toArray()
-          ).map(({ id, name, color }) => [id, { id, name, color }]),
+          ).map(({ id, name, color, description }) => [
+            id,
+            { id, name, color, description },
+          ]),
         );
         const byAnnotation = new Map<string, HighlightCategory[]>();
         for (const { projectId: owner, annotationId, codeId } of associations) {

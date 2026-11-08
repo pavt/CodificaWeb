@@ -1,3 +1,4 @@
+import { isMarginInteraction } from './margin-labels';
 import type { CaptureResult } from '../capture-contract';
 
 const editable =
@@ -162,7 +163,8 @@ export function observeSelection(onCommit?: () => void) {
     }
   };
 
-  const commit = () => {
+  const commit = (event: Event) => {
+    if (isMarginInteraction(event)) return;
     update();
     publish();
   };

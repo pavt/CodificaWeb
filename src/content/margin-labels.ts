@@ -12,7 +12,8 @@ export function readMarginCategories(value: unknown): HighlightCategory[] {
 }
 
 function marginLabel({ name, color }: HighlightCategory) {
-  const label = document.createElement('span');
+  const label = document.createElement('button');
+  label.type = 'button';
   const swatch = document.createElement('span');
   swatch.className = 'citation-swatch';
   swatch.style.backgroundColor = color;
@@ -22,11 +23,18 @@ function marginLabel({ name, color }: HighlightCategory) {
 }
 
 interface MarginCitation {
+  id: string;
   anchor: Range;
+  range: Range;
+  length: number;
   categories: HighlightCategory[];
 }
 
-const hosts = new WeakSet<Node>();
+const hosts = new WeakSet<EventTarget>();
+
+export function isMarginInteraction(event: Event) {
+  return event.composedPath().some((item) => hosts.has(item));
+}
 
 export function isPageMutation(record: MutationRecord) {
   return (
@@ -42,15 +50,113 @@ export function createMarginLabels() {
   let list: HTMLElement | undefined;
   let citations: MarginCitation[] = [];
   let frame = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let lastPreview: string | undefined;
+  let priority: MarginCitation[] = [];
+  let popup: HTMLElement | undefined;
+  let opener: HTMLButtonElement | undefined;
+
+  function dismiss() {
+    popup?.remove();
+    popup = undefined;
+    opener?.focus({ preventScroll: true });
+    opener = undefined;
+  }
+
+  async function activate(
+    id: string,
+    category: HighlightCategory,
+    button: HTMLButtonElement,
+  ) {
+    const currentHost = host;
+    let response: unknown;
+    try {
+      response = await chrome.runtime.sendMessage({
+        type: 'citation.open',
+        id,
+        categoryId: category.id,
+      });
+    } catch {
+      // With the panel closed, show the detail beside the label.
+    }
+    if (response === true || host !== currentHost || !button.isConnected)
+      return;
+    popup?.remove();
+    opener = button;
+    const box = button.getBoundingClientRect();
+    const detail = document.createElement('section');
+    detail.className = 'citation-popup';
+    detail.setAttribute('role', 'dialog');
+    detail.setAttribute('aria-label', category.name);
+    detail.style.left =
+      Math.max(
+        4,
+        Math.min(box.left, document.documentElement.clientWidth - 232),
+      ) + 'px';
+    detail.style.top =
+      Math.max(
+        4,
+        Math.min(box.bottom + 4, document.documentElement.clientHeight - 128),
+      ) + 'px';
+    const definition = document.createElement('p');
+    definition.textContent =
+      typeof category.description === 'string' && category.description.trim()
+        ? category.description
+        : 'Sin definición';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = 'Cerrar';
+    close.addEventListener('click', dismiss);
+    detail.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        dismiss();
+      }
+    });
+    const title = document.createElement('strong');
+    title.textContent = category.name;
+    detail.append(title, definition, close);
+    list?.after(detail);
+    popup = detail;
+    close.focus({ preventScroll: true });
+  }
+
+  function stopPreview() {
+    clearTimeout(timer);
+    lastPreview = undefined;
+  }
+
+  function pointerMove(event: PointerEvent) {
+    clearTimeout(timer);
+    if (event.buttons || isMarginInteraction(event)) return;
+    const { clientX: x, clientY: y } = event;
+    timer = setTimeout(() => {
+      const match = priority.find(({ range }) =>
+        [...range.getClientRects()].some(
+          (rect) =>
+            x >= rect.left &&
+            x <= rect.right &&
+            y >= rect.top &&
+            y <= rect.bottom,
+        ),
+      );
+      if (!match?.id || match.id === lastPreview) return;
+      lastPreview = match.id;
+      void chrome.runtime
+        .sendMessage({ type: 'citation.preview', id: match.id })
+        .catch(() => undefined);
+    }, 120);
+  }
   const width = 148;
   const gap = 8;
 
   function render() {
     if (!list) return;
+    if (popup || host?.matches(':focus-within')) return;
     list.replaceChildren();
     const viewport = document.documentElement;
     const candidates = citations
-      .flatMap(({ anchor, categories }) => {
+      .flatMap(({ id, anchor, categories }) => {
         const rect = anchor.getClientRects()[0];
         let block = anchor.startContainer.parentElement;
         while (block && getComputedStyle(block).display.startsWith('inline'))
@@ -66,17 +172,30 @@ export function createMarginLabels() {
           Math.ceil(Math.max(rect.right, block.getBoundingClientRect().right)) +
           gap;
         if (x + width + gap > viewport.clientWidth) return [];
-        return [{ x, y: Math.max(0, Math.floor(rect.top)), block, categories }];
+        return [
+          { id, x, y: Math.max(0, Math.floor(rect.top)), block, categories },
+        ];
       })
       .sort((a, b) => a.y - b.y);
 
     const occupied: { x: number; y: number; bottom: number }[] = [];
-    for (const { x, y, block, categories } of candidates) {
+    for (const { id, x, y, block, categories } of candidates) {
       const row = document.createElement('div');
       row.className = 'citation-row';
       row.style.left = x + 'px';
       row.style.top = y + 'px';
-      row.append(...categories.map(marginLabel));
+      row.append(
+        ...categories.map((category) => {
+          const label = marginLabel(category);
+          label.addEventListener('pointerdown', (event) =>
+            event.preventDefault(),
+          );
+          label.addEventListener('click', () => {
+            void activate(id, category, label);
+          });
+          return label;
+        }),
+      );
       list.append(row);
       const bottom = y + row.getBoundingClientRect().height;
       const fits =
@@ -92,11 +211,13 @@ export function createMarginLabels() {
           [y, (y + bottom) / 2, bottom - 1].every((top) =>
             document
               .elementsFromPoint(left, top)
-              .every((element) => element.contains(block)),
+              .every((element) => element === host || element.contains(block)),
           ),
         );
-      if (fits) occupied.push({ x, y, bottom });
-      else row.remove();
+      if (fits) {
+        row.classList.add('citation-row-ready');
+        occupied.push({ x, y, bottom });
+      } else row.remove();
     }
   }
 
@@ -108,6 +229,12 @@ export function createMarginLabels() {
   return {
     clear() {
       if (!host) return;
+      stopPreview();
+      window.removeEventListener('pointermove', pointerMove, true);
+      window.removeEventListener('pointerout', stopPreview);
+      popup = undefined;
+      opener = undefined;
+      priority = [];
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('resize', schedule);
@@ -119,6 +246,11 @@ export function createMarginLabels() {
     show(next: MarginCitation[]) {
       if (!next.length) return;
       citations = next;
+      priority = [...next].sort(
+        (a, b) =>
+          (a.length ?? 0) - (b.length ?? 0) ||
+          ((a.id ?? '') < (b.id ?? '') ? -1 : Number(a.id !== b.id)),
+      );
       host = document.createElement('div');
       hosts.add(host);
       host.style.cssText =
@@ -129,13 +261,23 @@ export function createMarginLabels() {
         :host { color-scheme: light dark; }
         .citation-row { position: absolute; width: ${width}px; display: grid; gap: 2px; font: 12px/1.4 system-ui; }
         .citation-category { display:flex; align-items:baseline; gap:5px; padding:2px 5px; border-radius:4px; overflow-wrap:anywhere; background:Canvas; color:CanvasText; border:1px solid GrayText; }
+        .citation-row-ready button, .citation-popup { pointer-events:auto; }
+        .citation-category { text-align:start; cursor:pointer; font:inherit; }
+        .citation-popup { position:absolute; box-sizing:border-box; width:228px; max-height:120px; overflow:auto; overflow-wrap:anywhere; padding:8px; font:13px/1.4 system-ui; background:Canvas; color:CanvasText; border:1px solid GrayText; border-radius:6px; }
+        .citation-popup p { margin:4px 0; }
         .citation-swatch { display:inline-block; width:8px; height:8px; border:1px solid GrayText; flex:none; }
       `);
       shadow.adoptedStyleSheets = [style];
       list = document.createElement('div');
       list.setAttribute('aria-label', 'Categorías al margen');
       shadow.append(list);
+      shadow.addEventListener('focusout', schedule);
       document.documentElement.append(host);
+      window.addEventListener('pointermove', pointerMove, {
+        capture: true,
+        passive: true,
+      });
+      window.addEventListener('pointerout', stopPreview);
       window.addEventListener('scroll', schedule, true);
       window.addEventListener('resize', schedule);
       schedule();
