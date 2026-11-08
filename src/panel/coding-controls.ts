@@ -176,7 +176,7 @@ export function createCodingControls(
     status.textContent = '';
   }
 
-  function render() {
+  function render(focusCodeId?: string) {
     options.replaceChildren();
     const query = codeNameKey(search?.value ?? '');
     for (const code of available) {
@@ -189,12 +189,24 @@ export function createCodingControls(
       checkbox.addEventListener('change', () => {
         const assigned = checkbox.checked;
         checkbox.checked = code.assigned;
-        void change({
-          type: 'coding.set',
-          codeId: code.id,
-          assigned,
-          operationId: crypto.randomUUID(),
-        });
+        const interaction = new AbortController();
+        let focusCodeId =
+          document.activeElement === checkbox ? code.id : undefined;
+        const abandonFocus = () => {
+          focusCodeId = undefined;
+        };
+        const options = { capture: true, signal: interaction.signal };
+        document.addEventListener('pointerdown', abandonFocus, options);
+        document.addEventListener('focusin', abandonFocus, options);
+        void change(
+          {
+            type: 'coding.set',
+            codeId: code.id,
+            assigned,
+            operationId: crypto.randomUUID(),
+          },
+          () => focusCodeId,
+        ).finally(() => interaction.abort());
       });
       const swatch = document.createElement('span');
       swatch.setAttribute('aria-hidden', 'true');
@@ -237,10 +249,11 @@ export function createCodingControls(
         row.append(edit);
       }
       options.append(row);
+      if (code.id === focusCodeId) checkbox.focus();
     }
   }
 
-  search?.addEventListener('input', render);
+  search?.addEventListener('input', () => render());
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
     const fields = new FormData(form);
@@ -262,7 +275,10 @@ export function createCodingControls(
     });
   });
 
-  async function change(message: Record<string, unknown>) {
+  async function change(
+    message: Record<string, unknown>,
+    focusAfterSave?: () => string | undefined,
+  ) {
     const current = active;
     if (!current || fieldset.disabled) return;
     const creating = message.type === 'coding.createAndApply';
@@ -298,8 +314,8 @@ export function createCodingControls(
           if (search) search.value = '';
         }
         available = codes;
-        render();
         fieldset.disabled = false;
+        render(focusAfterSave?.());
         onCodes?.(current.target, codes);
         if (creating) {
           onCatalogChanged?.(current.target);
