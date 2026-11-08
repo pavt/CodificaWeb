@@ -238,7 +238,7 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
     quote: `Cita ${index}`,
     codes: [{ id: 'movilidad', name: 'Movilidad' }],
     note: 'Registro de terreno',
-    context: 'Esperamos el bus durante veinte minutos.',
+    context: { prefix: 'Esperamos el bus. ', suffix: ' describe la espera.' },
   }));
   const send = vi.fn(async (message: { type: string }) => {
     if (message.type === 'evidence.search')
@@ -269,7 +269,13 @@ test('Q16: muestra tarjetas compactas, limita los resultados iniciales y conserv
   const firstCard = resultList.querySelector('li');
   expect(firstCard?.textContent).toMatch(/Cita 0.*example.test\/busqueda/);
   expect(firstCard?.textContent).toContain('Movilidad');
-  expect(firstCard?.textContent).toContain('Esperamos el bus');
+  expect(
+    firstCard?.querySelector('.relation-exact blockquote')?.textContent,
+  ).toBe('«Cita 0»');
+  const context = firstCard?.querySelector('details');
+  expect(context?.open).toBe(false);
+  expect(context?.querySelector('mark')?.textContent).toBe('Cita 0');
+  expect(context?.textContent).toContain('Esperamos el bus');
   expect(firstCard?.textContent).toContain('Registro de terreno');
   const more = [...resultList.querySelectorAll('button')].find(
     (button) => button.textContent === 'Mostrar más citas',

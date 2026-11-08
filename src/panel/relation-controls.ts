@@ -1,4 +1,5 @@
 import { isRecord } from '../capture-contract';
+import type { EvidenceResult } from '../domain/evidence-search';
 import { isEvidence } from './evidence-controls';
 
 interface Citation {
@@ -8,7 +9,7 @@ interface Citation {
   title?: string;
   codes?: readonly { name: string }[];
   note?: string | null;
-  context?: string;
+  context?: EvidenceResult['context'];
 }
 
 const newType = '__new__';
@@ -46,22 +47,40 @@ function excerpt(
     heading.textContent = label;
     element.append(heading);
   }
-  element.append(text, source);
+  const exact = document.createElement('div');
+  exact.className = 'relation-exact';
+  const exactLabel = document.createElement('span');
+  exactLabel.textContent = 'Texto citado';
+  exact.append(exactLabel, text);
+  element.append(exact, source);
   const metadata = [
-    codes?.map(({ name }) => name).join(' · '),
-    typeof context === 'string' &&
-    quote.length < 80 &&
-    context.trim() !== quote.trim()
-      ? context
-      : '',
-    note,
+    ['Categorías', codes?.map(({ name }) => name).join(' · ')],
+    ['Nota', note],
   ];
-  for (const value of metadata) {
+  for (const [caption, value] of metadata) {
     if (!value) continue;
     const detail = document.createElement('p');
+    const label = document.createElement('strong');
     detail.className = 'relation-context';
-    detail.textContent = value;
+    label.textContent = caption + ' · ';
+    detail.append(label, value);
     element.append(detail);
+  }
+  if (context && (context.prefix.trim() || context.suffix.trim())) {
+    const surrounding = document.createElement('details');
+    surrounding.className = 'relation-surrounding';
+    const toggle = document.createElement('summary');
+    toggle.textContent = 'Ver contexto';
+    const passage = document.createElement('p');
+    const selection = document.createElement('mark');
+    selection.textContent = quote;
+    passage.append(
+      context.prefix ? '…' + context.prefix : '',
+      selection,
+      context.suffix ? context.suffix + '…' : '',
+    );
+    surrounding.append(toggle, passage);
+    element.append(surrounding);
   }
   return element;
 }
@@ -425,7 +444,7 @@ export function mountRelations(root: HTMLElement) {
     showStage(current, 'search');
     close.textContent = 'Cancelar';
     root.hidden = false;
-    heading.focus();
+    query.focus();
     void findCitations(current);
     void listLinks(current);
   }

@@ -63,11 +63,10 @@ export class IndexedEvidence {
                     quote: selectors.quote.exact,
                     ...(selectors.quote.exact.length < 80
                       ? {
-                          context: [
-                            selectors.quote.prefix,
-                            selectors.quote.exact,
-                            selectors.quote.suffix,
-                          ].join(''),
+                          context: {
+                            prefix: selectors.quote.prefix,
+                            suffix: selectors.quote.suffix,
+                          },
                         }
                       : {}),
                     note: note ?? null,

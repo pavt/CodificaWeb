@@ -28,7 +28,11 @@ export function isEvidence(value: unknown): value is EvidenceResult {
     (value.note === null || typeof value.note === 'string') &&
     'codes' in value &&
     Array.isArray(value.codes) &&
-    value.codes.every(isCode)
+    value.codes.every(isCode) &&
+    (!('context' in value) ||
+      (isRecord(value.context) &&
+        typeof value.context.prefix === 'string' &&
+        typeof value.context.suffix === 'string'))
   );
 }
 

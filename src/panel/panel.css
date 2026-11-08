@@ -359,10 +359,23 @@ main:has(> #citation-relation:not([hidden]))
   gap: 5px;
   background: white;
   border: 1px solid #ccdcd2;
-  border-inline-start: 3px solid #265e46;
   border-radius: 9px;
   padding: 10px 12px;
   overflow-wrap: anywhere;
+}
+#citation-relation .relation-exact {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-inline-start: 3px solid #265e46;
+  border-radius: 5px;
+  background: #e3f0e7;
+  color: #192f2a;
+}
+.relation-exact > span {
+  color: #365b4a;
+  font-size: 11px;
+  font-weight: 700;
 }
 #citation-relation blockquote {
   font-weight: 650;
@@ -379,6 +392,25 @@ main:has(> #citation-relation:not([hidden]))
   font-size: 12px;
   max-block-size: 5rem;
   overflow: auto;
+}
+#citation-relation .relation-surrounding {
+  color: #526760;
+  font-size: 12px;
+}
+.relation-surrounding summary {
+  cursor: pointer;
+  color: #265e46;
+  font-weight: 650;
+}
+.relation-surrounding p {
+  margin-block-start: 4px;
+  white-space: pre-wrap;
+}
+.relation-surrounding mark {
+  color: #192f2a;
+  background: #d9ecde;
+  font-weight: 700;
+  text-decoration: underline;
 }
 #relation-results button,
 #relation-close {

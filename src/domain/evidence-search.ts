@@ -14,7 +14,7 @@ export interface EvidenceMatch {
 export interface EvidenceResult extends EvidenceMatch {
   id: string;
   url: string;
-  context?: string;
+  context?: { prefix: string; suffix: string };
 }
 
 function normalize(text: string) {

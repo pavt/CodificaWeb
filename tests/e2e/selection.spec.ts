@@ -726,7 +726,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       const secondUrl =
         'https://example.org/informe?tracking=parametros-antiguos#fragmento';
       const secondId = '00000000-0000-4000-8000-000000000010';
-      const secondQuote = 'Instalaron rampas';
+      const secondQuote = 'rampas';
       const annotation = fixture.annotations[0];
       if (!annotation) throw new Error('Falta la primera cita del ejemplo.');
       await file.setInputFiles({
@@ -753,10 +753,15 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
                 sourceId: secondId,
                 selectors: {
                   ...annotation.selectors,
-                  quote: { ...annotation.selectors.quote, exact: secondQuote },
+                  quote: {
+                    ...annotation.selectors.quote,
+                    prefix: 'Instalaron ',
+                    exact: secondQuote,
+                  },
                   position: {
                     ...annotation.selectors.position,
-                    end: secondQuote.length,
+                    start: 'Instalaron '.length,
+                    end: 'Instalaron '.length + secondQuote.length,
                   },
                 },
               },
@@ -795,9 +800,17 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         'example.org/informe',
       );
       await expect(candidate).not.toContainText('tracking=');
-      await expect(candidate).toContainText(
-        'Instalaron rampas en la estación.',
+      await expect(candidate.locator('.relation-exact blockquote')).toHaveText(
+        '«rampas»',
       );
+      const surrounding = candidate.locator('.relation-surrounding');
+      await expect(surrounding.locator('p')).toBeHidden();
+      await surrounding.getByText('Ver contexto').press('Enter');
+      await expect(surrounding.locator('p')).toBeVisible();
+      await expect(surrounding.locator('p')).toHaveText(
+        '…Instalaron rampas en la estación.…',
+      );
+      await expect(surrounding.locator('mark')).toHaveText('rampas');
 
       await relation
         .getByRole('button', { name: 'Elegir cita' })
@@ -850,7 +863,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .press('Enter');
       const other = panel
         .locator('#evidence-results li')
-        .filter({ hasText: secondQuote });
+        .filter({ hasText: secondUrl });
       await other
         .getByRole('button', { name: 'Relacionar con otra cita' })
         .press('Enter');
