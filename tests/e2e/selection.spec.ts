@@ -137,6 +137,12 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(
         panel.getByText('Cita guardada', { exact: true }),
       ).toBeVisible();
+      await expect(
+        panel.getByRole('heading', { name: 'Categoría aplicada' }),
+      ).toBeVisible();
+      await expect(
+        panel.getByText('Selecciona otro fragmento para seguir.'),
+      ).toBeVisible();
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(panel.getByText('Una definición sintética')).toBeVisible();
@@ -175,6 +181,9 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await panel.getByLabel('Buscar categorías').clear();
       await finding.click();
       await expect(finding).not.toBeChecked();
+      await expect(
+        panel.getByText('Selecciona otro fragmento para seguir.'),
+      ).toBeHidden();
 
       const note = panel.getByLabel('Nota en texto plano');
       const saveNote = panel.getByRole('button', { name: 'Guardar nota' });

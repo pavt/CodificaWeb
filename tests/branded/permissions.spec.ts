@@ -225,6 +225,29 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#fragment-codes').disabled"),
           )
           .toBe(false);
+        // Simulate declining at the browser API boundary, without granting access.
+        await readPanel(`(() => {
+          chrome.permissions.request = async () => false;
+          document.querySelector('#site-access').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#site-status').textContent"),
+          )
+          .toContain('Permiso denegado');
+        expect(await quote()).toBe(citation);
+        expect(
+          await readPanel("document.querySelector('#fragment-codes').disabled"),
+        ).toBe(false);
+        expect(
+          await readPanel("document.querySelector('#verify-site').disabled"),
+        ).toBe(false);
+        expect(
+          await worker.evaluate(
+            (origins) => chrome.permissions.contains({ origins }),
+            origins,
+          ),
+        ).toBe(false);
         // A live page can update unrelated UI while the category is being edited.
         await page.evaluate(() => {
           const activity = document.createElement('span');
@@ -244,6 +267,22 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        expect(
+          await readPanel(
+            "document.querySelector('#selection-title').textContent",
+          ),
+        ).toBe('Cita guardada');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-category')).display",
+          ),
+        ).not.toBe('none');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-next-step')).display",
+          ),
+        ).not.toBe('none');
+
         await readPanel(`(() => {
           document.querySelector('.definition-edit').click();
           document.querySelector('#category-saved-definition').value = 'Definición revisada';
@@ -265,6 +304,12 @@ for (const [name, executable] of browsers) {
           });
         await dragQuote(1, 'Otra cita.');
         await expect.poll(quote).toBe('Otra cita.');
+        expect(
+          await readPanel(
+            "getComputedStyle(document.querySelector('.saved-next-step')).display",
+          ),
+        ).toBe('none');
+
         await expect
           .poll(() =>
             readPanel("document.querySelector('#coding-options').textContent"),

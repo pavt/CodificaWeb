@@ -23,7 +23,10 @@
           disabled
         >
           <div id="category-assign">
-            <h3>Asignar categoría</h3>
+            <h3>
+              <span class="pending-category">Asignar categoría</span>
+              <span class="saved-category">Categoría aplicada</span>
+            </h3>
             <label for="category-search">Buscar categorías</label>
             <input
               id="category-search"
@@ -89,6 +92,9 @@
           </form>
           <p id="coding-status" aria-live="polite"></p>
         </fieldset>
+        <p class="card saved-next-step">
+          Selecciona otro fragmento para seguir.
+        </p>
       </section>
       <p id="site-status" role="status"></p>
       <details id="panel-tools" open>

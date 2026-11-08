@@ -89,12 +89,17 @@ form.addEventListener('submit', async (event) => {
   const request = ++accessRequest;
   button.disabled = true;
   status.textContent = '';
-  target = undefined;
-  highlights.clear();
-  captureButton.disabled = true;
-  clearPreview();
+  // The optional permission must not discard the activeTab capture.
+  const url = input.value;
+  if (!direct) {
+    target = undefined;
+    highlights.clear();
+    captureButton.disabled = true;
+    clearPreview();
+  }
+  let preparedTarget: CaptureTarget | undefined;
   try {
-    const result = await verifySiteAccess(input.value, async (nextTarget) => {
+    const result = await verifySiteAccess(url, async (nextTarget) => {
       if (request !== accessRequest) return;
       const registration = await chrome.runtime.sendMessage({
         type: 'site.enable',
@@ -118,12 +123,15 @@ form.addEventListener('submit', async (event) => {
       if (prepared !== true)
         throw new Error('El documento ya no está disponible.');
       if (request !== accessRequest) return;
-      target = projectId ? { ...nextTarget, projectId } : nextTarget;
-      captureButton.disabled = Boolean(projects && !projectId);
+      preparedTarget = nextTarget;
     });
     if (request === accessRequest) {
       status.textContent = result;
-      if (direct && target) void captureCurrent();
+      if (preparedTarget) {
+        target = projectId ? { ...preparedTarget, projectId } : preparedTarget;
+        captureButton.disabled = Boolean(projects && !projectId);
+        if (direct) void captureCurrent();
+      }
     }
   } catch {
     if (request === accessRequest)

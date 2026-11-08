@@ -198,3 +198,13 @@ button:disabled {
   font-size: 12px;
   text-decoration: underline;
 }
+
+section:not(:has(#quote-card[data-saved]))
+  :is(.saved-category, .saved-next-step),
+section:has(#quote-card[data-saved]) .pending-category,
+section:has(#category-assign[hidden]) .saved-next-step {
+  display: none;
+}
+.saved-next-step {
+  color: #526760;
+}
