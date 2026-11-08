@@ -5,7 +5,7 @@ import { refreshProjectHighlights } from './project-messages';
 const catalog = new IndexedCatalog(database);
 
 export async function handleCodeRequest(message: Record<string, unknown>) {
-  const { type, projectId, id, name, description, color } = message;
+  const { type, projectId, id, name, description } = message;
   const error = { kind: 'error' } as const;
   if (
     typeof projectId !== 'string' ||
@@ -19,13 +19,9 @@ export async function handleCodeRequest(message: Record<string, unknown>) {
     if (typeof id !== 'string') return error;
     await catalog.remove(projectId, id);
   } else if (type === 'code.create' || type === 'code.update') {
-    if (
-      typeof name !== 'string' ||
-      typeof description !== 'string' ||
-      typeof color !== 'string'
-    )
+    if (typeof name !== 'string' || typeof description !== 'string')
       return error;
-    const fields = { name, description, color };
+    const fields = { name, description };
     if (type === 'code.create') await catalog.create(projectId, fields);
     else if (typeof id === 'string')
       await catalog.update(projectId, id, fields);

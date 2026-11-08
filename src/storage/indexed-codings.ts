@@ -260,7 +260,6 @@ export class IndexedCodings {
       fragmentKey(fragment),
       fields.name,
       fields.description,
-      fields.color,
     ]);
     return this.db.transaction('rw', this.db.tables, async () => {
       if ((await new IndexedProjects(this.db).activeId()) !== projectId)

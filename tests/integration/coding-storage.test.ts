@@ -43,7 +43,7 @@ test('Q12: conserva códigos y procedencia al cerrar y reabrir la conexión', as
     ]);
     expect(
       await restored.highlights(initialProjectId, fragment.url, theme),
-    ).toMatchObject([{ color: '#FDD835', selectors: fragment.selectors }]);
+    ).toMatchObject([{ color: '#7FC97F', selectors: fragment.selectors }]);
     expect(await reopened.sources.toArray()).toMatchObject([
       { projectId: initialProjectId, url: fragment.url },
     ]);
@@ -142,10 +142,10 @@ test('Q04–Q05: aísla fuentes y posiciones y aplica el filtro al catálogo per
   ).toBe(true);
   expect(
     await repository.highlights(initialProjectId, fragment.url, null),
-  ).toMatchObject([{ color: '#FDD835' }]);
+  ).toMatchObject([{ color: '#7FC97F' }]);
   expect(
     await repository.highlights(initialProjectId, fragment.url, context),
-  ).toMatchObject([{ color: '#81D4FA' }]);
+  ).toMatchObject([{ color: '#BEAED4' }]);
   expect(
     await repository.highlights(initialProjectId, fragment.url, 'ajeno'),
   ).toEqual([]);
@@ -153,7 +153,7 @@ test('Q04–Q05: aísla fuentes y posiciones y aplica el filtro al catálogo per
   await set(theme, false);
   expect(
     await repository.highlights(initialProjectId, fragment.url, null),
-  ).toMatchObject([{ color: '#81D4FA' }]);
+  ).toMatchObject([{ color: '#BEAED4' }]);
 });
 
 test('Q12: retirar un código de una fuente nueva no crea una anotación', async () => {
@@ -212,7 +212,6 @@ test('Q07: guarda y edita una nota de texto plano y borra solo la nota', async (
 test('T016: revierte la categoría y la cita al fallar el recibo y permite reintentar sin duplicar', async () => {
   const fields = {
     name: ' Hallazgo ',
-    color: '#126abc',
     description: 'Definición',
   };
   const operation = crypto.randomUUID();
@@ -230,7 +229,7 @@ test('T016: revierte la categoría y la cita al fallar el recibo y permite reint
   db.operations.hook('creating').unsubscribe(fail);
   const saved = expect.objectContaining({
     name: 'Hallazgo',
-    color: '#126ABC',
+    color: '#FDC086',
     description: 'Definición',
     assigned: true,
   });
@@ -241,13 +240,13 @@ test('T016: revierte la categoría y la cita al fallar el recibo y permite reint
   await expect(
     repository.highlights(initialProjectId, fragment.url, null),
   ).resolves.toMatchObject([
-    { color: '#126ABC', selectors: fragment.selectors },
+    { color: '#FDC086', selectors: fragment.selectors },
   ]);
   await expect(
     repository.createAndApply(
       initialProjectId,
       fragment,
-      { ...fields, color: '#ffffff' },
+      { ...fields, description: 'Otra' },
       operation,
     ),
   ).rejects.toThrow('Operación reutilizada');
@@ -264,7 +263,6 @@ test('T016: rechaza una cita pendiente de otro proyecto sin modificar el catálo
       fragment,
       {
         name: 'Hallazgo',
-        color: '#126ABC',
         description: '',
       },
       crypto.randomUUID(),

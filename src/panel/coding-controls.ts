@@ -62,9 +62,6 @@ export function createCodingControls(
   const assign = fieldset.querySelector<HTMLElement>('#category-assign');
   const open = fieldset.querySelector<HTMLButtonElement>('#category-open');
   const cancel = fieldset.querySelector<HTMLButtonElement>('#category-cancel');
-  const color = form?.querySelector<HTMLInputElement>('#category-color');
-  const presets = form?.querySelectorAll<HTMLButtonElement>('[data-color]');
-
   const definitionForm = fieldset.querySelector<HTMLFormElement>(
     '#category-edit-definition',
   );
@@ -127,15 +124,6 @@ export function createCodingControls(
     }
   });
 
-  function syncColor() {
-    presets?.forEach((preset) =>
-      preset.setAttribute(
-        'aria-pressed',
-        String(preset.dataset.color === color?.value),
-      ),
-    );
-  }
-
   function setEditing(editing: boolean) {
     if (form) form.hidden = !editing;
     if (assign) assign.hidden = editing;
@@ -148,26 +136,16 @@ export function createCodingControls(
   });
   cancel?.addEventListener('click', () => {
     form?.reset();
-    syncColor();
     draft = undefined;
     setEditing(false);
     status.textContent = '';
     open?.focus();
   });
-  color?.addEventListener('input', syncColor);
-  presets?.forEach((preset) =>
-    preset.addEventListener('click', () => {
-      if (color && preset.dataset.color) color.value = preset.dataset.color;
-      syncColor();
-    }),
-  );
-
   function clear() {
     active = undefined;
     draft = undefined;
     available = [];
     form?.reset();
-    syncColor();
     setEditing(false);
     closeDefinition();
     if (search) search.value = '';
@@ -263,14 +241,12 @@ export function createCodingControls(
       return;
     }
     const description = String(fields.get('description'));
-    const color = String(fields.get('color'));
-    const key = JSON.stringify([name, description, color]);
+    const key = JSON.stringify([name, description]);
     if (draft?.key !== key) draft = { key, operationId: crypto.randomUUID() };
     void change({
       type: 'coding.createAndApply',
       name,
       description,
-      color,
       operationId: draft.operationId,
     });
   });
@@ -309,7 +285,6 @@ export function createCodingControls(
         if (creating) {
           draft = undefined;
           form?.reset();
-          syncColor();
           setEditing(false);
           if (search) search.value = '';
         }

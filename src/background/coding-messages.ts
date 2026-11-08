@@ -118,12 +118,11 @@ export async function handleCodingRequest(
     });
   }
   if (message.type === 'coding.createAndApply') {
-    const { name, description, color, operationId } = message;
+    const { name, description, operationId } = message;
     if (
       typeof message.projectId !== 'string' ||
       typeof name !== 'string' ||
       typeof description !== 'string' ||
-      typeof color !== 'string' ||
       typeof operationId !== 'string' ||
       !operationIdPattern.test(operationId)
     )
@@ -134,7 +133,7 @@ export async function handleCodingRequest(
         codes: await codings.createAndApply(
           projectId,
           fragment,
-          { name, description, color },
+          { name, description },
           operationId,
         ),
       };

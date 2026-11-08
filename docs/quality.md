@@ -11,7 +11,7 @@ Cada comportamiento empieza con una prueba observable. Ejecutarla sola y verific
 | ID  | Nivel                       | Evidencia                                                                                           |
 | --- | --------------------------- | --------------------------------------------------------------------------------------------------- |
 | Q01 | Integración y E2E           | Crear, editar, cambiar y borrar proyectos. Cascadas, aislamiento y cancelación                      |
-| Q02 | Integración y E2E           | Código reutilizado en dos fuentes. Edición de color y borrado conservan evidencia                   |
+| Q02 | Integración y E2E           | Código reutilizado en dos fuentes. Edición conserva el color y borrado conserva evidencia           |
 | Q03 | E2E                         | Selección por teclado y puntero entre nodos, Unicode, editable, cambio de foco y documento obsoleto |
 | Q04 | Unitaria e integración      | Varios códigos, duplicados idempotentes, retirar relación y rechazar proyecto ajeno                 |
 | Q05 | Unitaria y E2E              | Tramos iguales, parciales y anidados, desempate, filtro, texto DOM intacto y presupuesto R2         |

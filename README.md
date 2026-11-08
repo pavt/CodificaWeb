@@ -21,7 +21,7 @@ cw_pnpm format:check
 cw_pnpm typecheck
 ```
 
-`format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. En el panel, indica la URL de la pestaña activa y comprueba el acceso. Selecciona texto en esa página y pulsa **Capturar selección** para ver la cita y su fuente. Si la pestaña navega o se recarga, vuelve a comprobar el acceso antes de capturar.
+`format` aplica formato. `audit` consulta el registro npm. Para compilar y comprobar el paquete MV3 de T001, ejecuta `cw_pnpm coverage`, `cw_pnpm build`, `cw_pnpm exec playwright install chromium` y `cw_pnpm test:e2e`. El paquete queda en `dist/`. Carga la carpeta `dist/` como extensión descomprimida en Chrome o Brave. Si ya la cargaste, pulsa **Recargar** en la tarjeta de CodificaWeb. Selecciona texto en una página web y pulsa el icono de CodificaWeb. En **Crear categoría**, escribe el nombre y pulsa **Guardar y aplicar**. El color se asigna al guardar y aparece en la cita, la etiqueta y el resaltado. Las categorías ya guardadas conservan su color.
 
 Tras capturar un fragmento, marca o desmarca **Tema** y **Contexto**. Las asociaciones del proyecto inicial se guardan en IndexedDB en el perfil local y se conservan al reiniciar el service worker. Para volver a consultarlas, comprueba el acceso y captura de nuevo el mismo fragmento.
 

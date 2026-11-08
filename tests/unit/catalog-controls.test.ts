@@ -10,7 +10,7 @@ afterEach(() => vi.unstubAllGlobals());
 test('Q02: el panel crea, edita y elimina un código tras confirmar', async () => {
   document.body.innerHTML = `<fieldset><select id="catalog-select"></select>
     <input id="catalog-name"><textarea id="catalog-description"></textarea>
-    <input id="catalog-color" type="color"><p id="catalog-status"></p>
+    <input id="catalog-color" readonly><p id="catalog-status"></p>
     <button id="catalog-create"></button><button id="catalog-save"></button>
     <button id="catalog-remove"></button></fieldset>`;
   const confirm = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
@@ -44,7 +44,6 @@ test('Q02: el panel crea, edita y elimina un código tras confirmar', async () =
     ),
   );
   name.value = 'Nuevo tema';
-  color.value = '#aa0000';
   button('#catalog-create').click();
   await vi.waitFor(() => expect(select.options).toHaveLength(4));
   const id = [...select.options].find(
@@ -53,13 +52,13 @@ test('Q02: el panel crea, edita y elimina un código tras confirmar', async () =
   if (!id) throw new Error('Código de prueba ausente');
   select.value = id;
   select.dispatchEvent(new Event('change'));
-  expect(color.value).toBe('#aa0000');
+  expect(color.value).toBe('#FDC086');
   name.value = 'Editado';
-  color.value = '#123456';
   button('#catalog-save').click();
   await vi.waitFor(() =>
     expect(select.selectedOptions[0]?.text).toBe('Editado'),
   );
+  expect(color.value).toBe('#FDC086');
   button('#catalog-remove').click();
   expect(select.options).toHaveLength(4);
   button('#catalog-remove').click();
