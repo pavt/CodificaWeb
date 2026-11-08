@@ -44,26 +44,9 @@
               <label for="category-name">Nombre de la categoría</label>
               <input id="category-name" name="name" maxlength="256" required />
             </div>
-            <div>
-              <label for="category-color">Color de la categoría</label>
-              <div class="color-presets" aria-label="Colores sugeridos">
-                <button type="button" data-color="#fdd835" aria-pressed="true">
-                  Amarillo
-                </button>
-                <button type="button" data-color="#81d4fa" aria-pressed="false">
-                  Azul
-                </button>
-                <button type="button" data-color="#81c784" aria-pressed="false">
-                  Verde
-                </button>
-              </div>
-              <input
-                id="category-color"
-                name="color"
-                type="color"
-                value="#fdd835"
-              />
-            </div>
+            <p class="automatic-color">
+              El proyecto asigna el color automáticamente.
+            </p>
             <div>
               <label for="category-definition"
                 >Definición de la categoría (opcional)</label
@@ -190,8 +173,8 @@
             <input id="catalog-name" maxlength="256" />
             <label for="catalog-description">Descripción del código</label>
             <textarea id="catalog-description" maxlength="16384"></textarea>
-            <label for="catalog-color">Color del código</label>
-            <input id="catalog-color" type="color" value="#fdd835" />
+            <label for="catalog-color">Color asignado</label>
+            <input id="catalog-color" readonly />
             <button id="catalog-create" type="button">Crear código</button>
             <button id="catalog-save" type="button">Guardar código</button>
             <button id="catalog-remove" type="button">Borrar código</button>

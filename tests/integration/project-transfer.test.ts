@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { expect, test } from 'vitest';
 import fixture from '../../docs/examples/project-v1.json' with { type: 'json' };
+import { IndexedCatalog } from '../../src/storage/indexed-catalog';
 import { CodingDatabase } from '../../src/storage/database';
 import { ProjectTransfer } from '../../src/storage/project-transfer';
 
@@ -8,9 +9,24 @@ test('Q10: importa el ejemplo, remapea vínculos y exporta una copia que se pued
   const db = new CodingDatabase(`transfer-${crypto.randomUUID()}`);
   try {
     const transfer = new ProjectTransfer(db);
-    const id = await transfer.importCopy(JSON.stringify(fixture));
+    const original = structuredClone(fixture);
+    const firstCode = original.codes[0];
+    if (!firstCode) throw new Error('Categoría de ejemplo ausente');
+    firstCode.color = '#7FC97F';
+    const id = await transfer.importCopy(JSON.stringify(original));
     expect(id).not.toBe(fixture.project.id);
+    const catalog = new IndexedCatalog(db);
+    const added = await catalog.create(id, {
+      name: 'Nueva categoría',
+      description: '',
+    });
     const result = await transfer.exportProject(id);
+    expect(result.codes.find(({ id }) => id === added)?.color).toBe('#BEAED4');
+    for (const code of original.codes) {
+      expect(result.codes.find(({ name }) => name === code.name)?.color).toBe(
+        code.color,
+      );
+    }
     expect(result.project).toEqual({ ...fixture.project, id });
     expect(result.sources[0]).toMatchObject({
       projectId: id,
@@ -22,7 +38,10 @@ test('Q10: importa el ejemplo, remapea vínculos y exporta una copia que se pued
       selectors: fixture.annotations[0]?.selectors,
     });
     expect(result.codings.map(({ codeId }) => codeId).sort()).toEqual(
-      result.codes.map(({ id }) => id).sort(),
+      result.codes
+        .filter(({ id }) => id !== added)
+        .map(({ id }) => id)
+        .sort(),
     );
     expect(
       result.codings.every(

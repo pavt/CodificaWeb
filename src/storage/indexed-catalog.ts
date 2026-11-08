@@ -1,26 +1,20 @@
+import { nextCategoryColor } from '../domain/category-colors';
 import { codeNameKey } from '../domain/codings';
 import type { CodingDatabase } from './database';
 
 export interface CodeFields {
   name: string;
   description: string;
-  color: string;
 }
 
 function normalize(fields: CodeFields) {
   const name = fields.name.trim().normalize('NFC');
-  if (
-    !name ||
-    name.length > 256 ||
-    fields.description.length > 16_384 ||
-    !/^#[0-9a-f]{6}$/i.test(fields.color)
-  )
+  if (!name || name.length > 256 || fields.description.length > 16_384)
     throw new Error('Código no válido.');
   return {
-    ...fields,
     name,
+    description: fields.description,
     nameKey: codeNameKey(name),
-    color: fields.color.toUpperCase(),
   };
 }
 
@@ -39,12 +33,18 @@ export class IndexedCatalog {
       async () => {
         if (!(await this.db.projects.get(projectId)))
           throw new Error('Proyecto inexistente.');
+        const existing = await this.db.codes
+          .where('projectId')
+          .equals(projectId)
+          .toArray();
+        const color = nextCategoryColor(existing.map((code) => code.color));
         const id = crypto.randomUUID();
         const time = new Date().toISOString();
         await this.db.codes.add({
           id,
           projectId,
           ...values,
+          color,
           createdAt: time,
           updatedAt: time,
         });

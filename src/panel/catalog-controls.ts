@@ -36,7 +36,8 @@ export function mountCatalog(root: HTMLFieldSetElement, onChanged: () => void) {
     const code = codes.find(({ id }) => id === select.value);
     name.value = code?.name ?? '';
     description.value = code?.description ?? '';
-    color.value = code?.color ?? '#FDD835';
+    color.value = code?.color ?? 'Automático al crear';
+    color.style.borderInlineStartColor = code?.color ?? '';
     save.disabled = remove.disabled = !code;
   }
 
@@ -73,7 +74,7 @@ export function mountCatalog(root: HTMLFieldSetElement, onChanged: () => void) {
     } catch {
       if (requestId === generation)
         status.textContent =
-          'No se pudo actualizar el catálogo. Comprueba el nombre y el color.';
+          'No se pudo actualizar el catálogo. Comprueba el nombre.';
     } finally {
       if (requestId === generation) root.disabled = false;
     }
@@ -83,7 +84,6 @@ export function mountCatalog(root: HTMLFieldSetElement, onChanged: () => void) {
     id: select.value,
     name: name.value,
     description: description.value,
-    color: color.value,
   });
   select.addEventListener('change', showFields);
   root

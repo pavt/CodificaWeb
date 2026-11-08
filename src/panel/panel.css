@@ -137,8 +137,7 @@ button:disabled {
   background: #e6f2e9;
   color: #215e49;
 }
-#coding-options,
-.color-presets {
+#coding-options {
   display: flex;
   flex-wrap: wrap;
   align-items: start;
@@ -161,20 +160,12 @@ button:disabled {
   margin: 0;
   accent-color: #215e49;
 }
-.color-presets {
-  margin-block: 3px;
+#catalog-color {
+  border-inline-start: 1rem solid transparent;
+  padding-inline-start: 0.35rem;
 }
-.color-presets button:nth-child(1) {
-  background: #fcf2d2;
-}
-.color-presets button:nth-child(2) {
-  background: #e8effa;
-}
-.color-presets button:nth-child(3) {
-  background: #e6f2e9;
-}
-.color-presets button[aria-pressed='true'] {
-  border-color: #215e49;
+.automatic-color {
+  color: #526760;
 }
 #coding-status {
   margin-top: 8px;

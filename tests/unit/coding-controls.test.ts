@@ -47,7 +47,7 @@ function panel() {
   const form = document.createElement('form');
   form.id = 'category-create';
   form.innerHTML =
-    '<input name="name" required><textarea name="description"></textarea><input name="color" type="color" value="#fdd835"><button type="submit">Guardar y aplicar</button>';
+    '<input name="name" required><textarea name="description"></textarea><button type="submit">Guardar y aplicar</button>';
   const assign = document.createElement('div');
   assign.id = 'category-assign';
   assign.append(options);
@@ -151,10 +151,8 @@ test('T016: conserva el formulario y reintenta con la misma operación', async (
   const definition = form.elements.namedItem(
     'description',
   ) as HTMLTextAreaElement;
-  const color = form.elements.namedItem('color') as HTMLInputElement;
   name.value = 'Categoría tras reintento';
   definition.value = 'Definición local';
-  color.value = '#126abc';
 
   sendMessage.mockResolvedValueOnce({ kind: 'error' });
   form.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -164,7 +162,6 @@ test('T016: conserva el formulario y reintenta con la misma operación', async (
   expect(view.fieldset.disabled).toBe(false);
   expect(name.value).toBe('Categoría tras reintento');
   expect(definition.value).toBe('Definición local');
-  expect(color.value).toBe('#126abc');
   form.dispatchEvent(new Event('submit', { cancelable: true }));
   await vi.waitFor(() =>
     expect(view.code('Categoría tras reintento').checked).toBe(true),

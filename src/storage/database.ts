@@ -1,3 +1,4 @@
+import { accentColors } from '../domain/category-colors';
 import { Dexie } from 'dexie';
 import type { Table } from 'dexie';
 import type { Code, Fragment } from '../domain/codings';
@@ -100,12 +101,12 @@ export class CodingDatabase extends Dexie {
           {
             id: '00000000-0000-4000-8000-000000000003',
             name: 'Tema',
-            color: '#FDD835',
+            color: accentColors[0],
           },
           {
             id: '00000000-0000-4000-8000-000000000004',
             name: 'Contexto',
-            color: '#81D4FA',
+            color: accentColors[1],
           },
         ].map((code) => ({
           ...code,

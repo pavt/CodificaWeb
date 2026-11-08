@@ -128,7 +128,9 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await panel
         .getByLabel('Definición de la categoría')
         .fill('Una definición sintética');
-      await panel.getByLabel('Color de la categoría').fill('#126abc');
+      await expect(
+        panel.getByText('El proyecto asigna el color automáticamente.'),
+      ).toBeVisible();
       await panel.getByRole('button', { name: 'Guardar y aplicar' }).click();
       await expect(panel.locator('#coding-status')).toHaveText(
         'Categoría guardada y aplicada.',
@@ -145,6 +147,10 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       ).toBeVisible();
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
+      await expect(finding.locator('..')).toHaveCSS(
+        '--category-color',
+        '#FDC086',
+      );
       await expect(panel.getByText('Una definición sintética')).toBeVisible();
       await panel
         .getByRole('button', { name: 'Editar definición de Patrón rápido' })
@@ -168,7 +174,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         .poll(() =>
           source.evaluate(() =>
             Array.from(
-              CSS.highlights.get('codificaweb-126abc') ?? [],
+              CSS.highlights.get('codificaweb-fdc086') ?? [],
               (range) => range.toString(),
             ).join(''),
           ),
@@ -276,20 +282,20 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           name,
         );
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
-      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe(' mundo');
+      await expect.poll(() => paintedText('codificaweb-beaed4')).toBe(' mundo');
       const filter = panel.getByLabel('Filtrar resaltados por código');
       await filter.selectOption({ label: 'Contexto' });
       await expect
-        .poll(() => paintedText('codificaweb-81d4fa'))
+        .poll(() => paintedText('codificaweb-beaed4'))
         .toBe('🙂 hola mundo');
-      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
       await filter.selectOption({ label: 'Tema' });
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
-      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-beaed4')).toBe('');
       await expect(source.locator('#text')).toHaveJSProperty(
         'innerHTML',
         original,
@@ -303,7 +309,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await project.selectOption({ label: 'Proyecto B' });
       await expect(project).toBeEnabled();
       await expect(project.locator('option:checked')).toHaveText('Proyecto B');
-      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
       await capture.click();
       await expect(note).toBeEnabled();
       await expect(tema).toHaveCount(0);
@@ -325,7 +331,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         'Proyecto inicial',
       );
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
       await capture.click();
       await expect(tema).toBeChecked();
@@ -372,7 +378,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           throw new Error('Fixture sin pestaña');
         const entries = Array.from({ length: 200 }, (_, id) => ({
           id: String(id),
-          color: id % 2 ? '#FDD835' : '#81D4FA',
+          color: id % 2 ? '#7FC97F' : '#BEAED4',
           selectors: {
             position: { start: id * 400, end: id * 400 + 800 },
             quote: {
@@ -413,10 +419,10 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       // Q06 restores without reopening or reauthorizing the panel.
       await source.goto(url);
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
       await source.reload();
-      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe(' mundo');
+      await expect.poll(() => paintedText('codificaweb-beaed4')).toBe(' mundo');
       await source.evaluate(() => {
         const paragraph = document.querySelector('#text');
         if (paragraph)
@@ -424,28 +430,27 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
             'Nuevo <span>🙂</span><span> hola</span><em> mundo</em>';
       });
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
       await source.evaluate(() => {
         document.body.textContent = '🙂 hola mundo. 🙂 hola mundo';
       });
-      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
-      await expect.poll(() => paintedText('codificaweb-81d4fa')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-beaed4')).toBe('');
       await source.evaluate(() => {
         document.body.textContent = '🙂 hola mundo';
       });
       await expect
-        .poll(() => paintedText('codificaweb-fdd835'))
+        .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
       await source.evaluate(() => history.pushState(null, '', '/otra-ruta'));
-      await expect.poll(() => paintedText('codificaweb-fdd835')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
       // Q02: one user-created code is reused in two independent sources.
       await panel.getByText('Gestionar categorías', { exact: true }).click();
       const catalog = panel.getByLabel('Código del catálogo');
       const codeName = panel.getByLabel('Nombre del código');
-      const codeColor = panel.getByLabel('Color del código');
+      const codeColor = panel.getByLabel('Color asignado');
       await codeName.fill('Hallazgo');
-      await codeColor.fill('#aa0000');
       await panel.getByRole('button', { name: 'Crear código' }).click();
       await expect(
         catalog.locator('option', { hasText: 'Hallazgo' }),
@@ -482,7 +487,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         await finding.click();
         await expect(finding).toBeChecked();
         await expect
-          .poll(() => paintedText('codificaweb-aa0000'))
+          .poll(() => paintedText('codificaweb-ffff99'))
           .toBe('Evidencia del catálogo');
         await note.fill('Nota conservada');
         await saveNote.click();
@@ -491,21 +496,21 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         );
       }
       await catalog.selectOption({ label: 'Hallazgo' });
+      await expect(codeColor).toHaveValue('#FFFF99');
       await codeName.fill('Hallazgo editado');
       await panel
         .getByLabel('Descripción del código')
         .fill('Descripción nueva');
-      await codeColor.fill('#123456');
       await panel.getByRole('button', { name: 'Guardar código' }).click();
       await expect(
         panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
       ).toBeChecked();
       await expect
-        .poll(() => paintedText('codificaweb-123456'))
+        .poll(() => paintedText('codificaweb-ffff99'))
         .toBe('Evidencia del catálogo');
       await captureSource(sources[0] ?? '');
       await expect
-        .poll(() => paintedText('codificaweb-123456'))
+        .poll(() => paintedText('codificaweb-ffff99'))
         .toBe('Evidencia del catálogo');
       await catalog.selectOption({ label: 'Hallazgo editado' });
       panel.once('dialog', (dialog) => void dialog.accept());
@@ -513,7 +518,7 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(
         panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
       ).toHaveCount(0);
-      await expect.poll(() => paintedText('codificaweb-123456')).toBe('');
+      await expect.poll(() => paintedText('codificaweb-ffff99')).toBe('');
       await expect(note).toHaveValue('Nota conservada');
       // Q08: search stored evidence after the current page loses its text.
       await tema.click();

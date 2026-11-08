@@ -258,7 +258,6 @@ for (const [name, executable] of browsers) {
         await readPanel(`(() => {
           document.querySelector('#category-open').click();
           document.querySelector('#category-name').value = 'Categoría sintética';
-          document.querySelector('#category-color').value = '#126abc';
           document.querySelector('#category-definition').value = 'Definición sintética';
           document.querySelector('#category-create').requestSubmit();
         })()`);
@@ -327,7 +326,7 @@ for (const [name, executable] of browsers) {
           .poll(() =>
             page.evaluate(() =>
               Array.from(
-                CSS.highlights.get('codificaweb-126abc') ?? [],
+                CSS.highlights.get('codificaweb-fdc086') ?? [],
                 (range) => range.toString(),
               ),
             ),
