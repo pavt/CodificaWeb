@@ -52,3 +52,16 @@ T006 queda disponible tras T005. T008 espera T006. T013 cierra la validación de
 | FR-09                       | CA-09                   | T011       | Q09           | [#12](https://github.com/pavt/CodificaWeb/issues/12)                                                     |
 | FR-10                       | CA-10                   | T012       | Q10, Q13      | [#13](https://github.com/pavt/CodificaWeb/issues/13)                                                     |
 | Privacidad y compatibilidad | Definición de terminado | T001, T013 | Q11, Q14      | [#2](https://github.com/pavt/CodificaWeb/issues/2), [#14](https://github.com/pavt/CodificaWeb/issues/14) |
+
+## Evaluación del motor de selección y anclaje
+
+| Tarea | Dependencia | Requisitos y criterios                    | Prueba   | Issue                                                |
+| ----- | ----------- | ----------------------------------------- | -------- | ---------------------------------------------------- |
+| T031  | T029 (#59)  | FR-03, FR-05, FR-06 · CA-03, CA-05, CA-06 | Q11-PENC | [#63](https://github.com/pavt/CodificaWeb/issues/63) |
+
+**[T031 · Q11-PENC · PR #64](https://github.com/pavt/CodificaWeb/pull/64).** Evaluar la API pública de Penciled headless con la extensión
+MV3 y una cita categorizada. La prueba en
+[permissions.spec.ts](../../tests/branded/permissions.spec.ts) compara el registro
+CSS durante la selección, creación, importación y destrucción de la instancia.
+[Plan](../../docs/superpowers/plans/2026-11-09-penciled-headless.md) ·
+[Resultados y reproducción](../../docs/reference-analysis.md#validación-de-penciled-headless-t031).
