@@ -873,6 +873,31 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        const code = 'const value = 1;\n  return value;';
+        await other.evaluate((text) => {
+          const block = document.createElement('pre');
+          block.textContent = '\n'.repeat(20) + text + '\n'.repeat(20);
+          document.body.append(block);
+          window.getSelection()?.selectAllChildren(block);
+        }, code);
+        await expect.poll(quote).toBe(code);
+        await other.locator('pre').evaluate((block) => {
+          block.textContent = Array.from(
+            { length: 35 },
+            (_, index) => 'Línea ' + index,
+          ).join('\n');
+          window.getSelection()?.selectAllChildren(block);
+        });
+        await expect
+          .poll(() =>
+            readPanel(`(() => {
+          const preview = document.querySelector('#selection-quote');
+          return preview.textContent.includes('Línea 34') &&
+            preview.scrollHeight > preview.clientHeight &&
+            preview.clientHeight <= 160;
+        })()`),
+          )
+          .toBe(true);
       } finally {
         socket.close();
       }

@@ -266,7 +266,9 @@ function presentSelection(
 ) {
   previewed = result;
   if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
-  quote.textContent = result.selectors.quote.exact;
+  quote.textContent = result.selectors.quote.exact
+    .trimEnd()
+    .replace(/^(?:[^\S\n]*\n)+/, '');
   source.textContent = result.url;
   if (fromUserSelection && relations?.hasSavedView()) {
     relations.dismissSavedView();
