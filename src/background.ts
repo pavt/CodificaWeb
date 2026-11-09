@@ -27,7 +27,8 @@ async function handle(
   message: Record<string, unknown>,
   sender: chrome.runtime.MessageSender,
 ) {
-  if (sender.url === chrome.runtime.getURL('src/panel/index.html')) {
+  const panelUrl = chrome.runtime.getURL('src/panel/index.html');
+  if (sender.url === panelUrl || sender.url === panelUrl + '#proyecto') {
     if (message.type === 'site.enable')
       return { enabled: await enableSite(message.url) };
     if (typeof message.type === 'string' && message.type.startsWith('project.'))

@@ -442,3 +442,64 @@ main:has(> #citation-relation:not([hidden]))
   border-color: #265e46;
   font-weight: 650;
 }
+
+#open-library,
+#project-library a {
+  color: #215e49;
+  width: fit-content;
+}
+
+#project-library {
+  width: min(100%, 1080px);
+  margin-inline: auto;
+  padding: clamp(16px, 4vw, 36px);
+}
+
+#project-library nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#project-library button[aria-pressed='true'] {
+  background: #e3efe6;
+  border-color: #42705a;
+}
+
+#library-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 16px;
+}
+
+#document-browser,
+#document-list,
+#document-quotes,
+#document-quotes article {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+#document-list button {
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+#document-quotes article button {
+  justify-self: start;
+}
+
+.document-category {
+  display: inline-block;
+  margin-inline-end: 6px;
+  padding-inline: 5px;
+  border-inline-start: 4px solid var(--document-category-color);
+}
+
+@media (max-width: 620px) {
+  #library-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

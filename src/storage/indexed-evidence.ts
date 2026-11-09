@@ -1,3 +1,4 @@
+import type { ProjectDocument } from '../domain/project-document';
 import { filterEvidence } from '../domain/evidence-search';
 import type { EvidenceResult, SearchFilters } from '../domain/evidence-search';
 import type { CodingDatabase } from './database';
@@ -25,7 +26,12 @@ export class IndexedEvidence {
       async () => {
         const sources = (
           await db.sources.where('projectId').equals(projectId).sortBy('url')
-        ).map(({ id, url, title }) => ({ id, url, title }));
+        ).map(({ id, url, title }): ProjectDocument => ({
+          id,
+          url,
+          title,
+          format: 'web',
+        }));
         const codes = (
           await db.codes.where('projectId').equals(projectId).sortBy('nameKey')
         ).map(({ id, name, color }) => ({ id, name, color }));

@@ -98,6 +98,9 @@
         <div id="relation-links"></div>
         <button id="relation-close" type="button">Cancelar</button>
       </section>
+      <a id="open-library" href="#proyecto" target="_blank" rel="noopener"
+        >Abrir proyecto ↗</a
+      >
       <section aria-labelledby="selection-title">
         <div id="quote-card" class="card">
           <h2 id="selection-title">Sin selección</h2>
@@ -280,6 +283,51 @@
           </fieldset>
         </details>
       </details>
+    </main>
+    <main id="project-library" hidden>
+      <header id="library-header">
+        <p>CodificaWeb · Proyecto</p>
+        <h1 id="library-project-title">Biblioteca del proyecto</h1>
+      </header>
+      <nav aria-label="Secciones del proyecto">
+        <button type="button" data-view="documents" aria-pressed="true">
+          Documentos
+        </button>
+        <button type="button" data-view="categories" aria-pressed="false">
+          Categorías
+        </button>
+        <button type="button" data-view="settings" aria-pressed="false">
+          Ajustes
+        </button>
+      </nav>
+      <p id="library-status" role="status"></p>
+      <section data-section="documents">
+        <h2>Documentos</h2>
+        <div id="library-grid">
+          <div id="document-browser">
+            <label for="document-query">Buscar documentos o citas</label>
+            <input id="document-query" type="search" disabled />
+            <label for="document-code">Filtrar por categoría</label>
+            <select id="document-code" disabled></select>
+            <div id="document-list"></div>
+          </div>
+          <section id="document-detail" aria-labelledby="document-title" hidden>
+            <span>Página web</span>
+            <h3 id="document-title" tabindex="-1"></h3>
+            <a id="document-original" target="_blank" rel="noopener"
+              >Abrir página original ↗</a
+            >
+            <h3>Citas guardadas</h3>
+            <div id="document-quotes"></div>
+          </section>
+        </div>
+      </section>
+      <section id="library-categories" data-section="categories" hidden>
+        <h2>Categorías</h2>
+      </section>
+      <section id="library-settings" data-section="settings" hidden>
+        <h2>Ajustes</h2>
+      </section>
     </main>
     <script type="module" src="./index.ts"></script>
   </body>
