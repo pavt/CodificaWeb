@@ -267,7 +267,15 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#document-setup').hidden"),
           )
           .toBe(false);
-        expect(await quote()).toBe('');
+        expect(await quote()).toBe(citation);
+        expect(
+          await readPanel("document.querySelector('#fragment-codes').disabled"),
+        ).toBe(true);
+        expect(
+          await readPanel(
+            "document.querySelector('#quote-card + #document-setup') !== null",
+          ),
+        ).toBe(true);
         await readPanel(`(() => {
           const choice = document.querySelector('#document-existing');
           choice.selectedIndex = 1;
@@ -297,7 +305,7 @@ for (const [name, executable] of browsers) {
         ).toBe(true);
         expect(
           await readPanel(
-            "document.querySelector('#quote-card + #fragment-note') !== null",
+            "document.querySelector('#document-setup + #fragment-note') !== null",
           ),
         ).toBe(true);
 
@@ -639,6 +647,7 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#document-setup').hidden"),
           )
           .toBe(false);
+        expect(await quote()).toBe('Página siguiente.');
         await readPanel(
           "document.querySelector('#document-setup').requestSubmit()",
         );

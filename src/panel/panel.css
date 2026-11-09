@@ -80,7 +80,7 @@ fieldset {
 #selection-quote:empty {
   display: none;
 }
-#quote-card:has(blockquote:not(:empty)) #capture-status {
+#quote-card:has(blockquote:not(:empty)) #capture-status:not(.capture-error) {
   position: absolute;
   clip-path: inset(50%);
 }
@@ -451,4 +451,8 @@ main:has(> #citation-relation:not([hidden]))
 .page-note {
   display: grid;
   gap: 8px;
+}
+
+section:has(> #document-setup:not([hidden])) #fragment-codes {
+  display: none;
 }

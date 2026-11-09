@@ -109,6 +109,7 @@ const notes = createNoteControls(
   document.getElementById('note-status') as HTMLElement,
 );
 let selected: SelectionSnapshot | undefined;
+let previewed: SelectionSnapshot | undefined;
 let codingRead: Promise<void> | undefined;
 let citationLookup: Promise<void> | undefined;
 let target: CaptureTarget | undefined;
@@ -131,7 +132,8 @@ const setup =
     },
     () => {
       captureStatus.textContent =
-        'No se pudo verificar si la página pertenece al proyecto.';
+        'No se pudo verificar si la página pertenece al proyecto. Vuelve a seleccionar el texto.';
+      captureStatus.classList.add('capture-error');
     },
   );
 
@@ -146,7 +148,7 @@ const captureMessages = {
 function clearPreview() {
   setup?.clear();
   captureRequest++;
-  selected = undefined;
+  selected = previewed = undefined;
   codingRead = citationLookup = undefined;
   if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
@@ -154,6 +156,7 @@ function clearPreview() {
   if (selectionTitle) selectionTitle.textContent = 'Sin selección';
   source.textContent = '';
   captureStatus.textContent = '';
+  captureStatus.classList?.remove('capture-error');
   coding.clear();
   notes.clear();
 }
@@ -227,7 +230,8 @@ async function captureCurrent(fromUserSelection = false, dismiss = false) {
     fromUserSelection &&
     !dismiss &&
     result.kind === 'empty' &&
-    setup?.pending
+    previewed &&
+    !selected
   )
     return;
   if (fromUserSelection && !dismiss && result.kind === 'empty' && selected) {
@@ -240,14 +244,14 @@ async function captureCurrent(fromUserSelection = false, dismiss = false) {
   clearPreview();
 
   if (result.kind === 'selection') {
-    const revision = captureRequest;
+    presentSelection(result, fromUserSelection);
     if (
       direct &&
       setup &&
       !(await setup.check(
         current,
         result,
-        () => target === current && revision === captureRequest,
+        () => target === current && previewed === result,
       ))
     )
       return;
@@ -262,17 +266,25 @@ function showSelection(
   result: SelectionSnapshot,
   fromUserSelection: boolean,
 ) {
+  if (previewed !== result) presentSelection(result, fromUserSelection);
   selected = result;
+  captureStatus.textContent = 'Selección capturada.';
+  codingRead = coding.show(current, result);
+  void notes.show(current, result);
+}
+
+function presentSelection(
+  result: SelectionSnapshot,
+  fromUserSelection: boolean,
+) {
+  previewed = result;
   if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
   quote.textContent = result.selectors.quote.exact;
   source.textContent = result.url;
-  captureStatus.textContent = 'Selección capturada.';
   if (fromUserSelection && relations?.hasSavedView()) {
     relations.dismissSavedView();
     document.getElementById('quote-card')?.scrollIntoView({ block: 'nearest' });
   }
-  codingRead = coding.show(current, result);
-  void notes.show(current, result);
 }
 
 captureButton.addEventListener('click', () => void captureCurrent(true));
@@ -354,6 +366,7 @@ const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
 function applyProject(id: string | null, recapture = true) {
+  const initialProject = projectId === undefined;
   const changed = projectId !== id;
   if (changed) {
     projectId = id;
@@ -369,7 +382,7 @@ function applyProject(id: string | null, recapture = true) {
     target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
     captureButton.disabled = id === null && !direct;
     if (direct && id) highlights.track(target);
-    if (direct && recapture) void captureCurrent();
+    if (direct && recapture && initialProject) void captureCurrent();
   }
 }
 if (projects)
@@ -405,7 +418,7 @@ if (chrome.tabs?.onActivated) {
       }
       if (quoteCard && note && noteStatus) {
         note.classList.add('page-note');
-        quoteCard.after(note, noteStatus);
+        (setupForm ?? quoteCard).after(note, noteStatus);
       }
       citations?.append(form);
       if (accessRequest === 0) void attachActiveTab();
