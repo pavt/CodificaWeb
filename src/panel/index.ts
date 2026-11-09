@@ -119,7 +119,7 @@ let accessRequest = 0;
 let captureRequest = 0;
 
 const captureMessages = {
-  empty: 'Selecciona texto en la página para asignarle una categoría.',
+  empty: 'Selecciona un fragmento en la página.',
   excluded: 'Esta selección incluye contenido editable o excluido.',
   stale:
     'La pestaña o el documento cambió. Vuelve a comprobar el acceso y selecciona texto.',
@@ -133,9 +133,9 @@ function clearPreview() {
   if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
   document.getElementById('quote-card')?.removeAttribute('data-saved');
-  if (selectionTitle) selectionTitle.textContent = 'Sin selección';
+  if (selectionTitle) selectionTitle.textContent = 'Selección';
   source.textContent = '';
-  captureStatus.textContent = '';
+  captureStatus.textContent = captureMessages.empty;
   coding.clear();
   notes.clear();
 }
@@ -241,6 +241,7 @@ function resetTarget() {
   clearPreview();
   captureButton.disabled = true;
   input.value = '';
+  if (direct) form.hidden = true;
 }
 
 async function attachActiveTab() {
@@ -279,6 +280,7 @@ async function attachActiveTab() {
       ...(projectId ? { projectId } : {}),
     };
     input.value = tab.url;
+    form.hidden = false;
     button.disabled = false;
     status.textContent = '';
     captureButton.disabled = projectId === null;
@@ -339,7 +341,9 @@ if (chrome.tabs?.onActivated) {
     .then((tab) => {
       if (tab) return;
       direct = true;
-      document.getElementById('panel-tools')?.removeAttribute('open');
+      captureButton.hidden = true;
+      form.hidden = true;
+      document.getElementById('project-menu-content')?.append(form);
       if (accessRequest === 0) void attachActiveTab();
     })
     .catch(() => undefined);

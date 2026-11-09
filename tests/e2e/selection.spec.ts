@@ -77,6 +77,13 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         chrome.tabs.query = async () => [await chrome.tabs.get(tabId)];
       }, url);
 
+      const tools = panel.locator('#panel-tools');
+      const projectMenu = tools.locator(':scope > summary');
+      await expect(projectMenu).toHaveText('Proyecto');
+      await expect(tools).toHaveJSProperty('open', false);
+      await expect(
+        panel.getByText('Buscar evidencias', { exact: true }),
+      ).toBeHidden();
       await panel.getByLabel('URL del sitio').fill(url);
       await panel.getByRole('button', { name: 'Comprobar acceso' }).click();
       await expect(panel.getByRole('status')).toHaveText(
@@ -85,12 +92,11 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       const capture = panel.getByRole('button', { name: 'Capturar selección' });
 
       await capture.click();
-      await expect(panel.locator('#capture-status')).toContainText(
-        'Selecciona texto',
+      await expect(panel.locator('#capture-status')).toHaveText(
+        'Selecciona un fragmento en la página.',
       );
-      await expect(panel.locator('#selection-title')).toHaveText(
-        'Sin selección',
-      );
+      await expect(panel.locator('#selection-title')).toBeHidden();
+      await expect(panel.locator('#fragment-codes')).toBeHidden();
       await expect(panel.locator('#selection-quote')).toBeHidden();
 
       await source.bringToFront();
@@ -228,6 +234,8 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
           'rgb(253, 192, 134)',
           'rgba(0, 0, 0, 0)',
         ]);
+      await projectMenu.press('Enter');
+      await expect(tools).toHaveJSProperty('open', true);
       const pageCitations = panel.locator('#page-citations');
       await pageCitations.locator('summary').click();
       await expect(pageCitations.locator('li')).toContainText('🙂 hola mundo');
@@ -625,8 +633,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await source.evaluate(() => {
         document.body.textContent = 'Sin cita en esta página';
       });
-      const tools = panel.locator('#panel-tools');
-      await tools.locator(':scope > summary').click();
+      await expect(tools).toHaveJSProperty('open', true);
       const evidenceEntry = panel.getByText('Buscar evidencias', {
         exact: true,
       });
@@ -683,7 +690,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(destination).toHaveURL(firstSource);
       await expect(destination.locator('#catalog-fixture')).toBeInViewport();
       // Q10: round-trip the published fixture through the actual file controls.
-      await tools.locator(':scope > summary').click();
       await panel
         .getByText('Importar o exportar proyecto', { exact: true })
         .click();
