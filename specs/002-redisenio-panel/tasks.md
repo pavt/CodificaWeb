@@ -66,3 +66,5 @@ Los issues registran alcance, criterios, dependencias, etiquetas, prioridad y mi
 **Ajuste de vista previa en T022.** La prueba de Chrome falló al colocar el cursor justo debajo de las letras, en la zona del subrayado. La detección incluye la decoración y da prioridad al texto cuando hay coincidencias cercanas. La ficha se muestra encima del formulario. Chrome y Brave verifican el puntero en esa zona, la ficha visible y el borrador intacto.
 
 **[T030 · #61](https://github.com/pavt/CodificaWeb/issues/61).** UX-01. La vista previa omite las líneas vacías de los extremos y permite desplazar las citas largas dentro del panel. La cita almacenada conserva el texto y los anclajes. La suite del panel nativo reproduce el espacio excesivo con un bloque de código y comprueba la vista previa compacta.
+
+**Evidencia de T030.** [PR #62](https://github.com/pavt/CodificaWeb/pull/62). La prueba de `tests/branded/permissions.spec.ts` falló al mostrar 40 saltos sobrantes. La corrección pasó en Chromium, Chrome y Brave.
