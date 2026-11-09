@@ -173,9 +173,9 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
 
   captureButton.dispatchEvent(new Event('click'));
   await vi.waitFor(() =>
-    expect(status.textContent).toContain('Selecciona texto'),
+    expect(status.textContent).toBe('Selecciona un fragmento en la página.'),
   );
-  expect(title.textContent).toBe('Sin selección');
+  expect(title.textContent).toBe('Selección');
   expect(quote.textContent).toBe('');
 });
 

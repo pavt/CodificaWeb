@@ -200,7 +200,13 @@ button:disabled {
   margin-block-start: 6px;
   min-inline-size: 0;
 }
-section:has(#selection-quote:empty) #fragment-note {
+#quote-card:has(#selection-quote:empty) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+section:has(#selection-quote:empty)
+  :is(#selection-title, #fragment-codes, #fragment-note) {
   display: none;
 }
 

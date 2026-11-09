@@ -92,12 +92,11 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       const capture = panel.getByRole('button', { name: 'Capturar selección' });
 
       await capture.click();
-      await expect(panel.locator('#capture-status')).toContainText(
-        'Selecciona texto',
+      await expect(panel.locator('#capture-status')).toHaveText(
+        'Selecciona un fragmento en la página.',
       );
-      await expect(panel.locator('#selection-title')).toHaveText(
-        'Sin selección',
-      );
+      await expect(panel.locator('#selection-title')).toBeHidden();
+      await expect(panel.locator('#fragment-codes')).toBeHidden();
       await expect(panel.locator('#selection-quote')).toBeHidden();
 
       await source.bringToFront();
