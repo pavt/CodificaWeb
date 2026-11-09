@@ -59,7 +59,7 @@ T006 queda disponible tras T005. T008 espera T006. T013 cierra la validación de
 | ----- | ----------- | ----------------------------------------- | -------- | ---------------------------------------------------- |
 | T031  | T029 (#59)  | FR-03, FR-05, FR-06 · CA-03, CA-05, CA-06 | Q11-PENC | [#63](https://github.com/pavt/CodificaWeb/issues/63) |
 
-**T031 · Q11-PENC.** Evaluar la API pública de Penciled headless con la extensión
+**[T031 · Q11-PENC · PR #64](https://github.com/pavt/CodificaWeb/pull/64).** Evaluar la API pública de Penciled headless con la extensión
 MV3 y una cita categorizada. La prueba en
 [permissions.spec.ts](../../tests/branded/permissions.spec.ts) compara el registro
 CSS durante la selección, creación, importación y destrucción de la instancia.
