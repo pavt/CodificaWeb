@@ -42,5 +42,3 @@ La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa
 **Deselección deliberada.** Q03 y Q16 distinguen el clic primario en la página sin selección, que limpia la cita del panel, de la pérdida de selección al cambiar el foco, que conserva la cita guardada para relacionarla.
 
 **Color al volver a seleccionar.** Q06 reproduce una cita desplazada por texto insertado y comprueba que el panel recupera su categoría y su color al volver a seleccionar el tramo exacto. Si hay varias citas en el mismo tramo, el panel no elige un anclaje alternativo.
-
-**[T028 · #57](https://github.com/pavt/CodificaWeb/issues/57) · Biblioteca de documentos web.** FR-16/CA-16, Q17. Base T026. Extender `tests/e2e/selection.spec.ts` para comprobar dos documentos, sus citas y el salto entre documentos vinculados. Mantener la cobertura de transferencia v1/v2.

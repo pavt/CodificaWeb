@@ -37,9 +37,3 @@ La revisión muestra los fragmentos y sus fuentes, el nombre de la relación y s
 Todos los mensajes llevan `projectId` y solo se aceptan desde el panel interno. Las consultas reciben `id` de la cita o fuente. Devuelven el vínculo, el tipo actual y ambas citas con su texto y sus fuentes. La consulta por fuente agrupa los vínculos por la otra fuente.
 
 Para guardar con un tipo existente, `relations.create` recibe `fromAnnotationId`, `toAnnotationId`, `relationTypeId` y `note` opcional. Para guardar un tipo nuevo con el vínculo, `relations.createWithType` sustituye `relationTypeId` por `fields` con nombre, dirección y definición opcional. Un reintento idéntico devuelve el mismo vínculo. Un nombre ya usado para una operación diferente devuelve un error. El proyecto activo se comprueba dentro de la transacción.
-
-## T028 · Biblioteca de documentos
-
-Abrir la biblioteca en una pestaña de la extensión desde el panel lateral. Separar Documentos, Categorías y Ajustes. En Documentos, filtrar por título, URL, texto, nota y categoría. Seleccionar un documento para ver sus citas, seguir sus vínculos o volver a la ubicación original. Reusar el catálogo y los ajustes existentes.
-
-Proyectar las fuentes locales como documentos de formato web al leer la evidencia. Mantener los IDs, el anclaje de las citas y la transferencia compatible con v1/v2. Incorporar cada formato futuro con sus metadatos y anclajes propios. Q17 cubre el recorrido completo y complementa las pruebas de transferencia.

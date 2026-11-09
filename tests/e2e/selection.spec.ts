@@ -4,7 +4,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q10, Q12, Q14 y Q16–Q17: flujo de proyectos, evidencias y privacidad local', async () => {
+test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad local', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -751,15 +751,8 @@ test('Q01–Q10, Q12, Q14 y Q16–Q17: flujo de proyectos, evidencias y privacid
       }
       // Q16: relate citations from two sources using the panel at 320 px.
       await panel.setViewportSize({ width: 320, height: 700 });
-      const secondUrl = new URL('/informe?tracking=parametros-antiguos', url)
-        .href;
-      fixtureUrls.add(secondUrl);
-      await context.route(secondUrl, (route) =>
-        route.fulfill({
-          contentType: 'text/html; charset=utf-8',
-          body: '<div style="height: 2200px"></div><p id="related-fixture">Instalaron rampas en la estación.</p>',
-        }),
-      );
+      const secondUrl =
+        'https://example.org/informe?tracking=parametros-antiguos#fragmento';
       const secondId = '00000000-0000-4000-8000-000000000010';
       const secondQuote = 'rampas';
       const annotation = fixture.annotations[0];
@@ -846,7 +839,7 @@ test('Q01–Q10, Q12, Q14 y Q16–Q17: flujo de proyectos, evidencias y privacid
         .locator('#relation-results li')
         .filter({ hasText: secondQuote });
       await expect(candidate.locator('.relation-source')).toHaveText(
-        '127.0.0.1/informe',
+        'example.org/informe',
       );
       await expect(candidate).not.toContainText('tracking=');
       await expect(candidate.locator('.relation-exact blockquote')).toHaveText(
@@ -922,43 +915,6 @@ test('Q01–Q10, Q12, Q14 y Q16–Q17: flujo de proyectos, evidencias y privacid
       expect(
         await panel.evaluate(() => document.documentElement.scrollWidth),
       ).toBe(320);
-      await relation
-        .getByRole('button', { name: 'Cancelar', exact: true })
-        .press('Enter');
-      const [library] = await Promise.all([
-        context.waitForEvent('page'),
-        panel.getByRole('link', { name: /Abrir proyecto/ }).click(),
-      ]);
-      await expect(
-        library.getByRole('heading', { name: 'Documentos' }),
-      ).toBeVisible();
-      await expect(library.locator('#document-list button')).toHaveCount(2);
-      await library
-        .locator('#document-list button')
-        .filter({ hasText: 'movilidad' })
-        .click();
-      await expect(library.locator('#document-quotes')).toContainText(
-        'Faltan rampas',
-      );
-      await library
-        .locator('#document-quotes')
-        .getByRole('button', { name: /Actualiza el diagnóstico.*informe/i })
-        .click();
-      await expect(library.locator('#document-quotes')).toContainText('rampas');
-      await expect(library.locator('#document-quotes')).not.toContainText(
-        'Faltan rampas',
-      );
-      const [relatedSource] = await Promise.all([
-        context.waitForEvent('page'),
-        library
-          .getByRole('button', { name: 'Abrir cita en la página' })
-          .click(),
-      ]);
-      await expect(relatedSource).toHaveURL(secondUrl);
-      await expect(relatedSource.locator('#related-fixture')).toBeInViewport();
-      await expect(library.locator('#library-status')).toHaveText(
-        'Cita localizada.',
-      );
       expect(unexpectedTraffic).toEqual([]);
     } finally {
       await context.close();

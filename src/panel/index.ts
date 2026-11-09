@@ -1,4 +1,3 @@
-import { mountLibrary } from './library';
 import { isRecord } from '../capture-contract';
 import type { CaptureTarget, SelectionSnapshot } from '../capture-contract';
 import { mountCatalog } from './catalog-controls';
@@ -304,7 +303,6 @@ const setCatalogProject =
   mountCatalog(catalog, () => {
     highlights.clear();
     refreshEvidence?.(projectId ?? null);
-    void loadLibrary?.(projectId ?? null);
     if (target && selected) void coding.show(target, selected);
     else if (direct && target) highlights.track(target);
   });
@@ -313,38 +311,9 @@ const setTransferProject = transfer && mountTransfer(transfer);
 const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
-const library = document.getElementById('project-library');
-const libraryView = library && location.hash === '#proyecto' ? library : null;
-const loadLibrary = libraryView && mountLibrary(libraryView);
-if (libraryView) {
-  document.querySelector('main')?.setAttribute('hidden', '');
-  libraryView.hidden = false;
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) void loadLibrary?.(projectId ?? null);
-  });
-  for (const [control, destination] of [
-    [catalog?.closest('details'), '#library-categories'],
-    [projects?.closest('details'), '#library-settings'],
-    [transfer, '#library-settings'],
-  ] as const) {
-    if (control) {
-      control.setAttribute('open', '');
-      libraryView.querySelector(destination)?.append(control);
-    }
-  }
-}
 if (projects) {
   mountProjects(projects, (id) => {
-    if (libraryView) {
-      const label = libraryView.querySelector('#library-project-title');
-      const active =
-        projects.querySelector<HTMLSelectElement>('#project-select');
-      if (label)
-        label.textContent =
-          active?.selectedOptions[0]?.text ?? 'Biblioteca del proyecto';
-    }
     if (projectId === id) return;
-    void loadLibrary?.(id);
     const loadingInitialProject = projectId === undefined;
     projectId = id;
     relations?.setProject(id);
@@ -363,7 +332,7 @@ if (projects) {
   });
 }
 
-if (chrome.tabs?.onActivated && !libraryView) {
+if (chrome.tabs?.onActivated) {
   // Opening the panel HTML in a tab keeps the original explicit controls.
   void chrome.tabs
     .getCurrent()

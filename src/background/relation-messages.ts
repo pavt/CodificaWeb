@@ -39,8 +39,7 @@ export async function handleRelationRequest(
   } = message;
   if (
     sender.id !== chrome.runtime.id ||
-    (sender.url !== chrome.runtime.getURL(panelPath) &&
-      sender.url !== chrome.runtime.getURL(panelPath) + '#proyecto') ||
+    sender.url !== chrome.runtime.getURL(panelPath) ||
     !validId(projectId)
   )
     return error;

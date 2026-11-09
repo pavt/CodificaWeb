@@ -12,12 +12,6 @@ Todas las entidades tienen `id` UUID, `createdAt` y `updatedAt` ISO 8601 UTC. Lo
 
 Project tiene muchas Source y Code. Source tiene muchas Annotation. Annotation y Code son muchos a muchos mediante Coding. Crear la misma asociación es idempotente. Borrar un código retira sus Coding. Borrar una anotación retira sus Coding. Borrar una fuente retira sus anotaciones y asociaciones. Borrar un proyecto retira todo su corpus. Las cascadas son atómicas y actualizar un código no duplica su color en la evidencia. Borrar una nota elimina solo el campo.
 
-## Documentos como unidades de análisis
-
-La biblioteca presenta cada `Source` como un documento del proyecto y agrupa las citas por `sourceId`. El contrato de lectura `ProjectDocument` distingue el formato mediante `format`. Las fuentes existentes se leen como `web` con su identidad, título y URL. IndexedDB y los archivos JSON v1/v2 conservan sus estructuras e identificadores.
-
-Los selectores pertenecen a la cita. Una futura variante PDF podrá definir sus propios metadatos de documento y un perfil de selectores para páginas y fragmentos, conservando la referencia por ID del documento.
-
 ## Persistencia local de T005
 
 La base IndexedDB v1 se crea bajo el origen de la extensión con el proyecto inicial y los códigos Tema y Contexto. Las fuentes se crean al asignar el primer código y usan la URL como título inicial. Retirar el último código conserva la anotación y su fuente. Las asociaciones de las versiones anteriores vivían en memoria.
