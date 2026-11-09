@@ -368,6 +368,16 @@ for (const [name, executable] of browsers) {
         expect(
           await readPanel("document.querySelector('#category-name').value"),
         ).toBe('Categoría sintética');
+        // A page script can collapse the native selection after the gesture
+        // while the document still has focus. The category draft must survive.
+        await page.bringToFront();
+        expect(
+          await page.evaluate(() => {
+            window.getSelection()?.removeAllRanges();
+            document.dispatchEvent(new Event('selectionchange'));
+            return document.hasFocus() && window.getSelection()?.isCollapsed;
+          }),
+        ).toBe(true);
         await readPanel(`(() => {
           document.querySelector('#category-definition').value = 'Definición sintética';
           document.querySelector('#category-create').requestSubmit();
