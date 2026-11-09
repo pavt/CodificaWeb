@@ -547,6 +547,12 @@ export function mountRelations(root: HTMLElement) {
   });
 
   return {
+    hasSavedView() {
+      return draft?.stage === 'saved';
+    },
+    dismissSavedView() {
+      if (draft?.stage === 'saved') clear();
+    },
     action(citation: Citation) {
       return button('Relacionar con otra cita', (opener) =>
         start(citation, opener),

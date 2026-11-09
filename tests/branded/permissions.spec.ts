@@ -584,6 +584,62 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        // Q16: a saved relationship must give way to the next real hover.
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#selection-relation').hidden"),
+          )
+          .toBe(false);
+        await readPanel(
+          "document.querySelector('#selection-relation button').click()",
+        );
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#relation-results li button')?.textContent",
+            ),
+          )
+          .toBe('Elegir cita');
+        await readPanel(
+          "document.querySelector('#relation-results li button').click()",
+        );
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#relation-type').options.length",
+            ),
+          )
+          .toBeGreaterThan(1);
+        await readPanel(`(() => {
+          const type = document.querySelector('#relation-type');
+          type.value = '__new__';
+          type.dispatchEvent(new Event('change'));
+          document.querySelector('#relation-type-name').value = 'Complementa';
+          document.querySelector('#relation-review-button').click();
+          document.querySelector('#relation-submit').click();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#relation-status').textContent"),
+          )
+          .toBe('Vínculo guardado.');
+        await page
+          .locator('p')
+          .first()
+          .hover({ position: { x: 12, y: 8 } });
+        await expect.poll(inspect).toBe('Página siguiente.');
+        await expect
+          .poll(() =>
+            readPanel(
+              "getComputedStyle(document.querySelector('#citation-inspection')).display",
+            ),
+          )
+          .not.toBe('none');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#citation-relation').hidden"),
+          )
+          .toBe(true);
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');

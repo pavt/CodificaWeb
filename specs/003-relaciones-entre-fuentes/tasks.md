@@ -26,3 +26,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Jerarquía visual de la cita.** Q16 comprueba que una cita de una sola palabra tiene un bloque «Texto citado» separado y que «Ver contexto» marca esa palabra dentro del pasaje. La tarjeta toma como referencia la jerarquía de [Hypothesis](https://web.hypothes.is/blog/everything-you-can-do-with-the-hypothesis-lms-app-as-of-october-2026/) y la separación de texto exacto, prefijo y sufijo del [modelo de anotaciones del W3C](https://w3c.github.io/web-annotation/selector-note/).
 
 **Colores de categorías.** Q16 comprueba en Chromium que las etiquetas de las citas muestran los colores guardados en el proyecto, incluso cuando una cita tiene varias categorías.
+
+**Retorno a la ficha tras guardar.** Q16 reproduce en los paneles nativos de Chrome y Brave un vínculo guardado seguido de un hover real sobre la cita subrayada. La ficha vuelve a ser visible y el resumen guardado se cierra. Los borradores en curso se conservan.

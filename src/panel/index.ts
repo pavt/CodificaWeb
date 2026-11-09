@@ -361,12 +361,22 @@ if (chrome.tabs?.onActivated) {
       sender.url === target.url &&
       typeof message.id === 'string'
     ) {
-      if (message.type === 'citation.preview') highlights.inspect(message.id);
-      if (
+      const categoryId =
         message.type === 'citation.open' &&
         typeof message.categoryId === 'string'
-      )
-        respond(highlights.inspect(message.id, message.categoryId));
+          ? message.categoryId
+          : undefined;
+      if (message.type === 'citation.preview' || categoryId !== undefined) {
+        const savedView = relations?.hasSavedView() === true;
+        const inspected = highlights.inspect(message.id, categoryId, savedView);
+        if (inspected && savedView) {
+          relations?.dismissSavedView();
+          document
+            .getElementById('citation-inspection')
+            ?.scrollIntoView({ block: 'nearest' });
+        }
+        if (categoryId !== undefined) respond(inspected);
+      }
     }
     if (
       message.type === 'capture.changed' &&

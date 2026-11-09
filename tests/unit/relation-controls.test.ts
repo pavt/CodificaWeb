@@ -60,8 +60,11 @@ test('Q16: excluye citas de la misma fuente, reutiliza un tipo simétrico y abre
         throw new Error();
     }
   });
-  const { root, opener, find } = setup(send);
+  const { root, opener, find, hasSavedView, dismissSavedView } = setup(send);
   await vi.waitFor(() => expect(find('results').children).toHaveLength(1));
+  dismissSavedView();
+  expect(hasSavedView()).toBe(false);
+  expect(root.hidden).toBe(false);
   expect(root.textContent).toContain(a.quote);
   expect(root.querySelector('b')).toBeNull();
   find('results').querySelector('button')?.click();
@@ -95,9 +98,10 @@ test('Q16: excluye citas de la misma fuente, reutiliza un tipo simétrico y abre
   await vi.waitFor(() =>
     expect(find('links').textContent).toContain('Cita localizada.'),
   );
-  find('close').click();
+  expect(hasSavedView()).toBe(true);
+  dismissSavedView();
   expect(root.hidden).toBe(true);
-  expect(document.activeElement).toBe(opener);
+  expect(document.activeElement).not.toBe(opener);
 });
 
 test('Q16: un cambio de proyecto descarta la cita y bloquea resultados pendientes del proyecto anterior', async () => {

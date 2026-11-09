@@ -129,6 +129,8 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
   ).toBe('Sin definición');
   controller.inspect('9');
   expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  expect(controller.inspect('9', undefined, true)).toBe(true);
+  expect(inspection?.querySelector('p')?.textContent).toBe('B'.repeat(200));
   inspection?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   expect(controller.inspect('9')).toBe(true);
   expect(inspection?.querySelector('p')?.textContent).toBe('B'.repeat(200));

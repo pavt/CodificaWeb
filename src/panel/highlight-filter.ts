@@ -46,7 +46,11 @@ export function createHighlightFilter(
     if (event.key === 'Escape') close?.click();
   });
 
-  function inspect(id: string, categoryId?: string): boolean {
+  function inspect(
+    id: string,
+    categoryId?: string,
+    replacePinned = false,
+  ): boolean {
     const entry = entriesById.get(id);
     if (
       !entry ||
@@ -62,7 +66,7 @@ export function createHighlightFilter(
       (category) => category.id === categoryId,
     );
     if (categoryId && !selected) return false;
-    if (!categoryId && shown?.categoryId) return true;
+    if (!categoryId && shown?.categoryId && !replacePinned) return true;
     shown = { id, categoryId };
     inspectedQuote.textContent = entry.quote;
     if (inspectedCategories.dataset.citation !== id) {
