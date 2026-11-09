@@ -52,3 +52,10 @@ T006 queda disponible tras T005. T008 espera T006. T013 cierra la validación de
 | FR-09                       | CA-09                   | T011       | Q09           | [#12](https://github.com/pavt/CodificaWeb/issues/12)                                                     |
 | FR-10                       | CA-10                   | T012       | Q10, Q13      | [#13](https://github.com/pavt/CodificaWeb/issues/13)                                                     |
 | Privacidad y compatibilidad | Definición de terminado | T001, T013 | Q11, Q14      | [#2](https://github.com/pavt/CodificaWeb/issues/2), [#14](https://github.com/pavt/CodificaWeb/issues/14) |
+
+**[T032 · #65](https://github.com/pavt/CodificaWeb/issues/65) · FR-03, CA-03, Q03.**
+Conservar el fragmento capturado si la selección nativa se colapsa sin otro gesto.
+Depende de T029 (#59). La prueba del panel nativo en
+[permissions.spec.ts](../../tests/branded/permissions.spec.ts) reproduce la
+pérdida del fragmento al guardar una categoría en Chrome y Brave. Un gesto
+posterior puede reemplazar o descartar la selección. [PR #66](https://github.com/pavt/CodificaWeb/pull/66).
