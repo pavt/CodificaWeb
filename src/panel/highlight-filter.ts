@@ -9,6 +9,12 @@ import type { CodeAssignment, HighlightCategory } from '../domain/codings';
 export function createHighlightFilter(
   filter: HTMLSelectElement,
   status: HTMLElement,
+  onInspect: (
+    id: string,
+    quote: string,
+    url: string,
+    explicit: boolean,
+  ) => void,
 ) {
   const citations = document.getElementById('page-citations');
   const list = document.getElementById('page-citation-list');
@@ -21,7 +27,6 @@ export function createHighlightFilter(
   const detail = document.getElementById('citation-inspection-detail');
   const name = document.getElementById('citation-inspection-name');
   const definition = document.getElementById('citation-inspection-definition');
-  const close = document.getElementById('citation-inspection-close');
   const entriesById = new Map<
     string,
     { quote: string; categories: HighlightCategory[] }
@@ -36,16 +41,18 @@ export function createHighlightFilter(
     opener = undefined;
   }
 
-  close?.addEventListener('click', () => {
+  inspection?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
     const previous = opener;
     clearInspection();
     previous?.focus({ preventScroll: true });
   });
-  inspection?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close?.click();
-  });
 
-  function inspect(id: string, categoryId?: string): boolean {
+  function inspect(
+    id: string,
+    categoryId?: string,
+    replacePinned = false,
+  ): boolean {
     const entry = entriesById.get(id);
     if (
       !entry ||
@@ -61,7 +68,7 @@ export function createHighlightFilter(
       (category) => category.id === categoryId,
     );
     if (categoryId && !selected) return false;
-    if (!categoryId && shown?.categoryId) return true;
+    if (!categoryId && shown?.categoryId && !replacePinned) return true;
     shown = { id, categoryId };
     inspectedQuote.textContent = entry.quote;
     if (inspectedCategories.dataset.citation !== id) {
@@ -83,6 +90,7 @@ export function createHighlightFilter(
       ? selected.description?.trim() || 'Sin definición'
       : '';
     inspection.hidden = false;
+    if (target) onInspect(id, entry.quote, target.url, Boolean(categoryId));
     return true;
   }
 
@@ -196,6 +204,9 @@ export function createHighlightFilter(
   filter.addEventListener('change', () => void refresh());
   return {
     inspect,
+    endPreview() {
+      if (shown && !shown.categoryId) clearInspection();
+    },
     clear() {
       target = undefined;
       request++;

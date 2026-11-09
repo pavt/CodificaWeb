@@ -11,9 +11,17 @@ export interface EvidenceMatch {
   codes: readonly { id: string; name: string }[];
 }
 
+export interface EvidenceCategory {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface EvidenceResult extends EvidenceMatch {
+  codes: readonly EvidenceCategory[];
   id: string;
   url: string;
+  context?: { prefix: string; suffix: string };
 }
 
 function normalize(text: string) {

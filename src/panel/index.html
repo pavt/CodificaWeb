@@ -11,27 +11,102 @@
       <h1>CodificaWeb</h1>
       <p id="active-project-label"></p>
       <section id="citation-inspection" aria-label="Cita guardada" hidden>
-        <header>
-          <strong>Cita guardada</strong>
-          <button id="citation-inspection-close" type="button">
-            Cerrar ficha
-          </button>
-        </header>
+        <strong>Cita guardada</strong>
         <p id="citation-inspection-quote"></p>
         <div id="citation-inspection-categories"></div>
+        <div id="inspection-relation"></div>
         <div id="citation-inspection-detail" hidden>
           <strong id="citation-inspection-name"></strong>
           <p id="citation-inspection-definition"></p>
         </div>
       </section>
+      <section
+        id="citation-relation"
+        class="card"
+        aria-labelledby="relation-heading"
+        hidden
+      >
+        <header class="relation-actions">
+          <h2 id="relation-heading" tabindex="-1">Relacionar citas</h2>
+          <small id="relation-step"></small>
+        </header>
+        <div id="relation-origin"></div>
+        <p id="relation-status" role="status"></p>
+        <form id="relation-search">
+          <p>Elige una cita de otra fuente.</p>
+          <label for="relation-query">Buscar citas guardadas</label>
+          <input
+            id="relation-query"
+            type="search"
+            placeholder="Texto, categoría o fuente"
+          />
+          <p id="relation-search-status" role="status"></p>
+          <ul id="relation-results"></ul>
+        </form>
+        <form id="relation-save" hidden>
+          <fieldset id="relation-fields">
+            <div id="relation-review"></div>
+            <div id="relation-editor">
+              <label for="relation-type">Tipo de relación</label>
+              <select id="relation-type" required></select>
+              <div id="relation-new-type" hidden>
+                <label for="relation-type-name">Nombre del tipo</label>
+                <input id="relation-type-name" maxlength="256" />
+                <label for="relation-definition">Definición (opcional)</label>
+                <textarea id="relation-definition" maxlength="16384"></textarea>
+                <label for="relation-direction">Dirección</label>
+                <select id="relation-direction">
+                  <option value="directed">
+                    Dirigida: de una cita a la otra
+                  </option>
+                  <option value="symmetric">
+                    Simétrica: en ambos sentidos
+                  </option>
+                </select>
+              </div>
+              <div class="relation-actions">
+                <button id="relation-change" type="button">
+                  Cambiar segunda cita
+                </button>
+                <button
+                  id="relation-review-button"
+                  class="relation-primary"
+                  type="submit"
+                >
+                  Revisar vínculo
+                </button>
+              </div>
+            </div>
+            <div id="relation-confirm" hidden>
+              <div id="relation-summary" class="relation-summary"></div>
+              <div id="relation-confirm-actions" class="relation-actions">
+                <button id="relation-edit" type="button">Editar tipo</button>
+                <button id="relation-reverse" type="button">
+                  Invertir citas
+                </button>
+                <button
+                  id="relation-submit"
+                  class="relation-primary"
+                  type="submit"
+                >
+                  Guardar relación
+                </button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+        <div id="relation-links"></div>
+        <button id="relation-close" type="button">Cancelar</button>
+      </section>
       <section aria-labelledby="selection-title">
         <div id="quote-card" class="card">
-          <h2 id="selection-title">Texto seleccionado</h2>
+          <h2 id="selection-title">Sin selección</h2>
           <blockquote id="selection-quote"></blockquote>
           <p id="saved-color">
             <span id="saved-color-swatch" aria-hidden="true"></span>
             Color asignado
           </p>
+          <div id="selection-relation" hidden></div>
           <p id="capture-status" aria-live="polite"></p>
         </div>
         <fieldset

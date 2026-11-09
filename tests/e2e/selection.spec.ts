@@ -4,7 +4,7 @@ import { cpus, platform, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
-test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', async () => {
+test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad local', async () => {
   const workspace = await mkdtemp(resolve(tmpdir(), 'codificaweb-selection-'));
   const dist = resolve(workspace, 'extension');
   const url = 'http://127.0.0.1:32146/articulo';
@@ -88,6 +88,10 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect(panel.locator('#capture-status')).toContainText(
         'Selecciona texto',
       );
+      await expect(panel.locator('#selection-title')).toHaveText(
+        'Sin selección',
+      );
+      await expect(panel.locator('#selection-quote')).toBeHidden();
 
       await source.bringToFront();
       const [start, end] = await source
@@ -157,6 +161,17 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
         'background-color',
         'rgb(253, 192, 134)',
       );
+      const savedRelation = panel.locator('#quote-card').getByRole('button', {
+        name: 'Relacionar con otra cita',
+      });
+      await savedRelation.press('Enter');
+      await expect(panel.locator('#relation-origin')).toContainText(
+        '🙂 hola mundo',
+      );
+      await panel
+        .getByRole('button', { name: 'Cancelar', exact: true })
+        .press('Enter');
+      await expect(savedRelation).toBeFocused();
       const finding = panel.getByRole('checkbox', { name: 'Patrón rápido' });
       await expect(finding).toBeChecked();
       await expect(finding.locator('..')).toHaveCSS(
@@ -492,6 +507,30 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
       await expect
         .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
+      await panel.getByRole('button', { name: 'Comprobar acceso' }).click();
+      await expect(panel.getByRole('status')).toHaveText(
+        'Acceso al sitio verificado.',
+      );
+      await source.locator('#text').evaluate((paragraph) => {
+        const [first, last] = paragraph.querySelectorAll('span');
+        if (!first || !last) throw new Error('Faltan nodos de la cita.');
+        const range = document.createRange();
+        range.setStartBefore(first);
+        range.setEndAfter(last);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      });
+      await capture.click();
+      await expect(panel.locator('#selection-quote')).toHaveText('🙂 hola');
+      await expect(panel.locator('#selection-title')).toHaveText(
+        'Cita guardada',
+      );
+      await expect(panel.getByRole('checkbox', { name: 'Tema' })).toBeChecked();
+      await expect(panel.locator('#saved-color-swatch')).toHaveCSS(
+        'background-color',
+        'rgb(127, 201, 127)',
+      );
       await source.evaluate(() => {
         document.body.textContent = '🙂 hola mundo. 🙂 hola mundo';
       });
@@ -710,6 +749,172 @@ test('Q01–Q10, Q12 y Q14: flujo de proyectos, evidencias y privacidad local', 
           )
           .toBe(0);
       }
+      // Q16: relate citations from two sources using the panel at 320 px.
+      await panel.setViewportSize({ width: 320, height: 700 });
+      const secondUrl =
+        'https://example.org/informe?tracking=parametros-antiguos#fragmento';
+      const secondId = '00000000-0000-4000-8000-000000000010';
+      const secondQuote = 'rampas';
+      const annotation = fixture.annotations[0];
+      if (!annotation) throw new Error('Falta la primera cita del ejemplo.');
+      await file.setInputFiles({
+        name: 'relaciones.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(
+          JSON.stringify({
+            ...fixture,
+            project: { ...fixture.project, name: 'Relaciones' },
+            sources: [
+              ...fixture.sources,
+              {
+                ...fixture.sources[0],
+                id: secondId,
+                url: secondUrl,
+                title: secondUrl,
+              },
+            ],
+            annotations: [
+              ...fixture.annotations,
+              {
+                ...annotation,
+                id: '00000000-0000-4000-8000-000000000011',
+                sourceId: secondId,
+                selectors: {
+                  ...annotation.selectors,
+                  quote: {
+                    ...annotation.selectors.quote,
+                    prefix: 'Instalaron ',
+                    exact: secondQuote,
+                  },
+                  position: {
+                    ...annotation.selectors.position,
+                    start: 'Instalaron '.length,
+                    end: 'Instalaron '.length + secondQuote.length,
+                  },
+                },
+              },
+            ],
+          }),
+        ),
+      });
+      await importProject.click();
+      await expect(panel.locator('#transfer-status')).toHaveText(
+        'Copia del proyecto importada.',
+      );
+      await project.selectOption({ label: 'Relaciones' });
+      if (!(await panel.locator('#evidence-search').isVisible()))
+        await evidenceEntry.click();
+      await panel.getByLabel('Texto de la cita o nota').fill('');
+      await panel
+        .locator('#evidence-search')
+        .getByRole('button', { name: 'Buscar', exact: true })
+        .click();
+      const origin = panel
+        .locator('#evidence-results li')
+        .filter({ hasText: 'Faltan rampas' });
+      const relate = origin.getByRole('button', {
+        name: 'Relacionar con otra cita',
+      });
+      await expect(relate).toBeVisible();
+      await relate.press('Enter');
+      const relation = panel.getByRole('region', { name: 'Relacionar citas' });
+      await expect(relation.getByText('Paso 2 de 4')).toBeVisible();
+      const originCategories = relation.locator(
+        '#relation-origin .citation-category',
+      );
+      await expect(
+        originCategories
+          .filter({ hasText: 'Accesibilidad' })
+          .locator('.citation-swatch'),
+      ).toHaveCSS('background-color', 'rgb(253, 216, 53)');
+      await expect(
+        originCategories
+          .filter({ hasText: 'Transporte público' })
+          .locator('.citation-swatch'),
+      ).toHaveCSS('background-color', 'rgb(129, 212, 250)');
+
+      await expect(panel.locator('#panel-evidence')).toBeHidden();
+      await relation.getByLabel('Buscar citas guardadas').fill('informe');
+      const candidate = relation
+        .locator('#relation-results li')
+        .filter({ hasText: secondQuote });
+      await expect(candidate.locator('.relation-source')).toHaveText(
+        'example.org/informe',
+      );
+      await expect(candidate).not.toContainText('tracking=');
+      await expect(candidate.locator('.relation-exact blockquote')).toHaveText(
+        '«rampas»',
+      );
+      const surrounding = candidate.locator('.relation-surrounding');
+      await expect(surrounding.locator('p')).toBeHidden();
+      await surrounding.getByText('Ver contexto').press('Enter');
+      await expect(surrounding.locator('p')).toBeVisible();
+      await expect(surrounding.locator('p')).toHaveText(
+        '…Instalaron rampas en la estación.…',
+      );
+      await expect(surrounding.locator('mark')).toHaveText('rampas');
+
+      await relation
+        .getByRole('button', { name: 'Elegir cita' })
+        .press('Enter');
+      await relation
+        .getByLabel('Tipo de relación', { exact: true })
+        .selectOption('__new__');
+      await relation
+        .getByLabel('Nombre del tipo')
+        .fill('Actualiza el diagnóstico');
+      await relation
+        .getByLabel('Definición')
+        .fill('Aporta información posterior');
+      await expect(relation.getByText('Paso 3 de 4')).toBeVisible();
+      await relation
+        .getByRole('button', { name: 'Revisar vínculo' })
+        .press('Enter');
+      await expect(relation.getByText('Paso 4 de 4')).toBeVisible();
+      await expect(relation.getByText('Cita A → Cita B')).toBeVisible();
+      await relation
+        .getByRole('button', { name: 'Invertir citas' })
+        .press('Enter');
+      await panel.evaluate(() => {
+        const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+        chrome.runtime.sendMessage = ((message: { type?: string }) => {
+          if (message.type === 'relations.createWithType') {
+            chrome.runtime.sendMessage = send;
+            return Promise.resolve({ kind: 'error' });
+          }
+          return send(message);
+        }) as typeof chrome.runtime.sendMessage;
+      });
+      const save = relation.getByRole('button', { name: 'Guardar relación' });
+      await save.press('Enter');
+      await expect(relation.getByRole('status').first()).toHaveText(
+        /No se pudo guardar/,
+      );
+      await expect(relation.getByLabel('Nombre del tipo')).toHaveValue(
+        'Actualiza el diagnóstico',
+      );
+      await save.press('Enter');
+      await expect(relation.getByRole('status').first()).toHaveText(
+        'Vínculo guardado.',
+      );
+      await expect(
+        relation.getByText('Actualiza el diagnóstico · Hacia esta cita'),
+      ).toBeVisible();
+      await relation
+        .getByRole('button', { name: 'Cerrar', exact: true })
+        .press('Enter');
+      const other = panel
+        .locator('#evidence-results li')
+        .filter({ hasText: secondUrl });
+      await other
+        .getByRole('button', { name: 'Relacionar con otra cita' })
+        .press('Enter');
+      await expect(
+        relation.getByText('Actualiza el diagnóstico · Desde esta cita'),
+      ).toBeVisible();
+      expect(
+        await panel.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(320);
       expect(unexpectedTraffic).toEqual([]);
     } finally {
       await context.close();

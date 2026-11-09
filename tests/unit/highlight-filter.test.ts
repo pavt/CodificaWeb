@@ -20,7 +20,7 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
   });
   const filter = document.createElement('select');
   const status = document.createElement('p');
-  const controls = createHighlightFilter(filter, status);
+  const controls = createHighlightFilter(filter, status, vi.fn());
   const target = { tabId: 7, documentId: 'doc', url: 'https://example.test/' };
   const codes = [
     {
@@ -68,7 +68,7 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
 
 test('Q05: conserva el orden de las citas y limpia el panel al cambiar de documento', async () => {
   document.body.innerHTML =
-    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details><section id="citation-inspection" hidden><p id="citation-inspection-quote"></p><div id="citation-inspection-categories"></div><div id="citation-inspection-detail" hidden><strong id="citation-inspection-name"></strong><p id="citation-inspection-definition"></p></div><button id="citation-inspection-close">Cerrar</button></section>';
+    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details><section id="citation-inspection" hidden><p id="citation-inspection-quote"></p><div id="citation-inspection-categories"></div><div id="citation-inspection-detail" hidden><strong id="citation-inspection-name"></strong><p id="citation-inspection-definition"></p></div></section>';
   const filter = document.querySelector('select') as HTMLSelectElement;
   const status = document.querySelector('#status') as HTMLElement;
   const citations = document.querySelector('#page-citations') as HTMLElement;
@@ -106,7 +106,7 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
     tabs: { query, sendMessage: paint },
     runtime: { sendMessage: read },
   });
-  const controller = createHighlightFilter(filter, status);
+  const controller = createHighlightFilter(filter, status, vi.fn());
   controller.track(target);
   await vi.waitFor(() => expect(citations.hidden).toBe(false));
   expect(
@@ -121,14 +121,21 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
   expect(controller.inspect('0')).toBe(true);
   const inspection = document.querySelector('#citation-inspection');
   expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  controller.endPreview();
+  expect(inspection?.hasAttribute('hidden')).toBe(true);
+  expect(controller.inspect('0')).toBe(true);
   inspection
     ?.querySelector('button[data-category]')
     ?.dispatchEvent(new Event('click'));
   expect(
     inspection?.querySelector('#citation-inspection-definition')?.textContent,
   ).toBe('Sin definición');
+  controller.endPreview();
+  expect(inspection?.hasAttribute('hidden')).toBe(false);
   controller.inspect('9');
   expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  expect(controller.inspect('9', undefined, true)).toBe(true);
+  expect(inspection?.querySelector('p')?.textContent).toBe('B'.repeat(200));
   inspection?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   expect(controller.inspect('9')).toBe(true);
   expect(inspection?.querySelector('p')?.textContent).toBe('B'.repeat(200));

@@ -6,6 +6,7 @@ import { mountEvidence } from './evidence-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
 import { mountProjects } from './project-controls';
+import { mountRelations } from './relation-controls';
 import { readSelection } from './read-selection';
 import { mountTransfer } from './transfer-controls';
 import { verifySiteAccess } from './site-access';
@@ -21,10 +22,59 @@ const captureButton = document.getElementById(
 ) as HTMLButtonElement;
 const captureStatus = document.getElementById('capture-status') as HTMLElement;
 const quote = document.getElementById('selection-quote') as HTMLElement;
+const selectionTitle = document.getElementById('selection-title');
 const source = document.getElementById('selection-source') as HTMLElement;
+const relationRoot = document.getElementById('citation-relation');
+const relations = relationRoot && mountRelations(relationRoot);
+const selectionRelation = document.getElementById('selection-relation');
+const inspectionRelation = document.getElementById('inspection-relation');
+
+async function updateSelectionRelation(
+  snapshot: SelectionSnapshot,
+  id: string,
+) {
+  if (!selectionRelation || !relations) return;
+  selectionRelation.hidden = true;
+  try {
+    const response: unknown = await chrome.runtime.sendMessage({
+      type: 'coding.citation',
+      projectId: id,
+      fragment: snapshot,
+    });
+    if (selected !== snapshot || projectId !== id) return;
+    if (
+      isRecord(response) &&
+      response.kind === 'citation' &&
+      typeof response.id === 'string'
+    ) {
+      selectionRelation.replaceChildren(
+        relations.action({
+          id: response.id,
+          quote: snapshot.selectors.quote.exact,
+          url: snapshot.url,
+        }),
+      );
+      selectionRelation.hidden = false;
+    }
+  } catch {
+    // Saved citations are also available through evidence search.
+  }
+}
+
 const highlights = createHighlightFilter(
   document.getElementById('highlight-filter') as HTMLSelectElement,
   document.getElementById('highlight-status') as HTMLElement,
+  (id, quote, url, explicit) => {
+    if (inspectionRelation) inspectionRelation.hidden = !explicit;
+    if (
+      !relations ||
+      !inspectionRelation ||
+      inspectionRelation.dataset.citation === id
+    )
+      return;
+    inspectionRelation.dataset.citation = id;
+    inspectionRelation.replaceChildren(relations.action({ id, quote, url }));
+  },
 );
 const coding = createCodingControls(
   document.getElementById('fragment-codes') as HTMLFieldSetElement,
@@ -32,13 +82,16 @@ const coding = createCodingControls(
   document.getElementById('coding-status') as HTMLElement,
   (target, codes) => {
     highlights.update(target, codes);
+    if (selected && projectId)
+      citationLookup = updateSelectionRelation(selected, projectId);
     const applied = codes.find(({ assigned }) => assigned);
     const card = document.getElementById('quote-card');
-    const title = document.getElementById('selection-title');
-    if (card && title) {
+    if (card && selectionTitle) {
       card.toggleAttribute('data-saved', Boolean(applied));
       if (applied) card.style.setProperty('--category-color', applied.color);
-      title.textContent = applied ? 'Cita guardada' : 'Texto seleccionado';
+      selectionTitle.textContent = applied
+        ? 'Cita guardada'
+        : 'Texto seleccionado';
     }
   },
   ({ projectId }) => {
@@ -55,6 +108,8 @@ const notes = createNoteControls(
   document.getElementById('note-status') as HTMLElement,
 );
 let selected: SelectionSnapshot | undefined;
+let codingRead: Promise<void> | undefined;
+let citationLookup: Promise<void> | undefined;
 let target: CaptureTarget | undefined;
 let projectId: string | null | undefined;
 let direct = false;
@@ -64,7 +119,7 @@ let accessRequest = 0;
 let captureRequest = 0;
 
 const captureMessages = {
-  empty: 'Selecciona texto en la página e inténtalo de nuevo.',
+  empty: 'Selecciona texto en la página para asignarle una categoría.',
   excluded: 'Esta selección incluye contenido editable o excluido.',
   stale:
     'La pestaña o el documento cambió. Vuelve a comprobar el acceso y selecciona texto.',
@@ -74,10 +129,11 @@ const captureMessages = {
 function clearPreview() {
   captureRequest++;
   selected = undefined;
+  codingRead = citationLookup = undefined;
+  if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
   document.getElementById('quote-card')?.removeAttribute('data-saved');
-  const title = document.getElementById('selection-title');
-  if (title) title.textContent = 'Texto seleccionado';
+  if (selectionTitle) selectionTitle.textContent = 'Sin selección';
   source.textContent = '';
   captureStatus.textContent = '';
   coding.clear();
@@ -141,29 +197,43 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-async function captureCurrent() {
+async function captureCurrent(fromUserSelection = false, dismiss = false) {
   const current = target;
   if (!current) return;
   captureButton.disabled = true;
-  clearPreview();
-  const request = captureRequest;
+  const request = ++captureRequest;
   const result = await readSelection(current);
   if (target !== current || request !== captureRequest) return;
   captureButton.disabled = false;
+  if (fromUserSelection && !dismiss && result.kind === 'empty' && selected) {
+    // Let the saved citation lookup finish before deciding whether to keep it.
+    await codingRead;
+    await citationLookup;
+    if (target !== current || request !== captureRequest) return;
+    if (selectionRelation?.hidden === false) return;
+  }
+  clearPreview();
 
   if (result.kind === 'selection') {
     selected = result;
+    if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
     quote.textContent = result.selectors.quote.exact;
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
-    void coding.show(current, result);
+    if (fromUserSelection && relations?.hasSavedView()) {
+      relations.dismissSavedView();
+      document
+        .getElementById('quote-card')
+        ?.scrollIntoView({ block: 'nearest' });
+    }
+    codingRead = coding.show(current, result);
     void notes.show(current, result);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
   }
 }
 
-captureButton.addEventListener('click', () => void captureCurrent());
+captureButton.addEventListener('click', () => void captureCurrent(true));
 
 function resetTarget() {
   target = undefined;
@@ -224,7 +294,7 @@ async function attachActiveTab() {
 const evidence = document.getElementById(
   'evidence-search',
 ) as HTMLFormElement | null;
-const refreshEvidence = evidence && mountEvidence(evidence);
+const refreshEvidence = evidence && mountEvidence(evidence, relations?.action);
 const catalog = document.getElementById(
   'catalog',
 ) as HTMLFieldSetElement | null;
@@ -246,6 +316,7 @@ if (projects) {
     if (projectId === id) return;
     const loadingInitialProject = projectId === undefined;
     projectId = id;
+    relations?.setProject(id);
     setCatalogProject?.(id);
     setTransferProject?.(id);
     refreshEvidence?.(id);
@@ -306,15 +377,28 @@ if (chrome.tabs?.onActivated) {
       target &&
       sender.tab?.id === target.tabId &&
       sender.documentId === target.documentId &&
-      sender.url === target.url &&
-      typeof message.id === 'string'
+      sender.url === target.url
     ) {
-      if (message.type === 'citation.preview') highlights.inspect(message.id);
-      if (
+      if (message.type === 'citation.preview.end') highlights.endPreview();
+      const categoryId =
         message.type === 'citation.open' &&
         typeof message.categoryId === 'string'
-      )
-        respond(highlights.inspect(message.id, message.categoryId));
+          ? message.categoryId
+          : undefined;
+      if (
+        typeof message.id === 'string' &&
+        (message.type === 'citation.preview' || categoryId !== undefined)
+      ) {
+        const savedView = relations?.hasSavedView() === true;
+        const inspected = highlights.inspect(message.id, categoryId, savedView);
+        if (inspected && savedView) {
+          relations?.dismissSavedView();
+          document
+            .getElementById('citation-inspection')
+            ?.scrollIntoView({ block: 'nearest' });
+        }
+        if (categoryId !== undefined) respond(inspected);
+      }
     }
     if (
       message.type === 'capture.changed' &&
@@ -323,6 +407,6 @@ if (chrome.tabs?.onActivated) {
       sender.tab?.id === target.tabId &&
       sender.documentId === target.documentId
     )
-      void captureCurrent();
+      void captureCurrent(true, message.dismiss === true);
   });
 }

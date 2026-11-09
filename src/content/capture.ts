@@ -104,7 +104,7 @@ function sameAnchor(first: CaptureResult, second: CaptureResult) {
   );
 }
 
-export function observeSelection(onCommit?: () => void) {
+export function observeSelection(onCommit?: (dismiss: boolean) => void) {
   let revision = 0;
   const observer = new MutationObserver(() => revision++);
   observer.observe(document, {
@@ -121,6 +121,7 @@ export function observeSelection(onCommit?: () => void) {
   };
   let snapshot: CaptureResult = { kind: 'empty' };
   let range: Range | undefined;
+  let canDismiss = false;
   let validatedRevision = 0;
   let visible = '';
   const update = () => {
@@ -137,19 +138,22 @@ export function observeSelection(onCommit?: () => void) {
         : captureRange(selected, validatedRevision, visible);
     if (!sameAnchor(snapshot, latest)) snapshot = latest;
     range = snapshot.kind === 'selection' ? selected?.cloneRange() : undefined;
+    if (range) canDismiss = true;
   };
   update();
   let published: CaptureResult = snapshot;
   let pending: ReturnType<typeof setTimeout> | undefined;
-  const publish = () => {
+  const publish = (dismiss = false) => {
     clearTimeout(pending);
     if (
-      published === snapshot ||
-      (published.kind !== 'selection' && published.kind === snapshot.kind)
+      !dismiss &&
+      (published === snapshot ||
+        (published.kind !== 'selection' && published.kind === snapshot.kind))
     )
       return;
     published = snapshot;
-    onCommit?.();
+    if (dismiss) canDismiss = false;
+    onCommit?.(dismiss);
   };
   const onSelectionChange = () => {
     // Chrome may collapse the DOM selection as focus moves to the side panel.
@@ -166,7 +170,13 @@ export function observeSelection(onCommit?: () => void) {
   const commit = (event: Event) => {
     if (isMarginInteraction(event)) return;
     update();
-    publish();
+    publish(
+      canDismiss &&
+        snapshot.kind === 'empty' &&
+        event.type === 'pointerup' &&
+        event instanceof MouseEvent &&
+        event.button === 0,
+    );
   };
   document.addEventListener('selectionchange', onSelectionChange);
   document.addEventListener('pointerup', commit, true);

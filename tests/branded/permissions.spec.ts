@@ -406,12 +406,28 @@ for (const [name, executable] of browsers) {
         await page.mouse.move(underline.x, underline.y);
         await expect.poll(inspect).toBe(citation);
         expect(
+          await readPanel(
+            "document.querySelector('#inspection-relation').hidden",
+          ),
+        ).toBe(true);
+
+        expect(
+          await readPanel(
+            "document.querySelector('#citation-inspection').textContent.includes('Cerrar ficha')",
+          ),
+        ).toBe(false);
+
+        expect(
           await readPanel(`(() => {
           const card = document.querySelector('#citation-inspection').getBoundingClientRect();
           const editor = document.querySelector('#quote-card').getBoundingClientRect();
           return card.top >= 0 && card.top < innerHeight && card.bottom <= editor.top;
         })()`),
         ).toBe(true);
+        await page.locator('aside').hover();
+        await expect.poll(inspect).toBe('');
+        await page.mouse.move(underline.x, underline.y);
+        await expect.poll(inspect).toBe(citation);
         await expect.poll(quote).toBe('Otra cita.');
         await page
           .locator('p')
@@ -429,10 +445,19 @@ for (const [name, executable] of browsers) {
           )
           .toBe('Definición revisada');
         expect(
+          await readPanel(
+            "document.querySelector('#inspection-relation').hidden",
+          ),
+        ).toBe(false);
+
+        await page.locator('aside').hover();
+        await expect.poll(inspect).toBe('Otra cita.');
+
+        expect(
           await readPanel("document.querySelector('#category-name').value"),
         ).toBe('Borrador intacto');
         await readPanel(
-          "document.querySelector('#citation-inspection-close').click()",
+          "document.querySelector('#citation-inspection').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))",
         );
         const marginSession = await context.newCDPSession(page);
         const marginButton = async () => {
@@ -465,7 +490,7 @@ for (const [name, executable] of browsers) {
         await page.mouse.click((left + right) / 2, (top + bottom) / 2);
         await expect.poll(inspect).toBe(citation);
         await readPanel(
-          "document.querySelector('#citation-inspection-close').click()",
+          "document.querySelector('#citation-inspection').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))",
         );
         await marginSession.send('DOM.focus', { nodeId: await marginButton() });
         await page.keyboard.press('Enter');
@@ -579,6 +604,117 @@ for (const [name, executable] of browsers) {
         await readPanel(
           "document.querySelector('#category-create').requestSubmit()",
         );
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
+        // Q16: a saved relationship must give way to the next real hover.
+        const saveRelationship = async (typeName: string) => {
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#selection-relation').hidden"),
+            )
+            .toBe(false);
+          await readPanel(
+            "document.querySelector('#selection-relation button').click()",
+          );
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-results li button')?.textContent",
+              ),
+            )
+            .toBe('Elegir cita');
+          await readPanel(
+            "document.querySelector('#relation-results li button').click()",
+          );
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-type').options.length",
+              ),
+            )
+            .toBeGreaterThan(1);
+          await readPanel(`(() => {
+          const type = document.querySelector('#relation-type');
+          type.value = '__new__';
+          type.dispatchEvent(new Event('change'));
+          document.querySelector('#relation-type-name').value = '${typeName}';
+          document.querySelector('#relation-review-button').click();
+          document.querySelector('#relation-submit').click();
+        })()`);
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-status').textContent",
+              ),
+            )
+            .toBe('Vínculo guardado.');
+        };
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#selection-relation').hidden"),
+          )
+          .toBe(false);
+        await page.evaluate(() => window.getSelection()?.removeAllRanges());
+        await expect
+          .poll(() => page.evaluate(() => window.getSelection()?.isCollapsed))
+          .toBe(true);
+        await page.waitForTimeout(200);
+        await expect.poll(quote).toBe('Página siguiente.');
+        await page.locator('p').first().click();
+        await expect.poll(quote).toBe('');
+        await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
+        await saveRelationship('Complementa');
+        await page
+          .locator('p')
+          .first()
+          .hover({ position: { x: 12, y: 8 } });
+        await expect.poll(inspect).toBe('Página siguiente.');
+        await expect
+          .poll(() =>
+            readPanel(
+              "getComputedStyle(document.querySelector('#citation-inspection')).display",
+            ),
+          )
+          .not.toBe('none');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#citation-relation').hidden"),
+          )
+          .toBe(true);
+        await saveRelationship('Amplía');
+        await page
+          .locator('p')
+          .first()
+          .evaluate((paragraph) => {
+            const node = paragraph.firstChild;
+            if (!node) throw new Error('Falta el texto de la página.');
+            const range = document.createRange();
+            range.setStart(node, 0);
+            range.setEnd(node, 'Página'.length);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          });
+        await expect.poll(quote).toBe('Página');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#citation-relation').hidden"),
+          )
+          .toBe(true);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Después del vínculo';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
         await expect
           .poll(() =>
             readPanel("document.querySelector('#coding-status').textContent"),

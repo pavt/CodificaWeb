@@ -38,6 +38,7 @@ export async function handleCodingRequest(
 ): Promise<
   | { kind: 'codings'; codes: CodeAssignment[] }
   | { kind: 'highlights'; entries: HighlightEntry[]; projectId: string | null }
+  | { kind: 'citation'; id: string | null }
   | { kind: 'note'; note: string | null }
   | { kind: 'error' }
 > {
@@ -65,6 +66,11 @@ export async function handleCodingRequest(
   if (!projectId) return error;
   const fragment = decodeFragment(message.fragment);
   if (!fragment) return error;
+  if (message.type === 'coding.citation')
+    return {
+      kind: 'citation',
+      id: await codings.citationId(projectId, fragment),
+    };
   if (message.type === 'note.read') {
     return {
       kind: 'note',

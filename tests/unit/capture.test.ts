@@ -114,6 +114,15 @@ test('Q03: una página que consume pointerup aún entrega la selección al panel
     select('strong');
     selected?.dispatchEvent(new Event('pointerup', { bubbles: true }));
     expect(onCommit).toHaveBeenCalledOnce();
+    window.getSelection()?.removeAllRanges();
+    document.dispatchEvent(new KeyboardEvent('keyup'));
+    expect(onCommit).toHaveBeenLastCalledWith(false);
+    document.dispatchEvent(new MouseEvent('pointerup', { button: 2 }));
+    expect(onCommit).toHaveBeenCalledTimes(2);
+    document.dispatchEvent(new MouseEvent('pointerup', { button: 0 }));
+    expect(onCommit).toHaveBeenLastCalledWith(true);
+    document.dispatchEvent(new MouseEvent('pointerup', { button: 0 }));
+    expect(onCommit).toHaveBeenCalledTimes(3);
   } finally {
     capture.stop();
   }

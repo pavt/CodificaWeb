@@ -86,6 +86,7 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
   const captureButton = Object.assign(new EventTarget(), { disabled: true });
   const status = { textContent: '' };
   const quote = { textContent: '' };
+  const title = { textContent: '' };
   const source = { textContent: '' };
   const url = 'https://example.test/articulo';
   const elements = new Map<string, unknown>([
@@ -96,6 +97,7 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     ['capture-selection', captureButton],
     ['capture-status', status],
     ['selection-quote', quote],
+    ['selection-title', title],
     ['fragment-codes', { disabled: true, querySelector: () => null }],
     ['coding-options', { replaceChildren: vi.fn() }],
     ['coding-status', { textContent: '' }],
@@ -130,7 +132,8 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
         position: { type: 'TextPositionSelector', start: 0, end: 11 },
       },
     })
-    .mockResolvedValueOnce({ kind: 'excluded' });
+    .mockResolvedValueOnce({ kind: 'excluded' })
+    .mockResolvedValueOnce({ kind: 'empty' });
   vi.stubGlobal('chrome', {
     permissions: { request: vi.fn().mockResolvedValue(true) },
     scripting: { executeScript },
@@ -158,6 +161,7 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     expect(status.textContent).toBe('Selección capturada.'),
   );
   expect(quote.textContent).toBe('<b>cita</b>');
+  expect(title.textContent).toBe('Texto seleccionado');
   expect(source.textContent).toBe(url);
 
   captureButton.dispatchEvent(new Event('click'));
@@ -166,6 +170,13 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
   );
   expect(quote.textContent).toBe('');
   expect(source.textContent).toBe('');
+
+  captureButton.dispatchEvent(new Event('click'));
+  await vi.waitFor(() =>
+    expect(status.textContent).toContain('Selecciona texto'),
+  );
+  expect(title.textContent).toBe('Sin selección');
+  expect(quote.textContent).toBe('');
 });
 
 test('Q03 y Q11: actualiza la selección directa y descarta pestañas o documentos obsoletos', async () => {
@@ -280,6 +291,25 @@ test('Q03 y Q11: actualiza la selección directa y descarta pestañas o document
     { id: 'extension', tab: { id: 7 } as chrome.tabs.Tab, documentId: 'doc' },
   );
   await vi.waitFor(() => expect(quote.textContent).toBe('Cita nueva'));
+
+  sendMessage.mockResolvedValueOnce({ kind: 'empty' });
+  notify?.(
+    { type: 'capture.changed' },
+    { id: 'extension', tab: { id: 7 } as chrome.tabs.Tab, documentId: 'doc' },
+  );
+  await vi.waitFor(() => expect(quote.textContent).toBe(''));
+
+  const currentSender = {
+    id: 'extension',
+    tab: { id: 7 } as chrome.tabs.Tab,
+    documentId: 'doc',
+  };
+  sendMessage.mockResolvedValueOnce(selection('Cita recuperada'));
+  notify?.({ type: 'capture.changed' }, currentSender);
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita recuperada'));
+  sendMessage.mockResolvedValueOnce({ kind: 'empty' });
+  notify?.({ type: 'capture.changed', dismiss: true }, currentSender);
+  await vi.waitFor(() => expect(quote.textContent).toBe(''));
 
   query.mockResolvedValue([{ id: 8 }]);
   activate?.();

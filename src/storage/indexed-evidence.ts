@@ -25,10 +25,10 @@ export class IndexedEvidence {
       async () => {
         const sources = (
           await db.sources.where('projectId').equals(projectId).sortBy('url')
-        ).map(({ id, url }) => ({ id, url }));
+        ).map(({ id, url, title }) => ({ id, url, title }));
         const codes = (
           await db.codes.where('projectId').equals(projectId).sortBy('nameKey')
-        ).map(({ id, name }) => ({ id, name }));
+        ).map(({ id, name, color }) => ({ id, name, color }));
         const annotations = (
           await db.annotations
             .where('projectId')
@@ -61,6 +61,14 @@ export class IndexedEvidence {
                     sourceId,
                     url: source.url,
                     quote: selectors.quote.exact,
+                    ...(selectors.quote.exact.length < 80
+                      ? {
+                          context: {
+                            prefix: selectors.quote.prefix,
+                            suffix: selectors.quote.suffix,
+                          },
+                        }
+                      : {}),
                     note: note ?? null,
                     codes: byAnnotation.get(id) ?? [],
                   },

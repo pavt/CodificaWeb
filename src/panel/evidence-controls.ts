@@ -1,5 +1,8 @@
 import { isRecord } from '../capture-contract';
-import type { EvidenceResult } from '../domain/evidence-search';
+import type {
+  EvidenceCategory,
+  EvidenceResult,
+} from '../domain/evidence-search';
 
 function isSource(value: unknown): value is { id: string; url: string } {
   return (
@@ -9,15 +12,17 @@ function isSource(value: unknown): value is { id: string; url: string } {
   );
 }
 
-function isCode(value: unknown): value is { id: string; name: string } {
+function isCode(value: unknown): value is EvidenceCategory {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
-    typeof value.name === 'string'
+    typeof value.name === 'string' &&
+    typeof value.color === 'string' &&
+    /^#[0-9a-f]{6}$/i.test(value.color)
   );
 }
 
-function isEvidence(value: unknown): value is EvidenceResult {
+export function isEvidence(value: unknown): value is EvidenceResult {
   return (
     isSource(value) &&
     'sourceId' in value &&
@@ -28,7 +33,11 @@ function isEvidence(value: unknown): value is EvidenceResult {
     (value.note === null || typeof value.note === 'string') &&
     'codes' in value &&
     Array.isArray(value.codes) &&
-    value.codes.every(isCode)
+    value.codes.every(isCode) &&
+    (!('context' in value) ||
+      (isRecord(value.context) &&
+        typeof value.context.prefix === 'string' &&
+        typeof value.context.suffix === 'string'))
   );
 }
 
@@ -51,7 +60,10 @@ const navigationMessages: Record<string, string> = {
   unavailable: 'No se pudo abrir la fuente.',
 };
 
-export function mountEvidence(root: HTMLFormElement) {
+export function mountEvidence(
+  root: HTMLFormElement,
+  relationAction?: (row: EvidenceResult) => HTMLElement,
+) {
   const fields = root.querySelector('fieldset') as HTMLFieldSetElement;
   const query = root.querySelector('#evidence-text') as HTMLInputElement;
   const code = root.querySelector('#evidence-code') as HTMLSelectElement;
@@ -145,7 +157,9 @@ export function mountEvidence(root: HTMLFormElement) {
             open.disabled = false;
           }
         });
-        item.append(open, navigation);
+        item.append(open);
+        if (relationAction) item.append(relationAction(row));
+        item.append(navigation);
         list.append(item);
       }
       status.textContent = result.results.length
