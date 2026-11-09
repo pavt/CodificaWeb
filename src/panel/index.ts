@@ -241,6 +241,7 @@ function resetTarget() {
   clearPreview();
   captureButton.disabled = true;
   input.value = '';
+  if (direct) form.hidden = true;
 }
 
 async function attachActiveTab() {
@@ -279,6 +280,7 @@ async function attachActiveTab() {
       ...(projectId ? { projectId } : {}),
     };
     input.value = tab.url;
+    form.hidden = false;
     button.disabled = false;
     status.textContent = '';
     captureButton.disabled = projectId === null;
@@ -339,7 +341,9 @@ if (chrome.tabs?.onActivated) {
     .then((tab) => {
       if (tab) return;
       direct = true;
-      document.getElementById('panel-tools')?.removeAttribute('open');
+      captureButton.hidden = true;
+      form.hidden = true;
+      document.getElementById('project-menu-content')?.append(form);
       if (accessRequest === 0) void attachActiveTab();
     })
     .catch(() => undefined);

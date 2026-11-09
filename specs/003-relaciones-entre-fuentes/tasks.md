@@ -42,3 +42,5 @@ La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa
 **Deselección deliberada.** Q03 y Q16 distinguen el clic primario en la página sin selección, que limpia la cita del panel, de la pérdida de selección al cambiar el foco, que conserva la cita guardada para relacionarla.
 
 **Color al volver a seleccionar.** Q06 reproduce una cita desplazada por texto insertado y comprueba que el panel recupera su categoría y su color al volver a seleccionar el tramo exacto. Si hay varias citas en el mismo tramo, el panel no elige un anclaje alternativo.
+
+**[T027 · #55](https://github.com/pavt/CodificaWeb/issues/55) · Simplificar el panel.** Depende de T026. FR-15/CA-15. Q08, Q10, Q11 y Q16 en `tests/e2e/selection.spec.ts`, `tests/e2e/mv3.spec.ts` y `tests/branded/permissions.spec.ts`. La primera ejecución detectó el rótulo y la organización anterior.

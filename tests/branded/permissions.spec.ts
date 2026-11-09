@@ -264,6 +264,20 @@ for (const [name, executable] of browsers) {
           readPanel("document.querySelector('#selection-quote')?.textContent");
         await expect.poll(quote).toBe(citation);
         expect(
+          await readPanel("document.querySelector('#panel-tools').open"),
+        ).toBe(false);
+        expect(
+          await readPanel(
+            "document.querySelector('#site-access').closest('#panel-tools') !== null",
+          ),
+        ).toBe(true);
+        expect(
+          await readPanel(
+            "document.querySelector('#fragment-note').closest('section') === document.querySelector('#quote-card').closest('section')",
+          ),
+        ).toBe(true);
+
+        expect(
           await readPanel("document.querySelector('#site-url-field').hidden"),
         ).toBe(true);
         await expect

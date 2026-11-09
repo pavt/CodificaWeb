@@ -177,8 +177,31 @@ button:disabled {
   cursor: pointer;
   color: #526760;
 }
-#panel-tools[open] > :not(summary) {
-  margin-block-start: 8px;
+#project-bar {
+  position: relative;
+  min-block-size: 2rem;
+}
+#active-project-label {
+  padding-block: 6px;
+  padding-inline-end: 6rem;
+}
+#panel-tools > summary {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  padding: 4px 8px;
+  border: 1px solid #ccdcd2;
+  border-radius: 6px;
+  background: white;
+}
+#project-menu-content {
+  display: grid;
+  gap: 8px;
+  margin-block-start: 6px;
+  min-inline-size: 0;
+}
+section:has(#selection-quote:empty) #fragment-note {
+  display: none;
 }
 
 .definition-edit {
@@ -295,7 +318,8 @@ section:has(#category-assign[hidden]) .saved-next-step {
 }
 
 main:has(> #citation-relation:not([hidden]))
-  > :not(h1, #active-project-label, #citation-relation) {
+  > :not(h1, #project-bar, #citation-relation),
+main:has(> #citation-relation:not([hidden])) #panel-tools {
   display: none;
 }
 #citation-relation {
