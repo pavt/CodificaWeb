@@ -88,6 +88,10 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(panel.locator('#capture-status')).toContainText(
         'Selecciona texto',
       );
+      await expect(panel.locator('#selection-title')).toHaveText(
+        'Sin selección',
+      );
+      await expect(panel.locator('#selection-quote')).toBeHidden();
 
       await source.bringToFront();
       const [start, end] = await source

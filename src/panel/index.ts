@@ -22,6 +22,7 @@ const captureButton = document.getElementById(
 ) as HTMLButtonElement;
 const captureStatus = document.getElementById('capture-status') as HTMLElement;
 const quote = document.getElementById('selection-quote') as HTMLElement;
+const selectionTitle = document.getElementById('selection-title');
 const source = document.getElementById('selection-source') as HTMLElement;
 const relationRoot = document.getElementById('citation-relation');
 const relations = relationRoot && mountRelations(relationRoot);
@@ -84,11 +85,12 @@ const coding = createCodingControls(
       void updateSelectionRelation(selected, projectId);
     const applied = codes.find(({ assigned }) => assigned);
     const card = document.getElementById('quote-card');
-    const title = document.getElementById('selection-title');
-    if (card && title) {
+    if (card && selectionTitle) {
       card.toggleAttribute('data-saved', Boolean(applied));
       if (applied) card.style.setProperty('--category-color', applied.color);
-      title.textContent = applied ? 'Cita guardada' : 'Texto seleccionado';
+      selectionTitle.textContent = applied
+        ? 'Cita guardada'
+        : 'Texto seleccionado';
     }
   },
   ({ projectId }) => {
@@ -114,7 +116,7 @@ let accessRequest = 0;
 let captureRequest = 0;
 
 const captureMessages = {
-  empty: 'Selecciona texto en la página e inténtalo de nuevo.',
+  empty: 'Selecciona texto en la página para asignarle una categoría.',
   excluded: 'Esta selección incluye contenido editable o excluido.',
   stale:
     'La pestaña o el documento cambió. Vuelve a comprobar el acceso y selecciona texto.',
@@ -127,8 +129,7 @@ function clearPreview() {
   if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
   document.getElementById('quote-card')?.removeAttribute('data-saved');
-  const title = document.getElementById('selection-title');
-  if (title) title.textContent = 'Texto seleccionado';
+  if (selectionTitle) selectionTitle.textContent = 'Sin selección';
   source.textContent = '';
   captureStatus.textContent = '';
   coding.clear();
@@ -204,6 +205,7 @@ async function captureCurrent(fromUserSelection = false) {
 
   if (result.kind === 'selection') {
     selected = result;
+    if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
     quote.textContent = result.selectors.quote.exact;
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
