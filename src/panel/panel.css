@@ -73,6 +73,8 @@ fieldset {
 }
 #selection-quote {
   margin-top: 8px;
+  max-block-size: 9em;
+  overflow: auto;
   white-space: pre-wrap;
   font-size: 15px;
   font-weight: 600;
