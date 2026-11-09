@@ -40,3 +40,5 @@ La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa
 **Selección persistente de citas guardadas.** Q16 verifica en Chrome y Brave que, al desaparecer la selección del navegador, la cita guardada sigue disponible como origen y permite guardar un vínculo. La vista previa al pasar el cursor es de lectura y la acción está disponible desde una selección guardada o desde la ficha abierta con clic.
 
 **Deselección deliberada.** Q03 y Q16 distinguen el clic primario en la página sin selección, que limpia la cita del panel, de la pérdida de selección al cambiar el foco, que conserva la cita guardada para relacionarla.
+
+**Color al volver a seleccionar.** Q06 reproduce una cita desplazada por texto insertado y comprueba que el panel recupera su categoría y su color al volver a seleccionar el tramo exacto. Si hay varias citas en el mismo tramo, el panel no elige un anclaje alternativo.

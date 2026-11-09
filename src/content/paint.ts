@@ -1,3 +1,4 @@
+import type { SelectionSnapshot } from '../capture-contract';
 import {
   createMarginLabels,
   isPageMutation,
@@ -10,11 +11,18 @@ import { indexDocument } from './text-index';
 export function createPainter() {
   const margin = createMarginLabels();
   const owned = new Map<string, Highlight>();
+  const savedSelectors = new Map<
+    string,
+    SelectionSnapshot['selectors'] | null
+  >();
+  let paintedUrl: string | undefined;
   let sheet: CSSStyleSheet | undefined;
   let observer: MutationObserver | undefined;
 
   function clear() {
     margin.clear();
+    savedSelectors.clear();
+    paintedUrl = undefined;
     for (const [name, highlight] of owned) {
       if (CSS.highlights.get(name) === highlight) CSS.highlights.delete(name);
     }
@@ -43,6 +51,7 @@ export function createPainter() {
     if (!index) return { painted: false, unresolved: 0 };
     const { nodes, text } = index;
 
+    paintedUrl = location.href;
     const ranges = entries.flatMap((entry) => {
       const { id, color, selectors } = entry ?? {};
       const { exact, prefix, suffix } = selectors?.quote ?? {};
@@ -59,6 +68,11 @@ export function createPainter() {
       )
         return [];
       const resolved = resolveAnchor(text, exact, prefix, suffix);
+      if (resolved && selectors.profile === 'dom-text-v1') {
+        const key = `${resolved.start}:${resolved.end}`;
+        // Different saved citations can resolve to the same text. Do not pick one.
+        savedSelectors.set(key, savedSelectors.has(key) ? null : selectors);
+      }
       return resolved
         ? [
             {
@@ -151,5 +165,16 @@ export function createPainter() {
   window.addEventListener('hashchange', clear);
   window.addEventListener('popstate', clear);
   window.addEventListener('pagehide', clear);
-  return { paint, clear };
+  return {
+    paint,
+    clear,
+    restoreSelectionAnchor(selection: SelectionSnapshot): SelectionSnapshot {
+      if (selection.url !== paintedUrl) return selection;
+      const { start, end } = selection.selectors.position;
+      const original = savedSelectors.get(`${start}:${end}`);
+      return original?.quote.exact === selection.selectors.quote.exact
+        ? { ...selection, selectors: original }
+        : selection;
+    },
+  };
 }

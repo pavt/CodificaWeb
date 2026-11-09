@@ -507,6 +507,30 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect
         .poll(() => paintedText('codificaweb-7fc97f'))
         .toBe('🙂 hola');
+      await panel.getByRole('button', { name: 'Comprobar acceso' }).click();
+      await expect(panel.getByRole('status')).toHaveText(
+        'Acceso al sitio verificado.',
+      );
+      await source.locator('#text').evaluate((paragraph) => {
+        const [first, last] = paragraph.querySelectorAll('span');
+        if (!first || !last) throw new Error('Faltan nodos de la cita.');
+        const range = document.createRange();
+        range.setStartBefore(first);
+        range.setEndAfter(last);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      });
+      await capture.click();
+      await expect(panel.locator('#selection-quote')).toHaveText('🙂 hola');
+      await expect(panel.locator('#selection-title')).toHaveText(
+        'Cita guardada',
+      );
+      await expect(panel.getByRole('checkbox', { name: 'Tema' })).toBeChecked();
+      await expect(panel.locator('#saved-color-swatch')).toHaveCSS(
+        'background-color',
+        'rgb(127, 201, 127)',
+      );
       await source.evaluate(() => {
         document.body.textContent = '🙂 hola mundo. 🙂 hola mundo';
       });

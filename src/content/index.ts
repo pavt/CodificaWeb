@@ -17,7 +17,8 @@ if (!world.codificawebCaptureInstalled) {
         .catch(() => undefined);
     });
   };
-  const restoration = startRestoration(createPainter(), startCapture);
+  const painter = createPainter();
+  const restoration = startRestoration(painter, startCapture);
   chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     if (
       sender.id !== chrome.runtime.id ||
@@ -72,8 +73,14 @@ if (!world.codificawebCaptureInstalled) {
       void restoration.restore().then(respond);
       return true;
     }
-    if (message.type === 'capture.read')
-      respond(capture?.read() ?? { kind: 'stale' });
+    if (message.type === 'capture.read') {
+      const selection = capture?.read() ?? { kind: 'stale' as const };
+      respond(
+        selection.kind === 'selection'
+          ? painter.restoreSelectionAnchor(selection)
+          : selection,
+      );
+    }
     if (
       message.type === 'highlight.paint' &&
       'url' in message &&

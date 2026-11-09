@@ -184,3 +184,42 @@ test('Q05: no sobrescribe ni elimina un resaltado ajeno con el mismo nombre', ()
   expect(registry.get('codificaweb-fdd835')).toBe(original);
   expect(registry.get('codificaweb-fdd835-cw')).toBe(replacement);
 });
+
+test('Q06: reutiliza el anclaje guardado solo para una cita repintada y unívoca', () => {
+  const painter = createPainter();
+  const original = {
+    profile: 'dom-text-v1',
+    quote: {
+      type: 'TextQuoteSelector',
+      exact: 'abcd',
+      prefix: '',
+      suffix: 'ef',
+    },
+    position: { type: 'TextPositionSelector', start: 0, end: 4 },
+  } as const;
+  document.body.prepend('Nuevo ');
+  const current = {
+    kind: 'selection',
+    url,
+    revision: 1,
+    selectors: {
+      ...original,
+      position: { ...original.position, start: 6, end: 10 },
+    },
+  } as const;
+  const saved = { ...entry, selectors: original };
+  painter.paint([saved]);
+  expect(painter.restoreSelectionAnchor(current).selectors).toEqual(original);
+  const wrongText = {
+    ...current,
+    selectors: {
+      ...current.selectors,
+      quote: { ...original.quote, exact: 'otro' },
+    },
+  };
+  expect(painter.restoreSelectionAnchor(wrongText)).toBe(wrongText);
+  painter.paint([saved, { ...saved, id: 'duplicate' }]);
+  expect(painter.restoreSelectionAnchor(current)).toBe(current);
+  painter.clear();
+  expect(painter.restoreSelectionAnchor(current)).toBe(current);
+});
