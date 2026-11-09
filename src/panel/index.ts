@@ -391,7 +391,23 @@ if (chrome.tabs?.onActivated) {
         return;
       }
       direct = true;
-      document.getElementById('panel-tools')?.removeAttribute('open');
+      const citations = document.getElementById('page-citations');
+      const filter = document.getElementById('highlight-filter');
+      const quoteCard = document.getElementById('quote-card');
+      const note = document.getElementById('fragment-note');
+      const noteStatus = document.getElementById('note-status');
+      if (citations && filter) {
+        const label = filter.previousElementSibling;
+        const list = document.getElementById('page-citation-list');
+        const filterStatus = document.getElementById('highlight-status');
+        if (label && list && filterStatus)
+          list.before(label, filter, filterStatus);
+      }
+      if (quoteCard && note && noteStatus) {
+        note.classList.add('page-note');
+        quoteCard.after(note, noteStatus);
+      }
+      citations?.append(form);
       if (accessRequest === 0) void attachActiveTab();
     })
     .catch(() => undefined);

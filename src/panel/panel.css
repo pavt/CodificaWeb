@@ -442,3 +442,13 @@ main:has(> #citation-relation:not([hidden]))
   border-color: #265e46;
   font-weight: 650;
 }
+
+.page-note:disabled,
+#note-status:empty {
+  display: none;
+}
+
+.page-note {
+  display: grid;
+  gap: 8px;
+}

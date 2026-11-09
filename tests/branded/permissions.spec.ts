@@ -279,7 +279,10 @@ for (const [name, executable] of browsers) {
             '#active-project-label',
             '#panel-evidence',
             '#projects',
-            '#project-transfer'
+            '#project-transfer',
+            '#panel-tools',
+            '#capture-selection',
+            '#catalog'
           ].every(selector => document.querySelector(selector)?.closest('[hidden]'))`),
         ).toBe(true);
         expect(
@@ -287,6 +290,17 @@ for (const [name, executable] of browsers) {
             "document.querySelector('#page-citations summary').textContent",
           ),
         ).toBe('Citas de esta página');
+        expect(
+          await readPanel(
+            "document.querySelector('#page-citations #highlight-filter') !== null",
+          ),
+        ).toBe(true);
+        expect(
+          await readPanel(
+            "document.querySelector('#quote-card + #fragment-note') !== null",
+          ),
+        ).toBe(true);
+
         expect(
           await readPanel("document.querySelector('#site-url-field').hidden"),
         ).toBe(true);
