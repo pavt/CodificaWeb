@@ -11,9 +11,9 @@ if (!world.codificawebCaptureInstalled) {
   let capture: ReturnType<typeof observeSelection> | undefined;
   let temporary = false;
   const startCapture = () => {
-    capture ??= observeSelection(() => {
+    capture ??= observeSelection((dismiss) => {
       void chrome.runtime
-        .sendMessage({ type: 'capture.changed' })
+        .sendMessage({ type: 'capture.changed', dismiss })
         .catch(() => undefined);
     });
   };

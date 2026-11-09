@@ -197,7 +197,7 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-async function captureCurrent(fromUserSelection = false) {
+async function captureCurrent(fromUserSelection = false, dismiss = false) {
   const current = target;
   if (!current) return;
   captureButton.disabled = true;
@@ -205,7 +205,7 @@ async function captureCurrent(fromUserSelection = false) {
   const result = await readSelection(current);
   if (target !== current || request !== captureRequest) return;
   captureButton.disabled = false;
-  if (fromUserSelection && result.kind === 'empty' && selected) {
+  if (fromUserSelection && !dismiss && result.kind === 'empty' && selected) {
     // Let the saved citation lookup finish before deciding whether to keep it.
     await codingRead;
     await citationLookup;
@@ -407,6 +407,6 @@ if (chrome.tabs?.onActivated) {
       sender.tab?.id === target.tabId &&
       sender.documentId === target.documentId
     )
-      void captureCurrent(true);
+      void captureCurrent(true, message.dismiss === true);
   });
 }

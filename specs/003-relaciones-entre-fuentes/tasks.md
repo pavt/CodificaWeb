@@ -38,3 +38,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa verifica su ausencia y el cierre automático. Escape sigue disponible para una definición abierta en el panel.
 
 **Selección persistente de citas guardadas.** Q16 verifica en Chrome y Brave que, al desaparecer la selección del navegador, la cita guardada sigue disponible como origen y permite guardar un vínculo. La vista previa al pasar el cursor es de lectura y la acción está disponible desde una selección guardada o desde la ficha abierta con clic.
+
+**Deselección deliberada.** Q03 y Q16 distinguen el clic primario en la página sin selección, que limpia la cita del panel, de la pérdida de selección al cambiar el foco, que conserva la cita guardada para relacionarla.

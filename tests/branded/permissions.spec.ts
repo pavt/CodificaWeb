@@ -663,6 +663,10 @@ for (const [name, executable] of browsers) {
           .toBe(true);
         await page.waitForTimeout(200);
         await expect.poll(quote).toBe('Página siguiente.');
+        await page.locator('p').first().click();
+        await expect.poll(quote).toBe('');
+        await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
         await saveRelationship('Complementa');
         await page
           .locator('p')

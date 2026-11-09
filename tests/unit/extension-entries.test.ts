@@ -299,6 +299,18 @@ test('Q03 y Q11: actualiza la selección directa y descarta pestañas o document
   );
   await vi.waitFor(() => expect(quote.textContent).toBe(''));
 
+  const currentSender = {
+    id: 'extension',
+    tab: { id: 7 } as chrome.tabs.Tab,
+    documentId: 'doc',
+  };
+  sendMessage.mockResolvedValueOnce(selection('Cita recuperada'));
+  notify?.({ type: 'capture.changed' }, currentSender);
+  await vi.waitFor(() => expect(quote.textContent).toBe('Cita recuperada'));
+  sendMessage.mockResolvedValueOnce({ kind: 'empty' });
+  notify?.({ type: 'capture.changed', dismiss: true }, currentSender);
+  await vi.waitFor(() => expect(quote.textContent).toBe(''));
+
   query.mockResolvedValue([{ id: 8 }]);
   activate?.();
   expect(quote.textContent).toBe('');
