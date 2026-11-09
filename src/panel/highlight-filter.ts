@@ -9,7 +9,12 @@ import type { CodeAssignment, HighlightCategory } from '../domain/codings';
 export function createHighlightFilter(
   filter: HTMLSelectElement,
   status: HTMLElement,
-  onInspect: (id: string, quote: string, url: string) => void,
+  onInspect: (
+    id: string,
+    quote: string,
+    url: string,
+    explicit: boolean,
+  ) => void,
 ) {
   const citations = document.getElementById('page-citations');
   const list = document.getElementById('page-citation-list');
@@ -85,7 +90,7 @@ export function createHighlightFilter(
       ? selected.description?.trim() || 'Sin definición'
       : '';
     inspection.hidden = false;
-    if (target) onInspect(id, entry.quote, target.url);
+    if (target) onInspect(id, entry.quote, target.url, Boolean(categoryId));
     return true;
   }
 

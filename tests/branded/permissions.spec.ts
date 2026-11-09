@@ -407,6 +407,12 @@ for (const [name, executable] of browsers) {
         await expect.poll(inspect).toBe(citation);
         expect(
           await readPanel(
+            "document.querySelector('#inspection-relation').hidden",
+          ),
+        ).toBe(true);
+
+        expect(
+          await readPanel(
             "document.querySelector('#citation-inspection').textContent.includes('Cerrar ficha')",
           ),
         ).toBe(false);
@@ -438,6 +444,12 @@ for (const [name, executable] of browsers) {
             ),
           )
           .toBe('Definición revisada');
+        expect(
+          await readPanel(
+            "document.querySelector('#inspection-relation').hidden",
+          ),
+        ).toBe(false);
+
         await page.locator('aside').hover();
         await expect.poll(inspect).toBe('Otra cita.');
 
@@ -640,6 +652,17 @@ for (const [name, executable] of browsers) {
             )
             .toBe('Vínculo guardado.');
         };
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#selection-relation').hidden"),
+          )
+          .toBe(false);
+        await page.evaluate(() => window.getSelection()?.removeAllRanges());
+        await expect
+          .poll(() => page.evaluate(() => window.getSelection()?.isCollapsed))
+          .toBe(true);
+        await page.waitForTimeout(200);
+        await expect.poll(quote).toBe('Página siguiente.');
         await saveRelationship('Complementa');
         await page
           .locator('p')

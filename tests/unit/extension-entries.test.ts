@@ -292,6 +292,13 @@ test('Q03 y Q11: actualiza la selección directa y descarta pestañas o document
   );
   await vi.waitFor(() => expect(quote.textContent).toBe('Cita nueva'));
 
+  sendMessage.mockResolvedValueOnce({ kind: 'empty' });
+  notify?.(
+    { type: 'capture.changed' },
+    { id: 'extension', tab: { id: 7 } as chrome.tabs.Tab, documentId: 'doc' },
+  );
+  await vi.waitFor(() => expect(quote.textContent).toBe(''));
+
   query.mockResolvedValue([{ id: 8 }]);
   activate?.();
   expect(quote.textContent).toBe('');

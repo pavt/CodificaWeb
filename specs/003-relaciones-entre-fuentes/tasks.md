@@ -36,3 +36,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Estado sin selección.** La regresión de Q03 comprueba que el panel solo anuncia «Texto seleccionado» tras capturar un fragmento válido. Con la captura vacía muestra «Sin selección» y la instrucción para empezar.
 
 La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa verifica su ausencia y el cierre automático. Escape sigue disponible para una definición abierta en el panel.
+
+**Selección persistente de citas guardadas.** Q16 verifica en Chrome y Brave que, al desaparecer la selección del navegador, la cita guardada sigue disponible como origen y permite guardar un vínculo. La vista previa al pasar el cursor es de lectura y la acción está disponible desde una selección guardada o desde la ficha abierta con clic.

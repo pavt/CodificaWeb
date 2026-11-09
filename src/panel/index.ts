@@ -64,7 +64,8 @@ async function updateSelectionRelation(
 const highlights = createHighlightFilter(
   document.getElementById('highlight-filter') as HTMLSelectElement,
   document.getElementById('highlight-status') as HTMLElement,
-  (id, quote, url) => {
+  (id, quote, url, explicit) => {
+    if (inspectionRelation) inspectionRelation.hidden = !explicit;
     if (
       !relations ||
       !inspectionRelation ||
@@ -82,7 +83,7 @@ const coding = createCodingControls(
   (target, codes) => {
     highlights.update(target, codes);
     if (selected && projectId)
-      void updateSelectionRelation(selected, projectId);
+      citationLookup = updateSelectionRelation(selected, projectId);
     const applied = codes.find(({ assigned }) => assigned);
     const card = document.getElementById('quote-card');
     if (card && selectionTitle) {
@@ -107,6 +108,8 @@ const notes = createNoteControls(
   document.getElementById('note-status') as HTMLElement,
 );
 let selected: SelectionSnapshot | undefined;
+let codingRead: Promise<void> | undefined;
+let citationLookup: Promise<void> | undefined;
 let target: CaptureTarget | undefined;
 let projectId: string | null | undefined;
 let direct = false;
@@ -126,6 +129,7 @@ const captureMessages = {
 function clearPreview() {
   captureRequest++;
   selected = undefined;
+  codingRead = citationLookup = undefined;
   if (selectionRelation) selectionRelation.hidden = true;
   quote.textContent = '';
   document.getElementById('quote-card')?.removeAttribute('data-saved');
@@ -197,11 +201,18 @@ async function captureCurrent(fromUserSelection = false) {
   const current = target;
   if (!current) return;
   captureButton.disabled = true;
-  clearPreview();
-  const request = captureRequest;
+  const request = ++captureRequest;
   const result = await readSelection(current);
   if (target !== current || request !== captureRequest) return;
   captureButton.disabled = false;
+  if (fromUserSelection && result.kind === 'empty' && selected) {
+    // Let the saved citation lookup finish before deciding whether to keep it.
+    await codingRead;
+    await citationLookup;
+    if (target !== current || request !== captureRequest) return;
+    if (selectionRelation?.hidden === false) return;
+  }
+  clearPreview();
 
   if (result.kind === 'selection') {
     selected = result;
@@ -215,7 +226,7 @@ async function captureCurrent(fromUserSelection = false) {
         .getElementById('quote-card')
         ?.scrollIntoView({ block: 'nearest' });
     }
-    void coding.show(current, result);
+    codingRead = coding.show(current, result);
     void notes.show(current, result);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
