@@ -17,6 +17,7 @@
     "coverage": "vitest run --coverage",
     "build": "vite build",
     "test:e2e": "playwright test",
+    "test:selection": "playwright test --config playwright.branded.config.ts --grep \"Chromium de Playwright\"",
     "test:e2e:branded": "playwright test --config playwright.branded.config.ts",
     "audit": "pnpm audit",
     "mcp:playwright": "playwright-mcp --isolated --headless --browser chrome"

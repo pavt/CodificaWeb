@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
 const browsers = [
+  ['Chromium de Playwright', chromium.executablePath()],
   ['Google Chrome', process.env.CODIFICAWEB_CHROME_BIN],
   ['Brave Browser', process.env.CODIFICAWEB_BRAVE_BIN],
 ] as const;
@@ -17,13 +18,15 @@ const citation = 'Cita sintética T015';
 const origins = ['http://127.0.0.1/*'];
 
 for (const [name, executable] of browsers) {
-  test(`Q11 y Q14 · paquete MV3 en ${name}`, async () => {
-    const profile = await mkdtemp(resolve(tmpdir(), 'codificaweb-branded-'));
+  test(`Regresión de selección y permisos en ${name}`, async () => {
+    const profile = await mkdtemp(resolve(tmpdir(), 'codificaweb-native-'));
+    const bundled = name === 'Chromium de Playwright';
     const child = spawn(
       executable ?? `/Applications/${name}.app/Contents/MacOS/${name}`,
       [
         `--user-data-dir=${profile}`,
         '--headless',
+        ...(bundled ? ['--no-sandbox'] : []),
         '--window-size=1200,800',
         '--remote-debugging-port=0',
         '--enable-unsafe-extension-debugging',

@@ -7,3 +7,5 @@
 Q18 reproduce el arrastre real con el alta pendiente. El panel muestra el texto antes de confirmar el proyecto o documento y habilita las categorías al completar el alta. Al cambiar de proyecto, el panel espera una selección nueva.
 
 Q18 comprueba el estado al llegar, antes de seleccionar, y el regreso a una página con citas. También cubre proyectos guardados, búsqueda por nombre y selección con teclado, páginas que pertenecen a otro proyecto y descarte de respuestas obsoletas. IndexedDB agrega un índice de URL para consultar fuentes existentes sin reescribir sus registros.
+
+Q18 también se ejecuta de forma permanente en CI mediante `pnpm test:selection`. Usa el panel lateral nativo del Chromium de Playwright y comprueba la selección desde la página, el alta, el etiquetado y el regreso a un documento guardado. El recorrido anterior en pestaña sigue cubriendo la exportación y la gestión de proyectos.
