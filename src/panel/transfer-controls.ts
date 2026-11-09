@@ -1,3 +1,4 @@
+import { createProjectZip } from '../domain/project-zip';
 import { isRecord } from '../capture-contract';
 import { maxProjectBytes } from '../domain/project-file-limits';
 
@@ -9,6 +10,7 @@ export function mountTransfer(root: HTMLElement) {
   const exportButton = root.querySelector(
     '#project-export',
   ) as HTMLButtonElement;
+  const download = root.querySelector<HTMLButtonElement>('#project-download');
   const status = root.querySelector('#transfer-status') as HTMLElement;
   let projectId: string | null = null;
   let busy = false;
@@ -16,6 +18,7 @@ export function mountTransfer(root: HTMLElement) {
   function updateButtons() {
     importButton.disabled = busy || !file.files?.length;
     exportButton.disabled = busy || !projectId;
+    if (download) download.disabled = exportButton.disabled;
   }
 
   file.addEventListener('change', updateButtons);
@@ -50,7 +53,7 @@ export function mountTransfer(root: HTMLElement) {
     }
   });
 
-  exportButton.addEventListener('click', async () => {
+  async function exportProject(zip: boolean) {
     if (!projectId || busy) return;
     busy = true;
     updateButtons();
@@ -67,12 +70,17 @@ export function mountTransfer(root: HTMLElement) {
       ) {
         throw new Error('Exportación no válida.');
       }
+      const archive = zip ? createProjectZip(reply.json) : undefined;
       const url = URL.createObjectURL(
-        new Blob([reply.json], { type: 'application/json' }),
+        archive
+          ? new Blob([Uint8Array.from(archive.bytes)], {
+              type: 'application/zip',
+            })
+          : new Blob([reply.json], { type: 'application/json' }),
       );
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'codificaweb-proyecto-v2.json';
+      link.download = archive?.filename ?? 'codificaweb-proyecto-v2.json';
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       status.textContent = 'Proyecto exportado.';
@@ -82,7 +90,9 @@ export function mountTransfer(root: HTMLElement) {
       busy = false;
       updateButtons();
     }
-  });
+  }
+  exportButton.addEventListener('click', () => void exportProject(false));
+  download?.addEventListener('click', () => void exportProject(true));
 
   return (id: string | null) => {
     projectId = id;

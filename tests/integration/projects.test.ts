@@ -122,3 +122,89 @@ test('Q01: migra recibos v2 y conserva los proyectos existentes', async () => {
     await db.delete();
   }
 });
+
+test('Q18: exige elegir proyecto y registra cada página una sola vez', async () => {
+  const db = new CodingDatabase(`codificaweb-documents-${crypto.randomUUID()}`);
+  const url = 'https://example.test/issues/1';
+  try {
+    const projects = new IndexedProjects(db);
+    expect((await projects.document(url)).kind).toBe('setup');
+    const first = await projects.document(url, { id: initialProjectId });
+    expect(first).toEqual({ kind: 'ready', projectId: initialProjectId });
+    const next = 'https://example.test/issues/2';
+    expect((await projects.document(next)).kind).toBe('unregistered');
+    await Promise.all([
+      projects.document(next, { add: initialProjectId }),
+      projects.document(next, { add: initialProjectId }),
+    ]);
+    expect(await db.sources.count()).toBe(2);
+    expect((await projects.document(next)).kind).toBe('ready');
+    const created = await projects.document(url, {
+      name: 'Nuevo',
+      description: '',
+    });
+    expect(created.kind).toBe('ready');
+    expect(await db.projects.count()).toBe(2);
+    expect(await db.sources.count()).toBe(3);
+    expect((await projects.document(next)).kind).toBe('unregistered');
+  } finally {
+    await db.delete();
+  }
+});
+
+test('Q18: valida la URL y la acción antes de registrar el documento', async () => {
+  const { handleProjectRequest } =
+    await import('../../src/background/project-messages');
+  const url = 'https://example.test/issues/2';
+  for (const data of [
+    {},
+    { url: 'x'.repeat(2049) },
+    { url: 'incorrecta' },
+    { url: 'file:///local' },
+    { url: 'https://user@example.test/' },
+    { url: 'https://:password@example.test/' },
+    { url, mode: 'create', name: ' ', description: '' },
+    { url, mode: 'create', name: 'x'.repeat(257), description: '' },
+    { url, mode: 'create', name: 'Caso', description: null },
+    { url, mode: 'create', name: 'Caso', description: 'x'.repeat(16385) },
+  ])
+    expect(
+      await handleProjectRequest({ type: 'project.document', ...data }),
+    ).toEqual({ kind: 'error' });
+  expect(
+    await handleProjectRequest({
+      type: 'project.document',
+      url,
+      mode: 'create',
+      name: ' Caso ',
+      description: '',
+    }),
+  ).toMatchObject({ kind: 'ready' });
+  expect(
+    await handleProjectRequest({ type: 'project.document', url }),
+  ).toMatchObject({ kind: 'ready' });
+  expect(
+    await handleProjectRequest({
+      type: 'project.document',
+      url,
+      mode: 'select',
+      id: initialProjectId,
+    }),
+  ).toEqual({ kind: 'ready', projectId: initialProjectId });
+  expect(
+    await handleProjectRequest({
+      type: 'project.document',
+      url,
+      mode: 'add',
+      id: initialProjectId,
+    }),
+  ).toEqual({ kind: 'ready', projectId: initialProjectId });
+  expect(
+    await handleProjectRequest({
+      type: 'project.document',
+      url,
+      mode: 'add',
+      id: 'incorrecto',
+    }),
+  ).toEqual({ kind: 'error' });
+});

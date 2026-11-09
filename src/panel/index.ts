@@ -2,6 +2,7 @@ import { isRecord } from '../capture-contract';
 import type { CaptureTarget, SelectionSnapshot } from '../capture-contract';
 import { mountCatalog } from './catalog-controls';
 import { createCodingControls } from './coding-controls';
+import { mountDocumentSetup } from './document-setup';
 import { mountEvidence } from './evidence-controls';
 import { createHighlightFilter } from './highlight-filter';
 import { createNoteControls } from './note-controls';
@@ -117,6 +118,22 @@ let activeTabId: number | undefined;
 let requiresInvocation = false;
 let accessRequest = 0;
 let captureRequest = 0;
+const setupForm = document.getElementById(
+  'document-setup',
+) as HTMLFormElement | null;
+const setup =
+  setupForm &&
+  mountDocumentSetup(
+    setupForm,
+    (id, selection) => {
+      applyProject(id, false);
+      if (target) showSelection(target, selection, true);
+    },
+    () => {
+      captureStatus.textContent =
+        'No se pudo verificar si la página pertenece al proyecto.';
+    },
+  );
 
 const captureMessages = {
   empty: 'Selecciona texto en la página para asignarle una categoría.',
@@ -127,6 +144,7 @@ const captureMessages = {
 };
 
 function clearPreview() {
+  setup?.clear();
   captureRequest++;
   selected = undefined;
   codingRead = citationLookup = undefined;
@@ -205,6 +223,13 @@ async function captureCurrent(fromUserSelection = false, dismiss = false) {
   const result = await readSelection(current);
   if (target !== current || request !== captureRequest) return;
   captureButton.disabled = false;
+  if (
+    fromUserSelection &&
+    !dismiss &&
+    result.kind === 'empty' &&
+    setup?.pending
+  )
+    return;
   if (fromUserSelection && !dismiss && result.kind === 'empty' && selected) {
     // Let the saved citation lookup finish before deciding whether to keep it.
     await codingRead;
@@ -215,22 +240,39 @@ async function captureCurrent(fromUserSelection = false, dismiss = false) {
   clearPreview();
 
   if (result.kind === 'selection') {
-    selected = result;
-    if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
-    quote.textContent = result.selectors.quote.exact;
-    source.textContent = result.url;
-    captureStatus.textContent = 'Selección capturada.';
-    if (fromUserSelection && relations?.hasSavedView()) {
-      relations.dismissSavedView();
-      document
-        .getElementById('quote-card')
-        ?.scrollIntoView({ block: 'nearest' });
-    }
-    codingRead = coding.show(current, result);
-    void notes.show(current, result);
+    const revision = captureRequest;
+    if (
+      direct &&
+      setup &&
+      !(await setup.check(
+        current,
+        result,
+        () => target === current && revision === captureRequest,
+      ))
+    )
+      return;
+    showSelection(current, result, fromUserSelection);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
   }
+}
+
+function showSelection(
+  current: CaptureTarget,
+  result: SelectionSnapshot,
+  fromUserSelection: boolean,
+) {
+  selected = result;
+  if (selectionTitle) selectionTitle.textContent = 'Texto seleccionado';
+  quote.textContent = result.selectors.quote.exact;
+  source.textContent = result.url;
+  captureStatus.textContent = 'Selección capturada.';
+  if (fromUserSelection && relations?.hasSavedView()) {
+    relations.dismissSavedView();
+    document.getElementById('quote-card')?.scrollIntoView({ block: 'nearest' });
+  }
+  codingRead = coding.show(current, result);
+  void notes.show(current, result);
 }
 
 captureButton.addEventListener('click', () => void captureCurrent(true));
@@ -311,33 +353,43 @@ const setTransferProject = transfer && mountTransfer(transfer);
 const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
-if (projects) {
-  mountProjects(projects, (id) => {
-    if (projectId === id) return;
-    const loadingInitialProject = projectId === undefined;
+function applyProject(id: string | null, recapture = true) {
+  const changed = projectId !== id;
+  if (changed) {
     projectId = id;
     relations?.setProject(id);
     setCatalogProject?.(id);
     setTransferProject?.(id);
     refreshEvidence?.(id);
     highlights.clear();
-    clearPreview();
-    if (target) {
-      const { tabId, documentId, url } = target;
-      target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
-      captureButton.disabled = id === null;
-      if (direct && id) highlights.track(target);
-      if (direct && id && loadingInitialProject) void captureCurrent();
-    }
-  });
+  }
+  clearPreview();
+  if (target) {
+    const { tabId, documentId, url } = target;
+    target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
+    captureButton.disabled = id === null && !direct;
+    if (direct && id) highlights.track(target);
+    if (direct && recapture) void captureCurrent();
+  }
 }
+if (projects)
+  mountProjects(projects, (id) => {
+    if (projectId !== id) applyProject(id);
+  });
 
 if (chrome.tabs?.onActivated) {
   // Opening the panel HTML in a tab keeps the original explicit controls.
   void chrome.tabs
     .getCurrent()
     .then((tab) => {
-      if (tab) return;
+      if (tab) {
+        for (const control of document.querySelectorAll<HTMLElement>(
+          '[data-tab-only]',
+        )) {
+          control.hidden = false;
+        }
+        return;
+      }
       direct = true;
       document.getElementById('panel-tools')?.removeAttribute('open');
       if (accessRequest === 0) void attachActiveTab();

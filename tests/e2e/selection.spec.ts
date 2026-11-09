@@ -1,3 +1,4 @@
+import { unzipSync, strFromU8 } from 'fflate';
 import fixture from '../../docs/examples/project-v1.json' with { type: 'json' };
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { cpus, platform, tmpdir } from 'node:os';
@@ -137,7 +138,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .getByLabel('Definición de la categoría')
         .fill('Una definición sintética');
       await expect(
-        panel.getByText('El proyecto asigna el color automáticamente.'),
+        panel.getByText('El color se asigna automáticamente.'),
       ).toBeVisible();
       await panel.getByRole('button', { name: 'Guardar y aplicar' }).click();
       await expect(panel.locator('#coding-status')).toHaveText(
@@ -378,7 +379,9 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
 
       await panel.getByText('Gestionar proyectos', { exact: true }).click();
       const project = panel.getByLabel('Proyecto activo');
-      const projectName = panel.getByLabel('Nombre del proyecto');
+      const projectName = panel.getByLabel('Nombre del proyecto', {
+        exact: true,
+      });
       await projectName.fill('Proyecto B');
       await panel.getByRole('button', { name: 'Crear proyecto' }).click();
       await project.selectOption({ label: 'Proyecto B' });
@@ -703,7 +706,20 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await file.setInputFiles({
         name: 'proyecto.json',
         mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(fixture)),
+        buffer: Buffer.from(
+          JSON.stringify({
+            ...fixture,
+            sources: [
+              ...fixture.sources,
+              {
+                ...fixture.sources[0],
+                id: '00000000-0000-4000-8000-0000000000ff',
+                url: 'https://example.test/issues/2',
+                title: 'Segundo documento',
+              },
+            ],
+          }),
+        ),
       });
       await importProject.click();
       await expect(panel.locator('#transfer-status')).toHaveText(
@@ -729,6 +745,31 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         fixture.annotations[0]?.note,
       );
       expect(transferred.codings).toHaveLength(2);
+      const [archive] = await Promise.all([
+        panel.waitForEvent('download'),
+        panel.getByRole('button', { name: 'Descargar proyecto (ZIP)' }).click(),
+      ]);
+      expect(archive.suggestedFilename()).toBe('Movilidad.zip');
+      const archivePath = await archive.path();
+      const entries = unzipSync(await readFile(archivePath));
+      const indexEntry = entries['Movilidad/proyecto.json'];
+      if (!indexEntry) throw new Error('Falta el índice');
+      const index = JSON.parse(strFromU8(indexEntry));
+      expect(index.documents).toHaveLength(2);
+      expect(
+        Object.keys(entries).filter((path) => path.includes('/documentos/')),
+      ).toHaveLength(2);
+      const documentEntry =
+        entries[
+          `Movilidad/${index.documents.find((document: { url: string }) => document.url === fixture.sources[0]?.url).path}`
+        ];
+      if (!documentEntry) throw new Error('Falta el documento');
+      expect(JSON.parse(strFromU8(documentEntry))).toMatchObject({
+        document: { format: 'web', url: fixture.sources[0]?.url },
+        citations: [
+          { note: fixture.annotations[0]?.note, categories: [{}, {}] },
+        ],
+      });
       await file.setInputFiles(output);
       await importProject.click();
       await expect(panel.locator('#transfer-status')).toHaveText(

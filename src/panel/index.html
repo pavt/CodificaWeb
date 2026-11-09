@@ -9,7 +9,7 @@
   <body>
     <main>
       <h1>CodificaWeb</h1>
-      <p id="active-project-label"></p>
+      <p id="active-project-label" data-tab-only hidden></p>
       <section id="citation-inspection" aria-label="Cita guardada" hidden>
         <strong>Cita guardada</strong>
         <p id="citation-inspection-quote"></p>
@@ -138,9 +138,7 @@
               <label for="category-name">Nombre de la categoría</label>
               <input id="category-name" name="name" maxlength="256" required />
             </div>
-            <p class="automatic-color">
-              El proyecto asigna el color automáticamente.
-            </p>
+            <p class="automatic-color">El color se asigna automáticamente.</p>
             <div>
               <label for="category-definition"
                 >Definición de la categoría (opcional)</label
@@ -173,8 +171,27 @@
           Selecciona otro fragmento para seguir.
         </p>
       </section>
+      <form id="document-setup" class="card" hidden>
+        <h2 id="document-setup-title">Define un proyecto</h2>
+        <p id="document-setup-status" role="status"></p>
+        <fieldset id="document-setup-project">
+          <legend>Proyecto para esta página</legend>
+          <label for="document-existing">Proyecto guardado</label>
+          <select id="document-existing"></select>
+          <label for="document-project-name">Nombre del proyecto nuevo</label>
+          <input id="document-project-name" maxlength="256" />
+          <label for="document-project-description">Descripción opcional</label>
+          <textarea
+            id="document-project-description"
+            maxlength="16384"
+          ></textarea>
+        </fieldset>
+        <button id="document-setup-submit" type="submit">
+          Agregar esta página
+        </button>
+      </form>
       <p id="site-status" role="status"></p>
-      <details id="panel-evidence" class="card">
+      <details id="panel-evidence" class="card" data-tab-only hidden>
         <summary>Buscar evidencias</summary>
         <form id="evidence-search">
           <fieldset disabled>
@@ -200,11 +217,11 @@
         </form>
       </details>
       <details id="page-citations" hidden>
-        <summary>Categorías en esta página</summary>
+        <summary>Citas de esta página</summary>
         <ol id="page-citation-list"></ol>
       </details>
       <details id="panel-tools" class="card" open>
-        <summary>Herramientas del proyecto</summary>
+        <summary>Herramientas de esta página</summary>
         <button id="capture-selection" type="button" disabled>
           Capturar selección
         </button>
@@ -229,7 +246,7 @@
           </span>
           <button id="verify-site" type="submit">Comprobar acceso</button>
         </form>
-        <details class="management-group">
+        <details class="management-group" data-tab-only hidden>
           <summary>Gestionar proyectos</summary>
           <fieldset id="projects" disabled>
             <legend>Proyectos</legend>
@@ -245,10 +262,13 @@
             <p id="project-status" aria-live="polite"></p>
           </fieldset>
         </details>
-        <details id="project-transfer">
+        <details id="project-transfer" data-tab-only hidden>
           <summary>Importar o exportar proyecto</summary>
           <button id="project-export" type="button" disabled>
             Exportar proyecto activo
+          </button>
+          <button id="project-download" type="button" disabled>
+            Descargar proyecto (ZIP)
           </button>
           <label for="project-file">Archivo de proyecto JSON</label>
           <input
