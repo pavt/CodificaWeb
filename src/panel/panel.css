@@ -443,16 +443,6 @@ main:has(> #citation-relation:not([hidden]))
   font-weight: 650;
 }
 
-.page-note:disabled,
-#note-status:empty {
-  display: none;
-}
-
-.page-note {
-  display: grid;
-  gap: 8px;
-}
-
 section:has(> #document-setup:not([hidden])) #fragment-codes {
   display: none;
 }

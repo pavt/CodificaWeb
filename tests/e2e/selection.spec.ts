@@ -279,13 +279,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         panel.getByText('Selecciona otro fragmento para seguir.'),
       ).toBeHidden();
 
-      const note = panel.getByLabel('Nota en texto plano');
-      const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
-      const removeNote = panel.getByRole('button', { name: 'Borrar nota' });
-      await note.fill('<b>Observación literal</b>');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
-
       const tema = panel.getByRole('checkbox', { name: 'Tema' });
       const contexto = panel.getByRole('checkbox', { name: 'Contexto' });
       await tema.click();
@@ -316,15 +309,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(contexto).toBeChecked();
       await expect.poll(async () => (await workerTargets()).length).toBe(1);
       await cdp.detach();
-      await expect(note).toHaveValue('<b>Observación literal</b>');
-      await note.fill('Nota editada');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
-      await capture.click();
-      await expect(note).toHaveValue('Nota editada');
-      await removeNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota borrada.');
-      await expect(note).toHaveValue('');
       await expect(tema).toBeChecked();
       await expect(contexto).toBeChecked();
       await expect(panel.locator('#selection-quote')).toHaveText(
@@ -389,11 +373,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(project.locator('option:checked')).toHaveText('Proyecto B');
       await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
       await capture.click();
-      await expect(note).toBeEnabled();
       await expect(tema).toHaveCount(0);
-      await note.fill('Nota del segundo proyecto');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
       await projectName.fill('Proyecto B editado');
       await panel.getByRole('button', { name: 'Guardar proyecto' }).click();
       await expect(project.locator('option:checked')).toHaveText(
@@ -413,7 +393,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .toBe('🙂 hola');
       await capture.click();
       await expect(tema).toBeChecked();
-      await expect(note).toHaveValue('');
 
       await source.evaluate(() =>
         history.replaceState(null, '', '#otra-fuente'),
@@ -591,11 +570,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         await expect
           .poll(() => paintedText('codificaweb-ffff99'))
           .toBe('Evidencia del catálogo');
-        await note.fill('Nota conservada');
-        await saveNote.click();
-        await expect(panel.locator('#note-status')).toHaveText(
-          'Nota guardada.',
-        );
       }
       await catalog.selectOption({ label: 'Hallazgo' });
       await expect(codeColor).toHaveValue('#FFFF99');
@@ -621,7 +595,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
       ).toHaveCount(0);
       await expect.poll(() => paintedText('codificaweb-ffff99')).toBe('');
-      await expect(note).toHaveValue('Nota conservada');
       // Q08: search stored evidence after the current page loses its text.
       await tema.click();
       await expect(tema).toBeChecked();
@@ -650,7 +623,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .selectOption({ label: sources[0] ?? '' });
       await search.click();
       await expect(evidence.locator('li')).toHaveCount(1);
-      await expect(evidence).toContainText('Nota conservada');
       await panel
         .getByLabel('Fuente de la evidencia')
         .selectOption({ label: sources[1] ?? '' });

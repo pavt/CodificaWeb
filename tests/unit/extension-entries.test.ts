@@ -46,11 +46,6 @@ test('Q11: solicita acceso al enviar el formulario y muestra errores de Chromium
     ['coding-status', { textContent: '' }],
     ['highlight-filter', new EventTarget()],
     ['highlight-status', { textContent: '' }],
-    ['fragment-note', { disabled: true }],
-    ['note-text', { value: '' }],
-    ['note-save', new EventTarget()],
-    ['note-remove', new EventTarget()],
-    ['note-status', { textContent: '' }],
     ['selection-source', { textContent: '' }],
   ]);
   const request = vi
@@ -103,11 +98,6 @@ test('Q03: instala la captura en el documento autorizado y muestra la cita como 
     ['coding-status', { textContent: '' }],
     ['highlight-filter', new EventTarget()],
     ['highlight-status', { textContent: '' }],
-    ['fragment-note', { disabled: true }],
-    ['note-text', { value: '' }],
-    ['note-save', new EventTarget()],
-    ['note-remove', new EventTarget()],
-    ['note-status', { textContent: '' }],
     ['selection-source', source],
   ]);
   const executeScript = vi
@@ -212,11 +202,6 @@ test('Q03 y Q11: actualiza la selección directa y descarta pestañas o document
     ['coding-status', { textContent: '' }],
     ['highlight-filter', new EventTarget()],
     ['highlight-status', { textContent: '' }],
-    ['fragment-note', { disabled: true }],
-    ['note-text', { value: '' }],
-    ['note-save', new EventTarget()],
-    ['note-remove', new EventTarget()],
-    ['note-status', { textContent: '' }],
   ]);
   const onActivated = vi.fn<(listener: () => void) => void>();
   const onUpdated =

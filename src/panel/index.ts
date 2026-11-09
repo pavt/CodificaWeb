@@ -5,7 +5,6 @@ import { createCodingControls } from './coding-controls';
 import { mountDocumentSetup } from './document-setup';
 import { mountEvidence } from './evidence-controls';
 import { createHighlightFilter } from './highlight-filter';
-import { createNoteControls } from './note-controls';
 import { mountProjects } from './project-controls';
 import { mountRelations } from './relation-controls';
 import { readSelection } from './read-selection';
@@ -101,13 +100,6 @@ const coding = createCodingControls(
     refreshEvidence?.(projectId);
   },
 );
-const notes = createNoteControls(
-  document.getElementById('fragment-note') as HTMLFieldSetElement,
-  document.getElementById('note-text') as HTMLTextAreaElement,
-  document.getElementById('note-save') as HTMLButtonElement,
-  document.getElementById('note-remove') as HTMLButtonElement,
-  document.getElementById('note-status') as HTMLElement,
-);
 let selected: SelectionSnapshot | undefined;
 let previewed: SelectionSnapshot | undefined;
 let codingRead: Promise<void> | undefined;
@@ -161,7 +153,6 @@ function clearPreview() {
   captureStatus.textContent = '';
   captureStatus.classList?.remove('capture-error');
   coding.clear();
-  notes.clear();
 }
 
 form.addEventListener('submit', async (event) => {
@@ -267,7 +258,6 @@ function showSelection(
   selected = result;
   captureStatus.textContent = 'Selección capturada.';
   codingRead = coding.show(current, result);
-  void notes.show(current, result);
 }
 
 function presentSelection(
@@ -413,19 +403,12 @@ if (chrome.tabs?.onActivated) {
       direct = true;
       const citations = document.getElementById('page-citations');
       const filter = document.getElementById('highlight-filter');
-      const quoteCard = document.getElementById('quote-card');
-      const note = document.getElementById('fragment-note');
-      const noteStatus = document.getElementById('note-status');
       if (citations && filter) {
         const label = filter.previousElementSibling;
         const list = document.getElementById('page-citation-list');
         const filterStatus = document.getElementById('highlight-status');
         if (label && list && filterStatus)
           list.before(label, filter, filterStatus);
-      }
-      if (quoteCard && note && noteStatus) {
-        note.classList.add('page-note');
-        (setupForm ?? quoteCard).after(note, noteStatus);
       }
       citations?.append(form);
       if (accessRequest === 0) void attachActiveTab();

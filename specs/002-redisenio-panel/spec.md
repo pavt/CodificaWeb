@@ -12,7 +12,7 @@ Una persona selecciona texto en la página, aplica una categoría existente o cr
 | UX-04 | Cambiar de pestaña, documento o proyecto invalida una selección pendiente. Un error de guardado conserva el formulario para reintentar y evita crear una categoría o asociación parcial.                                                                                                                                                                |
 | UX-05 | Los proyectos anteriores siguen disponibles. Las citas, categorías, notas y archivos JSON conservan compatibilidad. El trabajo queda en el perfil local.                                                                                                                                                                                                |
 
-La nota de la cita sigue disponible como acción secundaria. La definición pertenece a la categoría. Las funciones de búsqueda y administración se conservan según la [especificación vigente](../001-codificacion-web/spec.md).
+La definición pertenece a la categoría. Las funciones de búsqueda y administración se conservan según la [especificación vigente](../001-codificacion-web/spec.md).
 
 T019 amplía la paleta cualitativa según el número de categorías del proyecto. Los colores ya asignados se conservan al añadir, eliminar o renombrar categorías, así como al importar proyectos.
 

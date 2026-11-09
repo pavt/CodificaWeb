@@ -16,7 +16,6 @@ Cada comportamiento empieza con una prueba observable. Ejecutarla sola y verific
 | Q04 | Unitaria e integración      | Varios códigos, duplicados idempotentes, retirar relación y rechazar proyecto ajeno                 |
 | Q05 | Unitaria y E2E              | Tramos iguales, parciales y anidados, desempate, filtro, texto DOM intacto y presupuesto R2         |
 | Q06 | Unitaria y E2E              | Offsets, cita duplicada, inserciones, nodos divididos, ruta SPA, recarga y cita eliminada           |
-| Q07 | Integración y E2E           | Ciclo de nota, recarga y borrado conservando códigos                                                |
 | Q08 | Unitaria y E2E              | Intersección de filtros, búsqueda NFC, resultados sin ubicar y proyecto activo                      |
 | Q09 | E2E                         | Abrir/enfocar fuente, rango visible, redirección, permiso revocado y timeout                        |
 | Q10 | Unitaria, integración y E2E | Ejemplo v1, ida y vuelta, copia repetida, versión futura, FK inválida y rollback                    |

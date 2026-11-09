@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { seedHistoricalNote } from '../fixtures/historical-note';
 import { Dexie } from 'dexie';
 import { expect, test } from 'vitest';
 import { CodingDatabase, initialProjectId } from '../../src/storage/database';
@@ -25,11 +26,11 @@ test('Q01: persiste el proyecto activo, separa el corpus y borra solo el proyect
       },
     };
     expect(await projects.activeId()).toBe(initialProjectId);
-    await codings.setNote(
+    await seedHistoricalNote(
+      db,
       initialProjectId,
       fragment,
       'Proyecto inicial',
-      crypto.randomUUID(),
     );
     const second = await projects.create('Proyecto B', '');
     await projects.update(second, 'Renombrado', 'Descripción');
@@ -41,11 +42,14 @@ test('Q01: persiste el proyecto activo, separa el corpus y borra solo el proyect
     } finally {
       reopened.close();
     }
-    expect(await codings.readNote(second, fragment)).toBeNull();
-    await codings.setNote(second, fragment, 'Proyecto B', crypto.randomUUID());
-    expect(await codings.readNote(initialProjectId, fragment)).toBe(
-      'Proyecto inicial',
+    expect(await db.annotations.where('projectId').equals(second).count()).toBe(
+      0,
     );
+    await seedHistoricalNote(db, second, fragment, 'Proyecto B');
+    expect(
+      (await db.annotations.where('projectId').equals(initialProjectId).first())
+        ?.note,
+    ).toBe('Proyecto inicial');
     expect(await projects.list()).toMatchObject({
       activeId: second,
       projects: expect.arrayContaining([
@@ -67,11 +71,14 @@ test('Q01: persiste el proyecto activo, separa el corpus y borra solo el proyect
     expect(await projects.activeId()).toBe(initialProjectId);
     expect(await db.sources.count()).toBe(1);
     expect(await db.annotations.count()).toBe(1);
-    expect(await db.operations.count()).toBe(1);
-    expect(await codings.readNote(initialProjectId, fragment)).toBe(
-      'Proyecto inicial',
+    expect(await db.operations.count()).toBe(0);
+    expect(
+      (await db.annotations.where('projectId').equals(initialProjectId).first())
+        ?.note,
+    ).toBe('Proyecto inicial');
+    expect(await db.annotations.where('projectId').equals(second).count()).toBe(
+      0,
     );
-    expect(await codings.readNote(second, fragment)).toBeNull();
   } finally {
     await db.delete();
   }

@@ -318,9 +318,7 @@ for (const [name, executable] of browsers) {
           ),
         ).toBe(true);
         expect(
-          await readPanel(
-            "document.querySelector('#document-setup + #fragment-note') !== null",
-          ),
+          await readPanel("document.querySelector('#fragment-note') === null"),
         ).toBe(true);
 
         expect(
