@@ -2,7 +2,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, expect, test, vi } from 'vitest';
 import { mountDocumentSetup } from '../../src/panel/document-setup';
-import type { SelectionSnapshot } from '../../src/capture-contract';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -13,7 +12,7 @@ test('Q18: conserva la selección, permite elegir o crear y descarta respuestas 
   const input = form.querySelector(
     '#document-project-name',
   ) as HTMLInputElement;
-  const choice = form.querySelector('#document-existing') as HTMLSelectElement;
+
   const status = form.querySelector('#document-setup-status') as HTMLElement;
   const send = vi.fn();
   vi.stubGlobal('chrome', { runtime: { sendMessage: send } });
@@ -21,31 +20,21 @@ test('Q18: conserva la selección, permite elegir o crear y descarta respuestas 
   const reportError = vi.fn();
   const setup = mountDocumentSetup(form, activate, reportError);
   const target = { tabId: 1, documentId: 'doc', url: 'https://example.test/' };
-  const selection: SelectionSnapshot = {
-    kind: 'selection',
-    revision: 0,
-    url: target.url,
-    selectors: {
-      profile: 'dom-text-v1',
-      quote: {
-        type: 'TextQuoteSelector',
-        exact: 'Cita',
-        prefix: '',
-        suffix: '',
-      },
-      position: { type: 'TextPositionSelector', start: 0, end: 4 },
-    },
-  };
   const current = () => true;
   const project = { kind: 'ready', projectId: 'p' };
   const existing = {
     kind: 'setup',
-    projects: [null, {}, { id: 'p' }, { id: 'p', name: 'Guardado' }],
+    projects: [
+      null,
+      {},
+      { id: 'p' },
+      { id: 'p', name: 'Guardado', containsPage: false },
+    ],
   };
   form.requestSubmit();
   send.mockResolvedValueOnce(existing);
-  await setup.check(target, selection, current);
-  expect(setup.pending).toBe(true);
+  await setup.check(target, current);
+
   expect(form.hidden).toBe(false);
   form.requestSubmit();
   expect(status.textContent).toContain('Escribe un nombre');
@@ -58,16 +47,20 @@ test('Q18: conserva la selección, permite elegir o crear y descarta respuestas 
   );
   send.mockResolvedValueOnce(project);
   form.requestSubmit();
-  await vi.waitFor(() => expect(activate).toHaveBeenCalledWith('p', selection));
+  await vi.waitFor(() => expect(activate).toHaveBeenCalledWith('p'));
   expect(send).toHaveBeenLastCalledWith(
     expect.objectContaining({ mode: 'create', name: 'Nuevo' }),
   );
   setup.clear();
-  expect(setup.pending).toBe(false);
+  expect(form.hidden).toBe(true);
 
   send.mockResolvedValueOnce(existing).mockResolvedValueOnce(project);
-  await setup.check(target, selection, current);
-  choice.value = 'p';
+  await setup.check(target, current);
+  input.value = 'gua';
+  input.dispatchEvent(new Event('input'));
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+  expect(document.activeElement?.textContent).toBe('Guardado');
+  (document.activeElement as HTMLButtonElement).click();
   form.requestSubmit();
   await vi.waitFor(() => expect(activate).toHaveBeenCalledTimes(2));
   expect(send).toHaveBeenLastCalledWith(
@@ -75,35 +68,54 @@ test('Q18: conserva la selección, permite elegir o crear y descarta respuestas 
   );
 
   send
-    .mockResolvedValueOnce({ kind: 'unregistered', projectId: 'p' })
+    .mockResolvedValueOnce({
+      kind: 'unregistered',
+      projectId: 'p',
+      projects: existing.projects,
+    })
     .mockResolvedValueOnce(project);
-  await setup.check(target, selection, current);
+  await setup.check(target, current);
   form.requestSubmit();
   await vi.waitFor(() => expect(activate).toHaveBeenCalledTimes(3));
   expect(send).toHaveBeenLastCalledWith(
     expect.objectContaining({ mode: 'add', id: 'p' }),
   );
-  send.mockResolvedValueOnce(project);
+  send.mockResolvedValueOnce({
+    kind: 'unregistered',
+    projectId: 'p',
+    projects: [
+      { id: 'p', name: 'Guardado', containsPage: false },
+      { id: 'q', name: 'Con citas', containsPage: true },
+    ],
+  });
+  await setup.check(target, current);
+  expect(form.querySelector('#document-setup-title')?.textContent).toBe(
+    'Continuar en «Con citas»',
+  );
+  form.querySelector<HTMLButtonElement>('#document-change-project')?.click();
+  expect(document.activeElement).toBe(input);
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   expect(
-    await setup.check({ ...target, projectId: 'p' }, selection, current),
-  ).toBe(true);
+    form.querySelector('#document-project-suggestions')?.children,
+  ).toHaveLength(0);
+
   send.mockResolvedValueOnce(project);
-  expect(await setup.check(target, selection, current)).toBe(false);
+  await setup.check({ ...target, projectId: 'p' }, current);
   expect(activate).toHaveBeenCalledTimes(4);
 
   for (const reply of [null, {}, { kind: 'unregistered' }]) {
     send.mockResolvedValueOnce(reply);
-    await setup.check(target, selection, current);
+    await setup.check(target, current);
   }
   expect(reportError).toHaveBeenCalledTimes(3);
   send.mockRejectedValueOnce(Error('respuesta antigua'));
-  await setup.check(target, selection, () => false);
+  await setup.check(target, () => false);
   send.mockResolvedValueOnce(project);
-  await setup.check(target, selection, () => false);
+  await setup.check(target, () => false);
   expect(reportError).toHaveBeenCalledTimes(3);
 
   send.mockResolvedValueOnce(existing);
-  await setup.check(target, selection, current);
+  await setup.check(target, current);
   input.value = 'Pendiente';
   send.mockResolvedValueOnce(project);
   form.requestSubmit();

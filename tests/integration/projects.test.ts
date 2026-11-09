@@ -146,7 +146,16 @@ test('Q18: exige elegir proyecto y registra cada página una sola vez', async ()
     expect(created.kind).toBe('ready');
     expect(await db.projects.count()).toBe(2);
     expect(await db.sources.count()).toBe(3);
-    expect((await projects.document(next)).kind).toBe('unregistered');
+    expect(
+      await projects.document(url, { name: 'NUEVO', description: '' }),
+    ).toEqual(created);
+    expect(await db.projects.count()).toBe(2);
+    expect(await projects.document(next)).toMatchObject({
+      kind: 'unregistered',
+      projects: expect.arrayContaining([
+        { id: initialProjectId, name: expect.any(String), containsPage: true },
+      ]),
+    });
   } finally {
     await db.delete();
   }

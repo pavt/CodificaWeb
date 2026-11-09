@@ -112,20 +112,22 @@
         <form id="document-setup" class="card" hidden>
           <h2 id="document-setup-title">Define un proyecto</h2>
           <p id="document-setup-status" role="status"></p>
-          <fieldset id="document-setup-project">
-            <legend>Proyecto para esta página</legend>
-            <label for="document-existing">Proyecto guardado</label>
-            <select id="document-existing"></select>
-            <label for="document-project-name">Nombre del proyecto nuevo</label>
-            <input id="document-project-name" maxlength="256" />
-            <label for="document-project-description"
-              >Descripción opcional</label
-            >
-            <textarea
-              id="document-project-description"
-              maxlength="16384"
-            ></textarea>
-          </fieldset>
+          <div id="document-setup-project">
+            <label for="document-project-name">Proyecto</label>
+            <input
+              id="document-project-name"
+              maxlength="256"
+              autocomplete="off"
+              placeholder="Busca o escribe un nombre"
+            />
+            <div
+              id="document-project-suggestions"
+              aria-label="Proyectos guardados"
+            ></div>
+          </div>
+          <button id="document-change-project" type="button">
+            Elegir otro proyecto
+          </button>
           <button id="document-setup-submit" type="submit">
             Agregar esta página
           </button>

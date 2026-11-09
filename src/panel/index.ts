@@ -113,6 +113,7 @@ let previewed: SelectionSnapshot | undefined;
 let codingRead: Promise<void> | undefined;
 let citationLookup: Promise<void> | undefined;
 let target: CaptureTarget | undefined;
+let readyTarget: CaptureTarget | undefined;
 let projectId: string | null | undefined;
 let direct = false;
 let activeTabId: number | undefined;
@@ -126,13 +127,16 @@ const setup =
   setupForm &&
   mountDocumentSetup(
     setupForm,
-    (id, selection) => {
+    (id) => {
+      const selection = previewed;
       applyProject(id, false);
-      if (target) showSelection(target, selection, true);
+      readyTarget = target;
+      if (target && selection) showSelection(target, selection, true);
+      else void captureCurrent();
     },
     () => {
       captureStatus.textContent =
-        'No se pudo verificar si la página pertenece al proyecto. Vuelve a seleccionar el texto.';
+        'No se pudo verificar si la página pertenece al proyecto. Vuelve a abrir la página.';
       captureStatus.classList.add('capture-error');
     },
   );
@@ -146,7 +150,6 @@ const captureMessages = {
 };
 
 function clearPreview() {
-  setup?.clear();
   captureRequest++;
   selected = previewed = undefined;
   codingRead = citationLookup = undefined;
@@ -207,7 +210,10 @@ form.addEventListener('submit', async (event) => {
       if (preparedTarget) {
         target = projectId ? { ...preparedTarget, projectId } : preparedTarget;
         captureButton.disabled = Boolean(projects && !projectId);
-        if (direct) void captureCurrent();
+        if (direct) {
+          checkPage();
+          void captureCurrent();
+        }
       }
     }
   } catch {
@@ -245,16 +251,7 @@ async function captureCurrent(fromUserSelection = false, dismiss = false) {
 
   if (result.kind === 'selection') {
     presentSelection(result, fromUserSelection);
-    if (
-      direct &&
-      setup &&
-      !(await setup.check(
-        current,
-        result,
-        () => target === current && previewed === result,
-      ))
-    )
-      return;
+    if (direct && setup && readyTarget !== current) return;
     showSelection(current, result, fromUserSelection);
   } else {
     captureStatus.textContent = captureMessages[result.kind];
@@ -290,7 +287,8 @@ function presentSelection(
 captureButton.addEventListener('click', () => void captureCurrent(true));
 
 function resetTarget() {
-  target = undefined;
+  setup?.clear();
+  target = readyTarget = undefined;
   highlights.clear();
   clearPreview();
   captureButton.disabled = true;
@@ -336,10 +334,9 @@ async function attachActiveTab() {
     button.disabled = false;
     status.textContent = '';
     captureButton.disabled = projectId === null;
-    if (projectId !== null) {
-      highlights.track(target);
-      void captureCurrent();
-    }
+    if (projectId) highlights.track(target);
+    checkPage();
+    void captureCurrent();
   } catch {
     // Restricted pages and tabs without access leave the capture disabled.
   }
@@ -365,6 +362,13 @@ const setTransferProject = transfer && mountTransfer(transfer);
 const projects = document.getElementById(
   'projects',
 ) as HTMLFieldSetElement | null;
+function checkPage() {
+  const page = target;
+  if (!page || !setup) return;
+  setup.clear();
+  void setup.check(page, () => target === page);
+}
+
 function applyProject(id: string | null, recapture = true) {
   const initialProject = projectId === undefined;
   const changed = projectId !== id;
@@ -382,7 +386,10 @@ function applyProject(id: string | null, recapture = true) {
     target = { tabId, documentId, url, ...(id ? { projectId: id } : {}) };
     captureButton.disabled = id === null && !direct;
     if (direct && id) highlights.track(target);
-    if (direct && recapture && initialProject) void captureCurrent();
+    if (direct && recapture) {
+      checkPage();
+      if (initialProject) void captureCurrent();
+    }
   }
 }
 if (projects)

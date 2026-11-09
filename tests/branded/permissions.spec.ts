@@ -267,6 +267,16 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#document-setup').hidden"),
           )
           .toBe(false);
+        expect(
+          await readPanel(`(() => {
+          const panel = document.querySelector('main');
+          const form = document.querySelector('#document-setup');
+          panel.style.width = '320px';
+          const fits = form.scrollWidth <= form.clientWidth;
+          panel.style.removeProperty('width');
+          return fits;
+        })()`),
+        ).toBe(true);
         expect(await quote()).toBe(citation);
         expect(
           await readPanel("document.querySelector('#fragment-codes').disabled"),
@@ -277,8 +287,9 @@ for (const [name, executable] of browsers) {
           ),
         ).toBe(true);
         await readPanel(`(() => {
-          const choice = document.querySelector('#document-existing');
-          choice.selectedIndex = 1;
+          const name = document.querySelector('#document-project-name');
+          name.focus();
+          document.querySelector('#document-project-suggestions button').click();
           document.querySelector('#document-setup').requestSubmit();
         })()`);
         await expect.poll(quote).toBe(citation);
@@ -590,9 +601,19 @@ for (const [name, executable] of browsers) {
                 readPanel("document.querySelector('#document-setup').hidden"),
               )
               .toBe(false);
-            await readPanel(
-              "document.querySelector('#document-setup').requestSubmit()",
-            );
+            expect(
+              await readPanel(
+                "document.querySelector('#document-setup-title').textContent",
+              ),
+            ).toContain('Continuar en');
+            await readPanel(`(() => {
+              document.querySelector('#document-change-project').click();
+              const input = document.querySelector('#document-project-name');
+              input.value = 'Otro';
+              input.dispatchEvent(new Event('input'));
+              document.querySelector('#document-project-suggestions button').click();
+              document.querySelector('#document-setup').requestSubmit();
+            })()`);
           }
           await expect.poll(quote).toBe(text);
           await expect
@@ -641,12 +662,13 @@ for (const [name, executable] of browsers) {
         );
         await page.goto(nextUrl, { waitUntil: 'domcontentloaded' });
         await expect.poll(quote).toBe('');
-        await dragQuote(0, 'Página siguiente.');
         await expect
           .poll(() =>
             readPanel("document.querySelector('#document-setup').hidden"),
           )
           .toBe(false);
+        await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
         expect(await quote()).toBe('Página siguiente.');
         await readPanel(
           "document.querySelector('#document-setup').requestSubmit()",
@@ -785,6 +807,24 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        await page.goto(url);
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#page-citation-list').textContent",
+            ),
+          )
+          .toContain(citation);
+        expect(
+          await readPanel("document.querySelector('#document-setup').hidden"),
+        ).toBe(true);
+        await dragQuote(0, citation);
+        await expect.poll(quote).toBe(citation);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');

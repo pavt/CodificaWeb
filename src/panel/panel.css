@@ -456,3 +456,37 @@ main:has(> #citation-relation:not([hidden]))
 section:has(> #document-setup:not([hidden])) #fragment-codes {
   display: none;
 }
+
+#document-setup,
+#document-setup-project,
+#document-project-suggestions:not(:empty) {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+#document-setup :is(input, button) {
+  width: 100%;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+
+#document-project-name {
+  padding: 8px 10px;
+  border: 1px solid #687f71;
+  border-radius: 8px;
+}
+
+#document-project-suggestions button {
+  text-align: start;
+}
+
+#document-setup-submit {
+  background: #205941;
+  color: white;
+  font-weight: 650;
+}
+
+#document-setup-status:empty {
+  display: none;
+}

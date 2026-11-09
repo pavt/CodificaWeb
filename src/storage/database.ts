@@ -95,6 +95,7 @@ export class CodingDatabase extends Dexie {
       quotationLinks:
         'id, projectId, &[projectId+fromAnnotationId+toAnnotationId+relationTypeId], [projectId+fromAnnotationId], [projectId+toAnnotationId], [projectId+relationTypeId]',
     });
+    this.version(5).stores({ sources: 'id, &[projectId+url], projectId, url' });
     this.on('populate', async () => {
       const time = new Date().toISOString();
       await this.projects.add({

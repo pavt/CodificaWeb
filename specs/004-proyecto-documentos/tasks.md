@@ -5,3 +5,5 @@
 **[PR #60](https://github.com/pavt/CodificaWeb/pull/60).** Q18 cubre la selección y creación del proyecto, la validación de URL y el alta idempotente. Q19 también verifica la estructura y la seguridad de los nombres de archivo en `tests/unit/project-zip.test.ts`. Pasaron 121 pruebas unitarias y de integración con 81,14 % de cobertura de ramas, dos E2E en Chromium y las pruebas del panel nativo en Chrome y Brave.
 
 Q18 reproduce el arrastre real con el alta pendiente. El panel muestra el texto antes de confirmar el proyecto o documento y habilita las categorías al completar el alta. Al cambiar de proyecto, el panel espera una selección nueva.
+
+Q18 comprueba el estado al llegar, antes de seleccionar, y el regreso a una página con citas. También cubre proyectos guardados, búsqueda por nombre y selección con teclado, páginas que pertenecen a otro proyecto y descarte de respuestas obsoletas. IndexedDB agrega un índice de URL para consultar fuentes existentes sin reescribir sus registros.

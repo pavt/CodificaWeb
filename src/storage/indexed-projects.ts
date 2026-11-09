@@ -35,23 +35,49 @@ export class IndexedProjects {
       async () => {
         let projectId = (await db.preferences.get(activeKey))?.value;
         if (action && 'name' in action) {
-          projectId = await this.create(action.name, action.description);
+          const key = action.name.normalize('NFC').toLowerCase();
+          const existing = await db.projects
+            .filter(
+              ({ name }) => name.trim().normalize('NFC').toLowerCase() === key,
+            )
+            .first();
+          projectId =
+            existing?.id ??
+            (await this.create(action.name, action.description));
         } else if (action && 'add' in action && projectId !== action.add) {
           return { kind: 'error' } as const;
         } else if (action && 'id' in action) {
           projectId = action.id;
         }
-        if (!projectId || !(await db.projects.get(projectId)))
-          return {
-            kind: 'setup',
-            projects: await db.projects.toArray(),
-          } as const;
-
-        const source = await db.sources.get({
-          '[projectId+url]': [projectId, url],
-        });
-        if (!source && !action)
-          return { kind: 'unregistered', projectId } as const;
+        const active = projectId ? await db.projects.get(projectId) : undefined;
+        const source =
+          active &&
+          (await db.sources.get({
+            '[projectId+url]': [active.id, url],
+          }));
+        if (!action && !source) {
+          const memberships = new Set(
+            (await db.sources.where('url').equals(url).toArray()).map(
+              ({ projectId }) => projectId,
+            ),
+          );
+          const projects = (await db.projects.toArray()).map(
+            ({ id, name }) => ({
+              id,
+              name,
+              containsPage: memberships.has(id),
+            }),
+          );
+          return active
+            ? ({
+                kind: 'unregistered',
+                projectId: active.id,
+                projects,
+              } as const)
+            : ({ kind: 'setup', projects } as const);
+        }
+        if (!active) return { kind: 'error' } as const;
+        projectId = active.id;
         if (!source) {
           const time = new Date().toISOString();
           await db.sources.add({
