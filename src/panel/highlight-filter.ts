@@ -22,7 +22,6 @@ export function createHighlightFilter(
   const detail = document.getElementById('citation-inspection-detail');
   const name = document.getElementById('citation-inspection-name');
   const definition = document.getElementById('citation-inspection-definition');
-  const close = document.getElementById('citation-inspection-close');
   const entriesById = new Map<
     string,
     { quote: string; categories: HighlightCategory[] }
@@ -37,13 +36,11 @@ export function createHighlightFilter(
     opener = undefined;
   }
 
-  close?.addEventListener('click', () => {
+  inspection?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
     const previous = opener;
     clearInspection();
     previous?.focus({ preventScroll: true });
-  });
-  inspection?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close?.click();
   });
 
   function inspect(

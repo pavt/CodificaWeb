@@ -406,6 +406,12 @@ for (const [name, executable] of browsers) {
         await page.mouse.move(underline.x, underline.y);
         await expect.poll(inspect).toBe(citation);
         expect(
+          await readPanel(
+            "document.querySelector('#citation-inspection').textContent.includes('Cerrar ficha')",
+          ),
+        ).toBe(false);
+
+        expect(
           await readPanel(`(() => {
           const card = document.querySelector('#citation-inspection').getBoundingClientRect();
           const editor = document.querySelector('#quote-card').getBoundingClientRect();
@@ -439,7 +445,7 @@ for (const [name, executable] of browsers) {
           await readPanel("document.querySelector('#category-name').value"),
         ).toBe('Borrador intacto');
         await readPanel(
-          "document.querySelector('#citation-inspection-close').click()",
+          "document.querySelector('#citation-inspection').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))",
         );
         const marginSession = await context.newCDPSession(page);
         const marginButton = async () => {
@@ -472,7 +478,7 @@ for (const [name, executable] of browsers) {
         await page.mouse.click((left + right) / 2, (top + bottom) / 2);
         await expect.poll(inspect).toBe(citation);
         await readPanel(
-          "document.querySelector('#citation-inspection-close').click()",
+          "document.querySelector('#citation-inspection').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))",
         );
         await marginSession.send('DOM.focus', { nodeId: await marginButton() });
         await page.keyboard.press('Enter');

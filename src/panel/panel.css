@@ -283,13 +283,6 @@ section:has(#category-assign[hidden]) .saved-next-step {
   overflow-wrap: anywhere;
 }
 
-#citation-inspection header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
 #citation-inspection button[aria-pressed='true'] {
   outline: 2px solid currentColor;
 }

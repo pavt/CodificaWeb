@@ -34,3 +34,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Vista previa temporal.** Q16 verifica en Chrome y Brave que la ficha aparece al señalar texto categorizado, se cierra al pasar a texto sin categoría y reaparece al volver. Abrir una definición con clic conserva la ficha hasta cerrarla explícitamente.
 
 **Estado sin selección.** La regresión de Q03 comprueba que el panel solo anuncia «Texto seleccionado» tras capturar un fragmento válido. Con la captura vacía muestra «Sin selección» y la instrucción para empezar.
+
+La ficha de vista previa prescinde del botón «Cerrar ficha». La prueba nativa verifica su ausencia y el cierre automático. Escape sigue disponible para una definición abierta en el panel.

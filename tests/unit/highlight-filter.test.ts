@@ -68,7 +68,7 @@ test('Q05: filtra por código y limita la pintura al documento autorizado', asyn
 
 test('Q05: conserva el orden de las citas y limpia el panel al cambiar de documento', async () => {
   document.body.innerHTML =
-    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details><section id="citation-inspection" hidden><p id="citation-inspection-quote"></p><div id="citation-inspection-categories"></div><div id="citation-inspection-detail" hidden><strong id="citation-inspection-name"></strong><p id="citation-inspection-definition"></p></div><button id="citation-inspection-close">Cerrar</button></section>';
+    '<select></select><p id="status"></p><details id="page-citations" hidden><ol id="page-citation-list"></ol></details><section id="citation-inspection" hidden><p id="citation-inspection-quote"></p><div id="citation-inspection-categories"></div><div id="citation-inspection-detail" hidden><strong id="citation-inspection-name"></strong><p id="citation-inspection-definition"></p></div></section>';
   const filter = document.querySelector('select') as HTMLSelectElement;
   const status = document.querySelector('#status') as HTMLElement;
   const citations = document.querySelector('#page-citations') as HTMLElement;
