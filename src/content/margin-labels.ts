@@ -123,12 +123,23 @@ export function createMarginLabels() {
 
   function stopPreview() {
     clearTimeout(timer);
+    if (!lastPreview) return;
     lastPreview = undefined;
+    void chrome.runtime
+      .sendMessage({ type: 'citation.preview.end' })
+      .catch(() => undefined);
+  }
+
+  function pointerOut(event: PointerEvent) {
+    if (event.relatedTarget === null) stopPreview();
   }
 
   function pointerMove(event: PointerEvent) {
     clearTimeout(timer);
-    if (event.buttons || isMarginInteraction(event)) return;
+    if (event.buttons || isMarginInteraction(event)) {
+      stopPreview();
+      return;
+    }
     const { clientX: x, clientY: y } = event;
     timer = setTimeout(() => {
       let underline: MarginCitation | undefined;
@@ -143,7 +154,11 @@ export function createMarginLabels() {
         return false;
       });
       const match = text ?? underline;
-      if (!match?.id || match.id === lastPreview) return;
+      if (!match?.id) {
+        stopPreview();
+        return;
+      }
+      if (match.id === lastPreview) return;
       lastPreview = match.id;
       void chrome.runtime
         .sendMessage({ type: 'citation.preview', id: match.id })
@@ -229,18 +244,23 @@ export function createMarginLabels() {
     frame = requestAnimationFrame(render);
   }
 
+  function viewportChanged() {
+    stopPreview();
+    schedule();
+  }
+
   return {
     clear() {
       if (!host) return;
       stopPreview();
       window.removeEventListener('pointermove', pointerMove, true);
-      window.removeEventListener('pointerout', stopPreview);
+      window.removeEventListener('pointerout', pointerOut);
       popup = undefined;
       opener = undefined;
       priority = [];
       cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule, true);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', viewportChanged, true);
+      window.removeEventListener('resize', viewportChanged);
       host.remove();
       host = undefined;
       list = undefined;
@@ -280,9 +300,9 @@ export function createMarginLabels() {
         capture: true,
         passive: true,
       });
-      window.addEventListener('pointerout', stopPreview);
-      window.addEventListener('scroll', schedule, true);
-      window.addEventListener('resize', schedule);
+      window.addEventListener('pointerout', pointerOut);
+      window.addEventListener('scroll', viewportChanged, true);
+      window.addEventListener('resize', viewportChanged);
       schedule();
     },
   };

@@ -30,3 +30,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Retorno a la ficha tras guardar.** Q16 reproduce en los paneles nativos de Chrome y Brave un vínculo guardado seguido de un hover real sobre la cita subrayada. La ficha vuelve a ser visible y el resumen guardado se cierra. Los borradores en curso se conservan.
 
 **Codificación después de guardar.** Q16 cubre guardar una relación, seleccionar texto nuevo en la página y crear y aplicar una categoría sin cerrar el resumen manualmente. La regresión se reprodujo en Chrome y se verificó en Chrome y Brave.
+
+**Vista previa temporal.** Q16 verifica en Chrome y Brave que la ficha aparece al señalar texto categorizado, se cierra al pasar a texto sin categoría y reaparece al volver. Abrir una definición con clic conserva la ficha hasta cerrarla explícitamente.

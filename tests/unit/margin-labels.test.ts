@@ -86,13 +86,26 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
       new MouseEvent('pointermove', { clientX: 250, clientY: 25 }),
     );
     vi.advanceTimersByTime(130);
-    expect(send).toHaveBeenCalledTimes(1);
-    window.dispatchEvent(new MouseEvent('pointerout'));
+    expect(send).toHaveBeenLastCalledWith({ type: 'citation.preview.end' });
     window.dispatchEvent(
       new MouseEvent('pointermove', { clientX: 15, clientY: 42 }),
     );
     vi.advanceTimersByTime(130);
-    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(send).toHaveBeenLastCalledWith({
+      type: 'citation.preview',
+      id: 'narrow',
+    });
+    window.dispatchEvent(
+      new MouseEvent('pointerout', { relatedTarget: sidebar }),
+    );
+    expect(send).toHaveBeenCalledTimes(3);
+    window.dispatchEvent(new MouseEvent('pointerout'));
+    expect(send).toHaveBeenLastCalledWith({ type: 'citation.preview.end' });
+    window.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 15, clientY: 25 }),
+    );
+    vi.advanceTimersByTime(130);
     expect(send).toHaveBeenLastCalledWith({
       type: 'citation.preview',
       id: 'narrow',
@@ -107,7 +120,7 @@ test('Q05: posiciona etiquetas privadas y deja el espacio ocupado para el panel'
       }),
     );
     vi.advanceTimersByTime(130);
-    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenLastCalledWith({ type: 'citation.preview.end' });
     send.mockResolvedValueOnce(true);
     button?.click();
     await Promise.resolve();

@@ -202,6 +202,9 @@ export function createHighlightFilter(
   filter.addEventListener('change', () => void refresh());
   return {
     inspect,
+    endPreview() {
+      if (shown && !shown.categoryId) clearInspection();
+    },
     clear() {
       target = undefined;
       request++;

@@ -121,12 +121,17 @@ test('Q05: conserva el orden de las citas y limpia el panel al cambiar de docume
   expect(controller.inspect('0')).toBe(true);
   const inspection = document.querySelector('#citation-inspection');
   expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
+  controller.endPreview();
+  expect(inspection?.hasAttribute('hidden')).toBe(true);
+  expect(controller.inspect('0')).toBe(true);
   inspection
     ?.querySelector('button[data-category]')
     ?.dispatchEvent(new Event('click'));
   expect(
     inspection?.querySelector('#citation-inspection-definition')?.textContent,
   ).toBe('Sin definición');
+  controller.endPreview();
+  expect(inspection?.hasAttribute('hidden')).toBe(false);
   controller.inspect('9');
   expect(inspection?.querySelector('p')?.textContent).toBe('Primera cita');
   expect(controller.inspect('9', undefined, true)).toBe(true);

@@ -412,6 +412,10 @@ for (const [name, executable] of browsers) {
           return card.top >= 0 && card.top < innerHeight && card.bottom <= editor.top;
         })()`),
         ).toBe(true);
+        await page.locator('aside').hover();
+        await expect.poll(inspect).toBe('');
+        await page.mouse.move(underline.x, underline.y);
+        await expect.poll(inspect).toBe(citation);
         await expect.poll(quote).toBe('Otra cita.');
         await page
           .locator('p')
@@ -428,6 +432,9 @@ for (const [name, executable] of browsers) {
             ),
           )
           .toBe('Definición revisada');
+        await page.locator('aside').hover();
+        await expect.poll(inspect).toBe('Otra cita.');
+
         expect(
           await readPanel("document.querySelector('#category-name').value"),
         ).toBe('Borrador intacto');

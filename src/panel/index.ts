@@ -364,15 +364,18 @@ if (chrome.tabs?.onActivated) {
       target &&
       sender.tab?.id === target.tabId &&
       sender.documentId === target.documentId &&
-      sender.url === target.url &&
-      typeof message.id === 'string'
+      sender.url === target.url
     ) {
+      if (message.type === 'citation.preview.end') highlights.endPreview();
       const categoryId =
         message.type === 'citation.open' &&
         typeof message.categoryId === 'string'
           ? message.categoryId
           : undefined;
-      if (message.type === 'citation.preview' || categoryId !== undefined) {
+      if (
+        typeof message.id === 'string' &&
+        (message.type === 'citation.preview' || categoryId !== undefined)
+      ) {
         const savedView = relations?.hasSavedView() === true;
         const inspected = highlights.inspect(message.id, categoryId, savedView);
         if (inspected && savedView) {
