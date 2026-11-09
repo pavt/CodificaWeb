@@ -27,3 +27,39 @@ Cliente de anotación con anotador DOM, integraciones HTML/PDF y barra lateral c
 | Motor propio          | Control de confianza, colores, presupuesto y privacidad con APIs estándar                  | Mayor coste inicial en mapeo DOM y pruebas con HTML dinámico                                                                                                             |
 
 Se elige motor propio con Selection, Range, TreeWalker y CSS Custom Highlight. Adopta la idea de combinar cita, contexto y posición, con abstención explícita ante ambigüedad. En v1, el texto editado que ya no coincide queda sin ubicar. Se evita el coste y el riesgo de falsos positivos de una búsqueda aproximada automática. El coste inicial se concentra en fixtures de Unicode, límites DOM, coincidencias repetidas y solapamientos. La decisión y sus umbrales quedan sujetos a validar en los navegadores objetivo. [W3C Web Annotation](https://www.w3.org/TR/annotation-model/) · [CSS Custom Highlight API](https://www.w3.org/TR/css-highlight-api-1/)
+
+## Validación de Penciled headless (T031)
+
+Se usó el paquete de npm `penciled@0.5.3` con la extensión MV3 real y perfiles
+temporales. Playwright sirvió los módulos de prueba desde el origen local del
+fixture. Penciled se ejecutó en el contexto de la página, junto a los rangos que
+registró el script de contenido de CodificaWeb. La prueba mide el registro CSS y
+sus rangos. No carga la hoja de estilos de Penciled.
+
+| Operación con la API pública                   | Resultado observado en Chrome y Brave                                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Evento `select` sin anotaciones en memoria     | Devuelve el rango esperado y conserva el registro CSS                                                                 |
+| `create(range)` sobre una cita categorizada    | Registra `penciled-yellow` y `penciled-active` sobre la misma cita                                                    |
+| `clear()` seguido de `import()` y `getRange()` | Recupera la cita y registra `penciled-yellow`. El resaltado de categoría conserva sus rangos                          |
+| `destroy()`                                    | Restablece el registro CSS anterior. Se conservan el HTML de la cita y las claves de almacenamiento local del fixture |
+
+La prueba inicial exigía que importar y resolver dejara intacto el registro CSS.
+Falló en ambos navegadores por `penciled-yellow`. La prueba de caracterización
+registra ese resultado como parte del contrato observado. La captura sin
+anotaciones puede entregar rangos por separado. En la versión evaluada,
+`getRange()` requiere una anotación creada, importada o cargada y la API pública
+no ofrece una opción para desactivar el pintor. La evaluación no demuestra
+interferencia visual con la hoja de estilos actual. Sí demuestra que la API de
+recuperación incorpora un segundo pintor, por lo que las etapas de integración
+quedan detenidas en este punto.
+
+Para reproducir en macOS, con Chrome y Brave instalados:
+
+```sh
+pnpm build
+penciled_fixture=$(mktemp -d)
+npm pack penciled@0.5.3 --pack-destination "$penciled_fixture"
+tar -xzf "$penciled_fixture/penciled-0.5.3.tgz" -C "$penciled_fixture"
+CODIFICAWEB_PENCILED_DIST="$penciled_fixture/package/dist" \
+  pnpm test:e2e:branded --grep 'Google Chrome|Brave Browser'
+```

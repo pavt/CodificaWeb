@@ -16,6 +16,13 @@ const slowImage = new URL('/carga-lenta.svg', url).href;
 const otherSite = 'http://localhost:32147/otro';
 const citation = 'Cita sintética T015';
 const origins = ['http://127.0.0.1/*'];
+const penciledDist = process.env.CODIFICAWEB_PENCILED_DIST;
+const penciledRoot = new URL('/__penciled__/', url).href;
+const penciledFiles = [
+  'headless.js',
+  'annotate-BF1Cq2Cg.js',
+  'w3c-q8s9NNqR.js',
+];
 
 for (const [name, executable] of browsers) {
   test(`Regresión de selección y permisos en ${name}`, async () => {
@@ -67,6 +74,16 @@ for (const [name, executable] of browsers) {
 
       const unexpected: string[] = [];
       await context.route(/^https?:\/\//, (route) => route.abort());
+      if (penciledDist) {
+        for (const file of penciledFiles) {
+          await context.route(penciledRoot + file, (route) =>
+            route.fulfill({
+              contentType: 'text/javascript',
+              path: resolve(penciledDist, file),
+            }),
+          );
+        }
+      }
       await context.route(url, (route) =>
         route.fulfill({
           contentType: 'text/html; charset=utf-8',
@@ -99,6 +116,11 @@ for (const [name, executable] of browsers) {
       context.on('request', (request) => {
         if (
           /^https?:\/\//.test(request.url()) &&
+          !(
+            penciledDist &&
+            request.resourceType() === 'script' &&
+            penciledFiles.some((file) => request.url() === penciledRoot + file)
+          ) &&
           !(
             request.url() === slowImage &&
             request.resourceType() === 'image' &&
@@ -444,6 +466,97 @@ for (const [name, executable] of browsers) {
             ),
           )
           .toEqual([citation, 'Otra ', 'cita.']);
+        if (penciledDist) {
+          await test.step('API pública de Penciled sobre una cita categorizada', async () => {
+            const result = await page.evaluate(async (entry) => {
+              const { annotate } = await import(entry);
+              const snapshot = () =>
+                Array.from(CSS.highlights, ([name, ranges]) => [
+                  name,
+                  Array.from(ranges, (range) => range.toString()),
+                ]);
+              const paragraph = document.querySelector('p');
+              if (!paragraph) throw new Error('Falta el párrafo de prueba');
+              const before = snapshot();
+              const html = paragraph.innerHTML;
+              const storedKeys = Object.keys(localStorage);
+              const instance = annotate(document.body, {
+                storage: 'memory',
+                observe: false,
+                noteIndicator: false,
+              });
+              await instance.ready;
+              const selection = getSelection();
+              const original = selection?.rangeCount
+                ? selection.getRangeAt(0).cloneRange()
+                : undefined;
+              let observed;
+              let captureOnly;
+              let resolved;
+              let afterCreate;
+              let afterImport;
+              try {
+                const range = document.createRange();
+                range.selectNodeContents(paragraph);
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+                observed = await new Promise<string | null>((finish) => {
+                  const timeout = setTimeout(() => finish(null), 1500);
+                  instance.on('select', (event: { range: Range } | null) => {
+                    if (!event) return;
+                    clearTimeout(timeout);
+                    finish(event.range.toString());
+                  });
+                  document.dispatchEvent(new Event('selectionchange'));
+                });
+                captureOnly = snapshot();
+                const created = instance.create(range);
+                if (!created) throw new Error('Penciled no pudo crear la cita');
+                afterCreate = snapshot();
+                const exported = instance.export();
+                instance.clear();
+                instance.import(exported);
+                resolved = instance.getRange(created.id)?.toString();
+                afterImport = snapshot();
+              } finally {
+                instance.destroy();
+                selection?.removeAllRanges();
+                if (original) selection?.addRange(original);
+              }
+              return {
+                observed,
+                resolved,
+                before,
+                captureOnly,
+                afterCreate,
+                afterImport,
+                afterDestroy: snapshot(),
+                htmlPreserved: paragraph.innerHTML === html,
+                storagePreserved:
+                  JSON.stringify(Object.keys(localStorage)) ===
+                  JSON.stringify(storedKeys),
+              };
+            }, penciledRoot + 'headless.js');
+            expect(result.observed).toBe(citation);
+            expect(result.resolved).toBe(citation);
+            expect(result.captureOnly).toEqual(result.before);
+            // Headless leaves the category range in place but registers a
+            // second highlight on the same text for both public write paths.
+            const dualPaint = [
+              ...result.before,
+              ['penciled-yellow', [citation]],
+            ];
+            expect(result.afterCreate).toEqual([
+              ...dualPaint,
+              ['penciled-active', [citation]],
+            ]);
+            expect(result.afterImport).toEqual(dualPaint);
+            expect(result.afterDestroy).toEqual(result.before);
+            expect(result.htmlPreserved).toBe(true);
+            expect(result.storagePreserved).toBe(true);
+            await expect.poll(quote).toBe('Otra cita.');
+          });
+        }
         await readPanel(`(() => {
           document.querySelector('#category-open').click();
           document.querySelector('#category-name').value = 'Borrador intacto';
