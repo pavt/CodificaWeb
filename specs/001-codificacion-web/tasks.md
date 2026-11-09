@@ -58,4 +58,4 @@ Conservar el fragmento capturado si la selección nativa se colapsa sin otro ges
 Depende de T029 (#59). La prueba del panel nativo en
 [permissions.spec.ts](../../tests/branded/permissions.spec.ts) reproduce la
 pérdida del fragmento al guardar una categoría en Chrome y Brave. Un gesto
-posterior puede reemplazar o descartar la selección.
+posterior puede reemplazar o descartar la selección. [PR #66](https://github.com/pavt/CodificaWeb/pull/66).
