@@ -28,3 +28,5 @@ Flujo: confirmar T022 en `origin/main` y verificar su CI. Registrar un issue por
 **Colores de categorías.** Q16 comprueba en Chromium que las etiquetas de las citas muestran los colores guardados en el proyecto, incluso cuando una cita tiene varias categorías.
 
 **Retorno a la ficha tras guardar.** Q16 reproduce en los paneles nativos de Chrome y Brave un vínculo guardado seguido de un hover real sobre la cita subrayada. La ficha vuelve a ser visible y el resumen guardado se cierra. Los borradores en curso se conservan.
+
+**Codificación después de guardar.** Q16 cubre guardar una relación, seleccionar texto nuevo en la página y crear y aplicar una categoría sin cerrar el resumen manualmente. La regresión se reprodujo en Chrome y se verificó en Chrome y Brave.

@@ -585,44 +585,49 @@ for (const [name, executable] of browsers) {
           )
           .toBe('Categoría guardada y aplicada.');
         // Q16: a saved relationship must give way to the next real hover.
-        await expect
-          .poll(() =>
-            readPanel("document.querySelector('#selection-relation').hidden"),
-          )
-          .toBe(false);
-        await readPanel(
-          "document.querySelector('#selection-relation button').click()",
-        );
-        await expect
-          .poll(() =>
-            readPanel(
-              "document.querySelector('#relation-results li button')?.textContent",
-            ),
-          )
-          .toBe('Elegir cita');
-        await readPanel(
-          "document.querySelector('#relation-results li button').click()",
-        );
-        await expect
-          .poll(() =>
-            readPanel(
-              "document.querySelector('#relation-type').options.length",
-            ),
-          )
-          .toBeGreaterThan(1);
-        await readPanel(`(() => {
+        const saveRelationship = async (typeName: string) => {
+          await expect
+            .poll(() =>
+              readPanel("document.querySelector('#selection-relation').hidden"),
+            )
+            .toBe(false);
+          await readPanel(
+            "document.querySelector('#selection-relation button').click()",
+          );
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-results li button')?.textContent",
+              ),
+            )
+            .toBe('Elegir cita');
+          await readPanel(
+            "document.querySelector('#relation-results li button').click()",
+          );
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-type').options.length",
+              ),
+            )
+            .toBeGreaterThan(1);
+          await readPanel(`(() => {
           const type = document.querySelector('#relation-type');
           type.value = '__new__';
           type.dispatchEvent(new Event('change'));
-          document.querySelector('#relation-type-name').value = 'Complementa';
+          document.querySelector('#relation-type-name').value = '${typeName}';
           document.querySelector('#relation-review-button').click();
           document.querySelector('#relation-submit').click();
         })()`);
-        await expect
-          .poll(() =>
-            readPanel("document.querySelector('#relation-status').textContent"),
-          )
-          .toBe('Vínculo guardado.');
+          await expect
+            .poll(() =>
+              readPanel(
+                "document.querySelector('#relation-status').textContent",
+              ),
+            )
+            .toBe('Vínculo guardado.');
+        };
+        await saveRelationship('Complementa');
         await page
           .locator('p')
           .first()
@@ -640,6 +645,41 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#citation-relation').hidden"),
           )
           .toBe(true);
+        await saveRelationship('Amplía');
+        await page
+          .locator('p')
+          .first()
+          .evaluate((paragraph) => {
+            const node = paragraph.firstChild;
+            if (!node) throw new Error('Falta el texto de la página.');
+            const range = document.createRange();
+            range.setStart(node, 0);
+            range.setEnd(node, 'Página'.length);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          });
+        await expect.poll(quote).toBe('Página');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#citation-relation').hidden"),
+          )
+          .toBe(true);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
+        await readPanel(`(() => {
+          document.querySelector('#category-open').click();
+          document.querySelector('#category-name').value = 'Después del vínculo';
+          document.querySelector('#category-create').requestSubmit();
+        })()`);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#coding-status').textContent"),
+          )
+          .toBe('Categoría guardada y aplicada.');
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');

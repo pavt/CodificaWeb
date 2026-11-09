@@ -192,7 +192,7 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-async function captureCurrent() {
+async function captureCurrent(fromUserSelection = false) {
   const current = target;
   if (!current) return;
   captureButton.disabled = true;
@@ -207,6 +207,12 @@ async function captureCurrent() {
     quote.textContent = result.selectors.quote.exact;
     source.textContent = result.url;
     captureStatus.textContent = 'Selección capturada.';
+    if (fromUserSelection && relations?.hasSavedView()) {
+      relations.dismissSavedView();
+      document
+        .getElementById('quote-card')
+        ?.scrollIntoView({ block: 'nearest' });
+    }
     void coding.show(current, result);
     void notes.show(current, result);
   } else {
@@ -214,7 +220,7 @@ async function captureCurrent() {
   }
 }
 
-captureButton.addEventListener('click', () => void captureCurrent());
+captureButton.addEventListener('click', () => void captureCurrent(true));
 
 function resetTarget() {
   target = undefined;
@@ -385,6 +391,6 @@ if (chrome.tabs?.onActivated) {
       sender.tab?.id === target.tabId &&
       sender.documentId === target.documentId
     )
-      void captureCurrent();
+      void captureCurrent(true);
   });
 }
