@@ -17,12 +17,14 @@
     "coverage": "vitest run --coverage",
     "build": "vite build",
     "test:e2e": "playwright test",
+    "test:selection": "playwright test --config playwright.branded.config.ts --grep \"Chromium de Playwright\"",
     "test:e2e:branded": "playwright test --config playwright.branded.config.ts",
     "audit": "pnpm audit",
     "mcp:playwright": "playwright-mcp --isolated --headless --browser chrome"
   },
   "dependencies": {
     "dexie": "4.4.7",
+    "fflate": "0.8.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

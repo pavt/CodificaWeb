@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { seedHistoricalNote } from '../fixtures/historical-note';
 import { expect, test } from 'vitest';
 import { CodingDatabase, initialProjectId } from '../../src/storage/database';
 import { IndexedCatalog } from '../../src/storage/indexed-catalog';
@@ -47,12 +48,7 @@ test('Q02: reutiliza un código en dos fuentes, conserva el color al editar y el
         true,
         crypto.randomUUID(),
       );
-      await codings.setNote(
-        initialProjectId,
-        fragment,
-        'Nota',
-        crypto.randomUUID(),
-      );
+      await seedHistoricalNote(db, initialProjectId, fragment, 'Nota');
     }
     await expect(
       catalog.update('ajeno', code, {
@@ -74,7 +70,17 @@ test('Q02: reutiliza un código en dos fuentes, conserva el color al editar y el
     expect(await db.codings.count()).toBe(0);
     expect(await db.annotations.count()).toBe(2);
     for (const fragment of fragments) {
-      expect(await codings.readNote(initialProjectId, fragment)).toBe('Nota');
+      const source = await db.sources.get({
+        '[projectId+url]': [initialProjectId, fragment.url],
+      });
+      expect(
+        (
+          await db.annotations
+            .where('[projectId+sourceId]')
+            .equals([initialProjectId, source?.id ?? ''])
+            .first()
+        )?.note,
+      ).toBe('Nota');
       expect(
         await codings.highlights(initialProjectId, fragment.url, code),
       ).toEqual([]);

@@ -7,7 +7,7 @@ Investigadores que codifican contenido web pueden conservar evidencia textual y 
 | Historia                                        | Requisitos                 |
 | ----------------------------------------------- | -------------------------- |
 | US1 · Seleccionar, codificar y ver el resultado | FR-03, FR-04, FR-05        |
-| US2 · Recuperar evidencia y tomar notas         | FR-06, FR-07               |
+| US2 · Recuperar evidencia                       | FR-06                      |
 | US3 · Organizar y consultar un corpus           | FR-01, FR-02, FR-08, FR-09 |
 | US4 · Transferir un proyecto                    | FR-10                      |
 
@@ -19,14 +19,13 @@ Investigadores que codifican contenido web pueden conservar evidencia textual y 
 | FR-04 · Asignar varios códigos | CA-04 · Añadir dos códigos al mismo fragmento, repetir uno y retirar el otro. Queda una asociación única. Se rechazan asociaciones entre proyectos.                                                                                                           |
 | FR-05 · Mostrar colores        | CA-05 · Pintar un fragmento, añadir otro superpuesto y filtrar por cualquiera de los códigos. Ambos se pueden identificar desde el panel y los nodos de texto de la página quedan intactos.                                                                   |
 | FR-06 · Recuperar resaltados   | CA-06 · Tras guardar, recargar y revisitar un origen autorizado. Se recupera el mismo fragmento incluso tras inserciones alrededor o cambios de marcado compatibles. Una cita repetida sin evidencia distintiva o que desaparece se conserva como sin ubicar. |
-| FR-07 · Gestionar notas        | CA-07 · Crear, leer, editar y borrar la nota de un fragmento. Al reabrir persiste el último estado confirmado y borrar la nota conserva selección y códigos.                                                                                                  |
 | FR-08 · Buscar y filtrar       | CA-08 · Filtrar por código, texto o fuente dentro del proyecto activo. Los filtros se combinan por intersección y se incluyen evidencias sin ubicar.                                                                                                          |
 | FR-09 · Ir a la evidencia      | CA-09 · Desde un resultado, abrir o enfocar la fuente y desplazar al rango cuando se resuelve. Ante permiso ausente, redirección a otra fuente o anclaje fallido, el panel explica el estado y conserva la cita.                                              |
 | FR-10 · Transferir JSON        | CA-10 · Exportar e importar en otro perfil. Se preservan contenido, procedencia y relaciones. Referencias rotas, archivos no válidos o versiones futuras se rechazan de forma atómica.                                                                        |
 
 ## Aclaraciones adoptadas para revisión
 
-- Una nota editable opcional por anotación. La anotación puede existir sin código. La primera entrega de desarrollo puede usar un proyecto y un código iniciales hasta que llegue su gestión.
+- Las notas históricas se conservan al importar y exportar proyectos. La anotación puede existir sin código. La primera entrega de desarrollo puede usar un proyecto y un código iniciales hasta que llegue su gestión.
 - HTML HTTP(S) en el documento principal, con permisos por origen. Quedan para después iframes, Shadow DOM, controles editables, navegación privada y PDF. Las páginas internas del navegador o con inyección bloqueada muestran un estado de incompatibilidad.
 - El proyecto activo controla los resaltados. El panel enumera todos los códigos de una selección. El color principal es determinista y se puede cambiar con el filtro.
 - Fuente identificada por URL normalizada conservando query y fragmento, para respetar rutas y documentos distintos. Una SPA se reevalúa al cambiar de URL y al cambiar su contenido.

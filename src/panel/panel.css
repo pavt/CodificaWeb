@@ -80,7 +80,7 @@ fieldset {
 #selection-quote:empty {
   display: none;
 }
-#quote-card:has(blockquote:not(:empty)) #capture-status {
+#quote-card:has(blockquote:not(:empty)) #capture-status:not(.capture-error) {
   position: absolute;
   clip-path: inset(50%);
 }
@@ -441,4 +441,42 @@ main:has(> #citation-relation:not([hidden]))
   color: white;
   border-color: #265e46;
   font-weight: 650;
+}
+
+section:has(> #document-setup:not([hidden])) #fragment-codes {
+  display: none;
+}
+
+#document-setup,
+#document-setup-project,
+#document-project-suggestions:not(:empty) {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+#document-setup :is(input, button) {
+  width: 100%;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+
+#document-project-name {
+  padding: 8px 10px;
+  border: 1px solid #687f71;
+  border-radius: 8px;
+}
+
+#document-project-suggestions button {
+  text-align: start;
+}
+
+#document-setup-submit {
+  background: #205941;
+  color: white;
+  font-weight: 650;
+}
+
+#document-setup-status:empty {
+  display: none;
 }

@@ -71,30 +71,6 @@ export async function handleCodingRequest(
       kind: 'citation',
       id: await codings.citationId(projectId, fragment),
     };
-  if (message.type === 'note.read') {
-    return {
-      kind: 'note',
-      note: await codings.readNote(projectId, fragment),
-    };
-  }
-  if (message.type === 'note.set') {
-    const { note, operationId } = message;
-    if (
-      (note !== null &&
-        (typeof note !== 'string' || note.length > 16_384 || !note.trim())) ||
-      typeof operationId !== 'string' ||
-      !operationIdPattern.test(operationId)
-    )
-      return error;
-    try {
-      return {
-        kind: 'note',
-        note: await codings.setNote(projectId, fragment, note, operationId),
-      };
-    } catch {
-      return error;
-    }
-  }
   if (message.type === 'coding.read')
     return {
       kind: 'codings',

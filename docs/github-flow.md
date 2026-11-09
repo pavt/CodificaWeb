@@ -23,7 +23,7 @@ La traza mínima es `FR/CA → T → issue → rama → archivos Q → commits �
 | -------------------------------- | --------- | -------------------------------------------------- |
 | M0 · Preparación del repositorio | T000      | Plan y workflow base integrados mediante PR        |
 | M1 · Selección y resaltado       | T001–T004 | Seleccionar, asignar y pintar en la extensión real |
-| M2 · Persistencia y notas        | T005–T007 | Recuperar evidencia y gestionar notas              |
+| M2 · Persistencia                | T005–T006 | Recuperar evidencia                                |
 | M3 · Organización y búsqueda     | T008–T011 | Proyectos, códigos, filtros y navegación           |
 | M4 · Intercambio y validación    | T012–T013 | JSON y validación de versión                       |
 

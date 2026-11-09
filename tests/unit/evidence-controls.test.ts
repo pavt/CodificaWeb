@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
+import { seedHistoricalNote } from '../fixtures/historical-note';
 import { afterEach, expect, test, vi } from 'vitest';
 import { database, projects } from '../../src/background/coding-messages';
 import {
@@ -36,25 +37,20 @@ test('Q08: busca en IndexedDB, combina filtros y limpia resultados al cambiar de
     true,
     crypto.randomUUID(),
   );
-  await codings.setNote(
+  await seedHistoricalNote(
+    database,
     initialProjectId,
     fragment('a'),
     '<b>literal</b>',
-    crypto.randomUUID(),
   );
-  await codings.setNote(
+  await seedHistoricalNote(
+    database,
     initialProjectId,
     fragment('b'),
     'Otra nota',
-    crypto.randomUUID(),
   );
   const other = await projects.create('Otro', '');
-  await codings.setNote(
-    other,
-    fragment('ajena'),
-    'Otra nota',
-    crypto.randomUUID(),
-  );
+  await seedHistoricalNote(database, other, fragment('ajena'), 'Otra nota');
 
   const saved = await database.annotations
     .where('projectId')

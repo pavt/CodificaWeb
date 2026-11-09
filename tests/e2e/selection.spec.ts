@@ -1,3 +1,4 @@
+import { unzipSync, strFromU8 } from 'fflate';
 import fixture from '../../docs/examples/project-v1.json' with { type: 'json' };
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { cpus, platform, tmpdir } from 'node:os';
@@ -137,7 +138,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .getByLabel('Definición de la categoría')
         .fill('Una definición sintética');
       await expect(
-        panel.getByText('El proyecto asigna el color automáticamente.'),
+        panel.getByText('El color se asigna automáticamente.'),
       ).toBeVisible();
       await panel.getByRole('button', { name: 'Guardar y aplicar' }).click();
       await expect(panel.locator('#coding-status')).toHaveText(
@@ -278,13 +279,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         panel.getByText('Selecciona otro fragmento para seguir.'),
       ).toBeHidden();
 
-      const note = panel.getByLabel('Nota en texto plano');
-      const saveNote = panel.getByRole('button', { name: 'Guardar nota' });
-      const removeNote = panel.getByRole('button', { name: 'Borrar nota' });
-      await note.fill('<b>Observación literal</b>');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
-
       const tema = panel.getByRole('checkbox', { name: 'Tema' });
       const contexto = panel.getByRole('checkbox', { name: 'Contexto' });
       await tema.click();
@@ -315,15 +309,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(contexto).toBeChecked();
       await expect.poll(async () => (await workerTargets()).length).toBe(1);
       await cdp.detach();
-      await expect(note).toHaveValue('<b>Observación literal</b>');
-      await note.fill('Nota editada');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
-      await capture.click();
-      await expect(note).toHaveValue('Nota editada');
-      await removeNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota borrada.');
-      await expect(note).toHaveValue('');
       await expect(tema).toBeChecked();
       await expect(contexto).toBeChecked();
       await expect(panel.locator('#selection-quote')).toHaveText(
@@ -378,7 +363,9 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
 
       await panel.getByText('Gestionar proyectos', { exact: true }).click();
       const project = panel.getByLabel('Proyecto activo');
-      const projectName = panel.getByLabel('Nombre del proyecto');
+      const projectName = panel.getByLabel('Nombre del proyecto', {
+        exact: true,
+      });
       await projectName.fill('Proyecto B');
       await panel.getByRole('button', { name: 'Crear proyecto' }).click();
       await project.selectOption({ label: 'Proyecto B' });
@@ -386,11 +373,7 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await expect(project.locator('option:checked')).toHaveText('Proyecto B');
       await expect.poll(() => paintedText('codificaweb-7fc97f')).toBe('');
       await capture.click();
-      await expect(note).toBeEnabled();
       await expect(tema).toHaveCount(0);
-      await note.fill('Nota del segundo proyecto');
-      await saveNote.click();
-      await expect(panel.locator('#note-status')).toHaveText('Nota guardada.');
       await projectName.fill('Proyecto B editado');
       await panel.getByRole('button', { name: 'Guardar proyecto' }).click();
       await expect(project.locator('option:checked')).toHaveText(
@@ -410,7 +393,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .toBe('🙂 hola');
       await capture.click();
       await expect(tema).toBeChecked();
-      await expect(note).toHaveValue('');
 
       await source.evaluate(() =>
         history.replaceState(null, '', '#otra-fuente'),
@@ -588,11 +570,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         await expect
           .poll(() => paintedText('codificaweb-ffff99'))
           .toBe('Evidencia del catálogo');
-        await note.fill('Nota conservada');
-        await saveNote.click();
-        await expect(panel.locator('#note-status')).toHaveText(
-          'Nota guardada.',
-        );
       }
       await catalog.selectOption({ label: 'Hallazgo' });
       await expect(codeColor).toHaveValue('#FFFF99');
@@ -618,7 +595,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         panel.getByRole('checkbox', { name: 'Hallazgo editado' }),
       ).toHaveCount(0);
       await expect.poll(() => paintedText('codificaweb-ffff99')).toBe('');
-      await expect(note).toHaveValue('Nota conservada');
       // Q08: search stored evidence after the current page loses its text.
       await tema.click();
       await expect(tema).toBeChecked();
@@ -647,7 +623,6 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         .selectOption({ label: sources[0] ?? '' });
       await search.click();
       await expect(evidence.locator('li')).toHaveCount(1);
-      await expect(evidence).toContainText('Nota conservada');
       await panel
         .getByLabel('Fuente de la evidencia')
         .selectOption({ label: sources[1] ?? '' });
@@ -703,7 +678,20 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
       await file.setInputFiles({
         name: 'proyecto.json',
         mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(fixture)),
+        buffer: Buffer.from(
+          JSON.stringify({
+            ...fixture,
+            sources: [
+              ...fixture.sources,
+              {
+                ...fixture.sources[0],
+                id: '00000000-0000-4000-8000-0000000000ff',
+                url: 'https://example.test/issues/2',
+                title: 'Segundo documento',
+              },
+            ],
+          }),
+        ),
       });
       await importProject.click();
       await expect(panel.locator('#transfer-status')).toHaveText(
@@ -729,6 +717,31 @@ test('Q01–Q10, Q12, Q14 y Q16: flujo de proyectos, evidencias y privacidad loc
         fixture.annotations[0]?.note,
       );
       expect(transferred.codings).toHaveLength(2);
+      const [archive] = await Promise.all([
+        panel.waitForEvent('download'),
+        panel.getByRole('button', { name: 'Descargar proyecto (ZIP)' }).click(),
+      ]);
+      expect(archive.suggestedFilename()).toBe('Movilidad.zip');
+      const archivePath = await archive.path();
+      const entries = unzipSync(await readFile(archivePath));
+      const indexEntry = entries['Movilidad/proyecto.json'];
+      if (!indexEntry) throw new Error('Falta el índice');
+      const index = JSON.parse(strFromU8(indexEntry));
+      expect(index.documents).toHaveLength(2);
+      expect(
+        Object.keys(entries).filter((path) => path.includes('/documentos/')),
+      ).toHaveLength(2);
+      const documentEntry =
+        entries[
+          `Movilidad/${index.documents.find((document: { url: string }) => document.url === fixture.sources[0]?.url).path}`
+        ];
+      if (!documentEntry) throw new Error('Falta el documento');
+      expect(JSON.parse(strFromU8(documentEntry))).toMatchObject({
+        document: { format: 'web', url: fixture.sources[0]?.url },
+        citations: [
+          { note: fixture.annotations[0]?.note, categories: [{}, {}] },
+        ],
+      });
       await file.setInputFiles(output);
       await importProject.click();
       await expect(panel.locator('#transfer-status')).toHaveText(

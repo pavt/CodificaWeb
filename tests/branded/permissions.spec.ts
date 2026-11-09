@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { chromium, expect, test } from '@playwright/test';
 
 const browsers = [
+  ['Chromium de Playwright', chromium.executablePath()],
   ['Google Chrome', process.env.CODIFICAWEB_CHROME_BIN],
   ['Brave Browser', process.env.CODIFICAWEB_BRAVE_BIN],
 ] as const;
@@ -17,13 +18,15 @@ const citation = 'Cita sintética T015';
 const origins = ['http://127.0.0.1/*'];
 
 for (const [name, executable] of browsers) {
-  test(`Q11 y Q14 · paquete MV3 en ${name}`, async () => {
-    const profile = await mkdtemp(resolve(tmpdir(), 'codificaweb-branded-'));
+  test(`Regresión de selección y permisos en ${name}`, async () => {
+    const profile = await mkdtemp(resolve(tmpdir(), 'codificaweb-native-'));
+    const bundled = name === 'Chromium de Playwright';
     const child = spawn(
       executable ?? `/Applications/${name}.app/Contents/MacOS/${name}`,
       [
         `--user-data-dir=${profile}`,
         '--headless',
+        ...(bundled ? ['--no-sandbox'] : []),
         '--window-size=1200,800',
         '--remote-debugging-port=0',
         '--enable-unsafe-extension-debugging',
@@ -262,7 +265,62 @@ for (const [name, executable] of browsers) {
         };
         const quote = () =>
           readPanel("document.querySelector('#selection-quote')?.textContent");
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#document-setup').hidden"),
+          )
+          .toBe(false);
+        expect(
+          await readPanel(`(() => {
+          const panel = document.querySelector('main');
+          const form = document.querySelector('#document-setup');
+          panel.style.width = '320px';
+          const fits = form.scrollWidth <= form.clientWidth;
+          panel.style.removeProperty('width');
+          return fits;
+        })()`),
+        ).toBe(true);
+        expect(await quote()).toBe(citation);
+        expect(
+          await readPanel("document.querySelector('#fragment-codes').disabled"),
+        ).toBe(true);
+        expect(
+          await readPanel(
+            "document.querySelector('#quote-card + #document-setup') !== null",
+          ),
+        ).toBe(true);
+        await readPanel(`(() => {
+          const name = document.querySelector('#document-project-name');
+          name.focus();
+          document.querySelector('#document-project-suggestions button').click();
+          document.querySelector('#document-setup').requestSubmit();
+        })()`);
         await expect.poll(quote).toBe(citation);
+        expect(
+          await readPanel(`[
+            '#active-project-label',
+            '#panel-evidence',
+            '#projects',
+            '#project-transfer',
+            '#panel-tools',
+            '#capture-selection',
+            '#catalog'
+          ].every(selector => document.querySelector(selector)?.closest('[hidden]'))`),
+        ).toBe(true);
+        expect(
+          await readPanel(
+            "document.querySelector('#page-citations summary').textContent",
+          ),
+        ).toBe('Citas de esta página');
+        expect(
+          await readPanel(
+            "document.querySelector('#page-citations #highlight-filter') !== null",
+          ),
+        ).toBe(true);
+        expect(
+          await readPanel("document.querySelector('#fragment-note') === null"),
+        ).toBe(true);
+
         expect(
           await readPanel("document.querySelector('#site-url-field').hidden"),
         ).toBe(true);
@@ -538,6 +596,26 @@ for (const [name, executable] of browsers) {
         ] as const;
         for (const [index, [text, color]] of newProjectColors.entries()) {
           await dragQuote(index, text);
+          if (index === 0) {
+            await expect
+              .poll(() =>
+                readPanel("document.querySelector('#document-setup').hidden"),
+              )
+              .toBe(false);
+            expect(
+              await readPanel(
+                "document.querySelector('#document-setup-title').textContent",
+              ),
+            ).toContain('Continuar en');
+            await readPanel(`(() => {
+              document.querySelector('#document-change-project').click();
+              const input = document.querySelector('#document-project-name');
+              input.value = 'Otro';
+              input.dispatchEvent(new Event('input'));
+              document.querySelector('#document-project-suggestions button').click();
+              document.querySelector('#document-setup').requestSubmit();
+            })()`);
+          }
           await expect.poll(quote).toBe(text);
           await expect
             .poll(() =>
@@ -585,7 +663,17 @@ for (const [name, executable] of browsers) {
         );
         await page.goto(nextUrl, { waitUntil: 'domcontentloaded' });
         await expect.poll(quote).toBe('');
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#document-setup').hidden"),
+          )
+          .toBe(false);
         await dragQuote(0, 'Página siguiente.');
+        await expect.poll(quote).toBe('Página siguiente.');
+        expect(await quote()).toBe('Página siguiente.');
+        await readPanel(
+          "document.querySelector('#document-setup').requestSubmit()",
+        );
         await expect.poll(quote).toBe('Página siguiente.');
         await expect
           .poll(() =>
@@ -720,6 +808,24 @@ for (const [name, executable] of browsers) {
             readPanel("document.querySelector('#coding-status').textContent"),
           )
           .toBe('Categoría guardada y aplicada.');
+        await page.goto(url);
+        await expect
+          .poll(() =>
+            readPanel(
+              "document.querySelector('#page-citation-list').textContent",
+            ),
+          )
+          .toContain(citation);
+        expect(
+          await readPanel("document.querySelector('#document-setup').hidden"),
+        ).toBe(true);
+        await dragQuote(0, citation);
+        await expect.poll(quote).toBe(citation);
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#fragment-codes').disabled"),
+          )
+          .toBe(false);
         const other = await context.newPage();
         await other.bringToFront();
         await expect.poll(quote).toBe('');
@@ -743,6 +849,14 @@ for (const [name, executable] of browsers) {
           id,
           targetId: otherTab.targetId,
         });
+        await expect
+          .poll(() =>
+            readPanel("document.querySelector('#document-setup').hidden"),
+          )
+          .toBe(false);
+        await readPanel(
+          "document.querySelector('#document-setup').requestSubmit()",
+        );
         await expect.poll(quote).toBe('Otro sitio.');
         await expect
           .poll(() =>

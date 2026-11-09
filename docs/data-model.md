@@ -10,7 +10,7 @@ Todas las entidades tienen `id` UUID, `createdAt` y `updatedAt` ISO 8601 UTC. Lo
 | Annotation | projectId, sourceId, selectors, note? | Índice [projectId+sourceId]. Fuente del mismo proyecto. Una nota de texto plano opcional                               |
 | Coding     | projectId, annotationId, codeId       | Único [annotationId+codeId]. Índices [projectId+codeId] y [projectId+annotationId]. Ambos extremos del mismo proyecto  |
 
-Project tiene muchas Source y Code. Source tiene muchas Annotation. Annotation y Code son muchos a muchos mediante Coding. Crear la misma asociación es idempotente. Borrar un código retira sus Coding. Borrar una anotación retira sus Coding. Borrar una fuente retira sus anotaciones y asociaciones. Borrar un proyecto retira todo su corpus. Las cascadas son atómicas y actualizar un código no duplica su color en la evidencia. Borrar una nota elimina solo el campo.
+Project tiene muchas Source y Code. Source tiene muchas Annotation. Annotation y Code son muchos a muchos mediante Coding. Crear la misma asociación es idempotente. Borrar un código retira sus Coding. Borrar una anotación retira sus Coding. Borrar una fuente retira sus anotaciones y asociaciones. Borrar un proyecto retira todo su corpus. Las cascadas son atómicas y actualizar un código no duplica su color en la evidencia. Las notas históricas se conservan en las anotaciones existentes y en los archivos de intercambio.
 
 ## Persistencia local de T005
 

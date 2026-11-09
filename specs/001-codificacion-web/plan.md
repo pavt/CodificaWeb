@@ -4,13 +4,13 @@
 
 La [especificación](spec.md) gobierna alcance y criterios. [Arquitectura](../../docs/architecture.md) define módulos y límites de confianza. [Modelo](../../docs/data-model.md) define integridad y transferencia. Las fases son incrementos de desarrollo. Para la primera entrega, un proyecto y código predefinidos permiten probar el flujo sin esperar a los CRUD.
 
-| Fase | Objetivo y requisitos                                 | Depende de           | Tareas y pruebas               | Riesgos    | Criterio de salida                                                                                                                     |
-| ---- | ----------------------------------------------------- | -------------------- | ------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | Integrar plan, plantillas y CI base                   | Aprobación explícita | T000                           | R7         | PR revisado con check base en verde                                                                                                    |
-| 1    | Seleccionar, asignar y pintar · FR-03 a FR-05         | T000 integrado       | T001–T004 · Q03–Q05, Q11       | R1, R2, R3 | Chromium carga MV3. Selección entre nodos, código, color y solapamiento demostrados en extensión real                                  |
-| 2    | Persistir y anotar · FR-06 y FR-07                    | Fase 1               | T005–T007 · Q06, Q07, Q12, Q13 | R1, R3, R4 | Recarga, nueva visita y suspensión del worker recuperan el corpus. Evidencia ambigua queda sin ubicar. Nota persiste tras confirmación |
-| 3    | Organizar y consultar · FR-01, FR-02, FR-08, FR-09    | Fase 2               | T008–T011 · Q01, Q02, Q08, Q09 | R3, R4, R5 | CRUD transaccionales, búsqueda aislada y navegación con resultado explícito                                                            |
-| 4    | Transferir y validar · FR-10, regresión FR-01 a FR-09 | Fase 3               | T012–T013 · Q10, Q11, Q14      | R5, R6     | Ida y vuelta JSON, rechazo atómico y definición de terminado de la versión                                                             |
+| Fase | Objetivo y requisitos                                 | Depende de           | Tareas y pruebas               | Riesgos    | Criterio de salida                                                                                     |
+| ---- | ----------------------------------------------------- | -------------------- | ------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------ |
+| 0    | Integrar plan, plantillas y CI base                   | Aprobación explícita | T000                           | R7         | PR revisado con check base en verde                                                                    |
+| 1    | Seleccionar, asignar y pintar · FR-03 a FR-05         | T000 integrado       | T001–T004 · Q03–Q05, Q11       | R1, R2, R3 | Chromium carga MV3. Selección entre nodos, código, color y solapamiento demostrados en extensión real  |
+| 2    | Persistir evidencia · FR-06                           | Fase 1               | T005–T006 · Q06, Q12, Q13      | R1, R3, R4 | Recarga, nueva visita y suspensión del worker recuperan el corpus. Evidencia ambigua queda sin ubicar. |
+| 3    | Organizar y consultar · FR-01, FR-02, FR-08, FR-09    | Fase 2               | T008–T011 · Q01, Q02, Q08, Q09 | R3, R4, R5 | CRUD transaccionales, búsqueda aislada y navegación con resultado explícito                            |
+| 4    | Transferir y validar · FR-10, regresión FR-01 a FR-09 | Fase 3               | T012–T013 · Q10, Q11, Q14      | R5, R6     | Ida y vuelta JSON, rechazo atómico y definición de terminado de la versión                             |
 
 ## Flujo de entrega
 
